@@ -104,10 +104,18 @@ file changes when the *project* changes; the art file changes when a *vendor pac
 arrives. Keeping them apart means a new vendor format is added in the same commit that
 adds the first asset of that type, without touching the project's contract.
 
-> **LFS storage is a real budget, not a formality.** GitHub's free tier is 1 GB storage
-> and 1 GB bandwidth per month. A photoreal 4 km² slice will exceed it. Measure the art
-> budget before the first large import — see the storage budget table in the repository
-> rules page — rather than after a push is rejected.
+> **LFS storage is a real budget, not a formality.** GitHub Free includes **10 GiB** of
+> LFS storage and **10 GiB** of bandwidth per month; Team and Enterprise Cloud include
+> 250 GiB of each. A photoreal 4 km² slice will exceed 10 GiB. Measure the art budget
+> before the first large import — see the storage budget table in the repository rules
+> page — rather than after a push is rejected.
+>
+> **Bandwidth, not storage, is what runs out first.** Every clone, pull and CI checkout
+> that fetches an LFS object counts against the bandwidth quota, and it counts against
+> the *repository owner's* account — including clones by other people. A 4 GB art set
+> pulled by a CI job on every push exhausts 10 GiB in under three pushes. The mitigation
+> is in the workflow, not the plan: set `lfs: false` on any checkout that does not need
+> binary assets, and cache the LFS objects between runs.
 
 ### The twelve assemblies
 
