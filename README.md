@@ -8,7 +8,7 @@ The rule that makes the game work is the **Mineral Law**: *stone cannot be force
 
 No combat. No antagonist. Quiet, enormous, hopeful. The world can kill you with a fall or a flood, but it will never hunt you.
 
-**Status:** pre-production. The design package is complete; no code has been written. Week 1 of the implementation roadmap is a **gate** — a headless benchmark that decides whether the water solver can run on a mid-range phone. Nothing downstream of it starts until it returns a verdict.
+**Status:** pre-production. The design package is complete and the repository scaffold is committed — the twelve assemblies, the water solver interface, and the week-one benchmark harness. **No benchmark has been run**: the gate needs a Unity licence secret that does not yet exist, so the CI job is skipped rather than reported as broken. Week 1 of the implementation roadmap is a **gate** — a headless benchmark that decides whether the water solver can run on a mid-range phone. Nothing downstream of it starts until it returns a verdict.
 
 ---
 
@@ -115,18 +115,24 @@ file changes when the *project* changes; the art file changes when a *vendor pac
 arrives. Keeping them apart means a new vendor format is added in the same commit that
 adds the first asset of that type, without touching the project's contract.
 
-> **LFS storage is a real budget, not a formality.** GitHub Free includes **10 GiB** of
-> LFS storage and **10 GiB** of bandwidth per month; Team and Enterprise Cloud include
-> 250 GiB of each. A photoreal 4 km² slice will exceed 10 GiB. Measure the art budget
-> before the first large import — see the storage budget table in the repository rules
-> page — rather than after a push is rejected.
+> **LFS storage is a real budget, not a formality.** GitHub Free and Pro include **10 GiB**
+> of LFS storage and **10 GiB** of bandwidth per month; Team and Enterprise Cloud include
+> **250 GiB** of each. The estimated art set for the 4 km² slice is **≈ 1.4 GB** — about
+> 15% of the Free tier's storage. See the storage budget table in the repository rules
+> page for the per-category breakdown.
 >
 > **Bandwidth, not storage, is what runs out first.** Every clone, pull and CI checkout
 > that fetches an LFS object counts against the bandwidth quota, and it counts against
-> the *repository owner's* account — including clones by other people. A 4 GB art set
-> pulled by a CI job on every push exhausts 10 GiB in under three pushes. The mitigation
-> is in the workflow, not the plan: set `lfs: false` on any checkout that does not need
-> binary assets, and cache the LFS objects between runs.
+> the *repository owner's* account — including clones by other people. A full checkout of
+> the ≈ 1.4 GB art set is **~7 fetches** against a 10 GiB monthly quota. A CI job that
+> pulled art on every push would exhaust a month's bandwidth in about seven pushes.
+>
+> **The mitigation is in the workflow, not the plan.** `water-gate.yml` checks out with
+> `lfs: false` and gates its LFS fetch behind a `needs_art` input that defaults to false,
+> so the gate fetches **zero** LFS bytes — it measures a solver and has no use for a
+> texture. When a job genuinely needs art, the object store is cached under
+> `.git/lfs/objects`, keyed on the `.gitattributes` files. LFS objects are
+> content-addressed and immutable, so a cache hit can never be stale.
 
 ### The twelve assemblies
 
@@ -295,7 +301,7 @@ The design package is five documents plus three follow-on artifacts. They are th
 | 3 | **Systems Breakdown** | Seven loop states, fracture as a mask, water re-derived not stored, a journal not a snapshot |
 | 4 | **Technical Architecture** | One project with tiers as data, twelve assemblies, sixty-four tile scenes, the week-one gate |
 | 5 | **Implementation Roadmap** | Ten bootstrap steps, sixteen weeks, ten milestones, fourteen risks, a written cut order |
-| — | **Tracked Project Board** | The sixteen weeks as tracked items, plus eighteen tickets for weeks 1–2 |
+| — | **Tracked Project Board** | The sixteen weeks as tracked items, plus sixty-three tickets for weeks 1–7 |
 | — | **Harness Specification** | The week-one gate in full: solver interface, scenarios, thresholds, the checker, the ladder |
 | — | **README / CONTRIBUTING** | This file, and the working rules |
 | — | **Repository rules** | Every `.gitignore` and `.gitattributes` rule, with the reason it exists |
@@ -405,6 +411,19 @@ benchmark step carries `continue-on-error` and the enforcement happens in one fi
 Raw samples are uploaded for 30 days; the verdict file for 90. `Library/` is cached on a
 key that includes `Packages/packages-lock.json` and every `.asmdef`, so a dependency
 change invalidates the cache rather than producing a stale import.
+
+### LFS bandwidth
+
+The gate checks out with `lfs: false` and gates its LFS fetch behind a `needs_art` input
+that defaults to false, so a gate run fetches **zero** LFS bytes. When a job genuinely
+needs art, `.git/lfs/objects` is cached, keyed on the `.gitattributes` files — LFS objects
+are content-addressed and immutable, so a cache hit can never be stale.
+
+| | Before | After |
+|---|---|---|
+| LFS bytes per gate run | ≈ 1.4 GB (full art set) | **0** |
+| Gate runs before the 10 GiB monthly quota is gone | ~7 | unbounded |
+| LFS bytes when art *is* needed | ≈ 1.4 GB every run | ≈ 1.4 GB once, then cache hits |
 
 ---
 
