@@ -72,21 +72,36 @@ irreproducible gate is a rumour.
 
 ### 1.4 Reference device (Android tier only)
 
+**The reference device is the Samsung Galaxy A54 5G.** Fill in the measured
+fields; the identity fields are fixed and should not be edited per run.
+
 | Field | Value |
 |---|---|
-| Device model | `<...>` |
-| SoC | `<...>` |
-| Android version | `<...>` |
-| API level | `<...>` |
-| RAM | `<GB>` |
+| Device model | `Samsung Galaxy A54 5G (SM-A546B)` |
+| SoC | `Samsung Exynos 1380 (5 nm), 4x Cortex-A78 @ 2.4 GHz + 4x Cortex-A55 @ 2.0 GHz` |
+| GPU | `ARM Mali-G68 MP5` |
+| Android version | `<15 (One UI 7) \| as shipped>` |
+| API level | `<35>` |
+| RAM | `6 GB` |
+| Storage free | `<GB>` |
 | Thermal state at start | `<cool \| warm>` |
 | Ambient temperature | `<deg C>` |
 | Charging | `<no>` — charging changes the thermal envelope |
+| Build | `<IL2CPP, ARM64, Vulkan \| OpenGL ES 3.x>` |
 
-> **The reference device must be named before the gate runs.** Every Android
-> performance number in the design package is meaningless until one specific
-> mid-range 2022–2023 class phone is recorded. This is decision #3 from
-> Deliverable 4 and it is still open.
+> **The reference device is named, and it stays named.** Every Android
+> performance number in the design package is meaningless unless one specific
+> device is recorded and the same device is used for every subsequent run. This
+> was decision #3 from Deliverable 4; it is now closed.
+
+> **This is a recommendation, not a measurement.** The A54 was chosen because it
+> is the most representative mid-range phone in the install base and its
+> Mali-G68 MP5 is the weakest GPU class the project targets — so a pass here is a
+> floor, not a hope. **Confirm it against hardware you actually own.** If you own
+> a different mid-range 2022–2023 phone, use it and record it here instead; the
+> thresholds do not change, only this table does. An emulator is not acceptable:
+> its GPU path is not the device's and it has no thermal behaviour, and this gate
+> measures sustained load.
 
 ### 1.5 Test configuration
 
@@ -416,7 +431,7 @@ Correctness: clean. This is a budget failure, not a hard fail.
 
 ```
 PETRICHOR week-one water gate
-tier: android (Android reference device (mid-range 2022-2023 class))
+tier: android (Samsung Galaxy A54 5G, Exynos 1380, Mali-G68 MP5, 6 GB)
 attempt: 0
 
 correctness: OK (no NaN, mass balanced, hash non-zero, all tests green)
@@ -459,7 +474,7 @@ Every budget metric is comfortably inside its limit. The verdict is still
 
 ```
 PETRICHOR week-one water gate
-tier: android (Android reference device (mid-range 2022-2023 class))
+tier: android (Samsung Galaxy A54 5G, Exynos 1380, Mali-G68 MP5, 6 GB)
 attempt: 0
 
 VERDICT: HARD FAIL

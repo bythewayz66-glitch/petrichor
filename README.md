@@ -301,8 +301,44 @@ Read **[CONTRIBUTING.md](CONTRIBUTING.md)** before your first commit. It covers 
 
 ---
 
+## Reference device
+
+**The Android tier is measured on one named phone, and it is this one:**
+
+| Field | Value |
+|---|---|
+| Device | **Samsung Galaxy A54 5G** (`SM-A546B`) |
+| SoC | Samsung Exynos 1380 (5 nm) — 4× Cortex-A78 @ 2.4 GHz + 4× Cortex-A55 @ 2.0 GHz |
+| GPU | ARM Mali-G68 MP5 |
+| RAM | 6 GB |
+| Display | 6.4" Super AMOLED, 1080 × 2340, 120 Hz |
+| Android | shipped Android 13 (One UI 5.1); upgradable to Android 15 (One UI 7), API 35 |
+| Released | March 2023 |
+
+### Why this device
+
+- **It is the most representative mid-range phone in the install base.** The A54 was the best-selling Android phone of 2023. A number measured on it describes a phone a large fraction of players actually own; a number measured on a flagship describes a phone almost nobody does.
+- **The Mali-G68 MP5 is the weakest GPU class the project targets.** If the water sim fits here, it fits on most of the install base. Measuring on the weakest supported device is what makes the result a floor rather than a hope.
+- **6 GB of RAM is the binding constraint.** Four 257² water fields, plus terrain and the streamer, have to fit alongside the OS. A device with 8 GB would hide a memory problem that a 6 GB device exposes.
+- **API 35 satisfies the Play requirement** without needing a newer device to test it.
+
+### This is a recommendation, not a measurement
+
+**Confirm it against hardware you actually own.** The gate cannot be run on a device nobody has. If you own a different mid-range 2022–2023 phone, use it and record it in the gate report — the choice of device matters far less than the fact that one specific device is named and stays named across runs.
+
+What changes if you use a different device:
+
+| If your device is… | Then… |
+|---|---|
+| A flagship (Snapdragon 8 Gen 2, Adreno 740) | The numbers will look comfortable and will not describe the install base. Keep it as a *second* device, not the reference. |
+| Older or weaker (Snapdragon 695, Adreno 619) | Expect the Android tier to land on rung 3 or 4. That is a real result, not a failure — it is the gate doing its job. |
+| A different 2023 mid-range (Pixel 7a, Galaxy A34) | Fine. Record it and keep it. The thresholds do not change; only the device line in the report does. |
+| An emulator | **Not acceptable.** An emulator's GPU path is not the device's, and the thermal behaviour is absent entirely. The gate measures sustained load, which an emulator cannot reproduce. |
+
+---
+
 ## Assumptions
 
 - **One developer, full time.** Art is purchased, not authored. If either is wrong, the sixteen-week plan is wrong.
-- **The reference Android device is a specific mid-range 2022–2023 class phone.** Every Android performance number in the design package is meaningless until one is named and recorded.
+- **The reference Android device is the Samsung Galaxy A54 5G**, recorded above. Every Android performance number in the design package is meaningless until one specific device is named and stays named.
 - **The water solver is the project's largest technical risk.** URP ships no water system, so this is a simulation the project owns. Week 1 exists to find out whether it is feasible.
