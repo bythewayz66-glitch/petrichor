@@ -1,0 +1,25 @@
+{
+    "name": "PET.Benchmarks",
+    "rootNamespace": "PET.Benchmarks",
+    "references": [
+        "PET.Core",
+        "PET.Data",
+        "PET.Water",
+        "PET.Edit",
+        "Unity.PerformanceTesting",
+        "Unity.Collections",
+        "Unity.Burst",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

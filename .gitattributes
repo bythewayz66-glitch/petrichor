@@ -1,0 +1,116 @@
+# =============================================================================
+# PETRICHOR — .gitattributes
+# =============================================================================
+# Implements the LFS policy in CONTRIBUTING.md section 6.
+#
+# Three rules, in order of importance:
+#   1. Binary assets go to LFS. Git cannot diff or merge them, and storing them
+#      in the object database makes every clone enormous.
+#   2. Text assets are forced to LF and marked as UnityYAMLMerge. Unity scenes
+#      and prefabs are YAML, and a CRLF/LF mismatch produces a whole-file diff
+#      on every save.
+#   3. Terrain data is the exception that proves rule 1: it is binary, it is
+#      large, and it is per-tile so two people editing neighbouring tiles do
+#      not conflict.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Text assets — normalise to LF, merge with UnityYAMLMerge
+# -----------------------------------------------------------------------------
+# Unity serialises scenes, prefabs and ScriptableObjects as YAML when Force
+# Text is on. That makes them diffable and mergeable — but only if the line
+# endings are consistent. Without this, a Windows save rewrites every line.
+*.meta        text eol=lf
+*.asset       text eol=lf merge=unityyamlmerge
+*.prefab      text eol=lf merge=unityyamlmerge
+*.unity       text eol=lf merge=unityyamlmerge
+*.mat         text eol=lf merge=unityyamlmerge
+*.controller  text eol=lf merge=unityyamlmerge
+*.anim        text eol=lf merge=unityyamlmerge
+*.overrideController text eol=lf merge=unityyamlmerge
+*.physicMaterial     text eol=lf merge=unityyamlmerge
+*.physicsMaterial2D  text eol=lf merge=unityyamlmerge
+*.preset      text eol=lf merge=unityyamlmerge
+*.asmdef      text eol=lf
+*.asmref      text eol=lf
+*.json        text eol=lf
+*.md          text eol=lf
+*.txt         text eol=lf
+*.sh          text eol=lf
+*.py          text eol=lf
+*.cs          text eol=lf diff=csharp
+*.shader      text eol=lf
+*.hlsl        text eol=lf
+*.cginc       text eol=lf
+*.compute     text eol=lf
+*.uxml        text eol=lf
+*.uss         text eol=lf
+*.xml         text eol=lf
+*.yml         text eol=lf
+*.yaml        text eol=lf
+
+# -----------------------------------------------------------------------------
+# 2. Binary assets — LFS
+# -----------------------------------------------------------------------------
+# Textures. Source art is purchased, so these are large and numerous.
+*.png         filter=lfs diff=lfs merge=lfs -text
+*.jpg         filter=lfs diff=lfs merge=lfs -text
+*.jpeg        filter=lfs diff=lfs merge=lfs -text
+*.tga         filter=lfs diff=lfs merge=lfs -text
+*.tif         filter=lfs diff=lfs merge=lfs -text
+*.tiff        filter=lfs diff=lfs merge=lfs -text
+*.psd         filter=lfs diff=lfs merge=lfs -text
+*.exr         filter=lfs diff=lfs merge=lfs -text
+*.hdr         filter=lfs diff=lfs merge=lfs -text
+*.cubemap     filter=lfs diff=lfs merge=lfs -text
+
+# Meshes and animation.
+*.fbx         filter=lfs diff=lfs merge=lfs -text
+*.obj         filter=lfs diff=lfs merge=lfs -text
+*.blend       filter=lfs diff=lfs merge=lfs -text
+*.dae         filter=lfs diff=lfs merge=lfs -text
+*.3ds         filter=lfs diff=lfs merge=lfs -text
+*.ma          filter=lfs diff=lfs merge=lfs -text
+*.mb          filter=lfs diff=lfs merge=lfs -text
+
+# Audio.
+*.wav         filter=lfs diff=lfs merge=lfs -text
+*.mp3         filter=lfs diff=lfs merge=lfs -text
+*.ogg         filter=lfs diff=lfs merge=lfs -text
+*.aiff        filter=lfs diff=lfs merge=lfs -text
+*.aif         filter=lfs diff=lfs merge=lfs -text
+
+# Video and fonts.
+*.mp4         filter=lfs diff=lfs merge=lfs -text
+*.mov         filter=lfs diff=lfs merge=lfs -text
+*.webm        filter=lfs diff=lfs merge=lfs -text
+*.ttf         filter=lfs diff=lfs merge=lfs -text
+*.otf         filter=lfs diff=lfs merge=lfs -text
+
+# -----------------------------------------------------------------------------
+# 3. Terrain data — the exception
+# -----------------------------------------------------------------------------
+# Unity does not serialise TerrainData as text, so it cannot be Force Text and
+# cannot be merged. Keeping it a separate asset per tile means a tile edit
+# touches one small binary file, and two people editing neighbouring tiles do
+# not conflict. This is the mitigation described in CONTRIBUTING section 6.
+*.terrainlayer filter=lfs diff=lfs merge=lfs -text
+*.asset.terrain filter=lfs diff=lfs merge=lfs -text
+
+# -----------------------------------------------------------------------------
+# 4. Build and package output — never diffed, never merged
+# -----------------------------------------------------------------------------
+*.bundle      filter=lfs diff=lfs merge=lfs -text
+*.unitypackage filter=lfs diff=lfs merge=lfs -text
+*.dll         filter=lfs diff=lfs merge=lfs -text
+*.so          filter=lfs diff=lfs merge=lfs -text
+*.a           filter=lfs diff=lfs merge=lfs -text
+*.apk         filter=lfs diff=lfs merge=lfs -text
+*.aab         filter=lfs diff=lfs merge=lfs -text
+*.zip         filter=lfs diff=lfs merge=lfs -text
+
+# -----------------------------------------------------------------------------
+# 5. Generated files — mark as generated so GitHub collapses them
+# -----------------------------------------------------------------------------
+/Packages/packages-lock.json  linguist-generated=true
+/ProjectSettings/*.asset      linguist-generated=true

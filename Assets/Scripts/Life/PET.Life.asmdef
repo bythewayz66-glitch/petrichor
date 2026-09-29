@@ -1,0 +1,20 @@
+{
+    "name": "PET.Life",
+    "rootNamespace": "PET.Life",
+    "references": [
+        "PET.Core",
+        "PET.Data",
+        "PET.Edit",
+        "Unity.Collections",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

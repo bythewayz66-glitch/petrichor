@@ -1,0 +1,49 @@
+{
+  "_comment": "Week-one water gate thresholds. Changing a number here is a reviewable diff; changing it in code is not. The checker reads this file and nothing else.",
+  "_verified": "Unity 6.3 LTS = 6000.3 (released 2025-12-04, supported through 2027-12). com.unity.test-framework.performance 3.6.0 is the version released for the 6000.0 stream; take what Package Manager tags Recommended for your editor build.",
+  "_units": "All timings are MILLISECONDS PER SOLVER STEP, not per frame. Scenario C takes 3600 steps per sample and the harness divides by 3600, so C is directly comparable with A and B. The frame-level question is answered by multiplying: at 30 Hz a frame is 33.33 ms, and the solver's share of it is the per-step figure times the number of steps that frame takes.",
+
+  "tiers": {
+    "linux": {
+      "label": "Linux desktop flagship",
+      "frame_budget_ms": 16.67,
+      "target_fps": 60,
+      "tile_res": 257,
+      "tile_count": 4,
+      "thresholds": {
+        "A_StaticSoak":  { "p50_ms": 1.5, "p95_ms": 3.0, "max_ms": 6.0 },
+        "B_StepFlood":   { "p50_ms": 1.5, "p95_ms": 3.0, "max_ms": 6.0 },
+        "C_FastForward": { "p50_ms": 1.5, "p95_ms": 3.0, "max_ms": 6.0 }
+      }
+    },
+    "android": {
+      "label": "Android reference device (mid-range 2022-2023 class)",
+      "frame_budget_ms": 33.33,
+      "target_fps": 30,
+      "tile_res": 257,
+      "tile_count": 4,
+      "thresholds": {
+        "A_StaticSoak":  { "p50_ms": 2.5, "p95_ms": 5.0, "max_ms": 10.0 },
+        "B_StepFlood":   { "p50_ms": 2.5, "p95_ms": 5.0, "max_ms": 10.0 },
+        "C_FastForward": { "p50_ms": 2.5, "p95_ms": 5.0, "max_ms": 10.0 }
+      }
+    }
+  },
+
+  "hard_fail": {
+    "_comment": "These are NOT budget failures. The ladder buys performance and cannot buy correctness. Halving the resolution of a broken solver produces a broken solver that is twice as fast.",
+    "nan_count_max": 0,
+    "mass_drift_max": 0.001,
+    "hash_must_be_nonzero": true,
+    "_mass_note": "The mass check is a BALANCE, not a constancy check: the checker compares mass_after against mass_before + mass_inflow. A field with an open source is supposed to gain water, so asserting constant mass would fail a correct solver and pass a dry one.",
+    "_determinism_note": "Scenario D_Determinism is asserted in NUnit, not here. A red test case in the results XML is treated as a hard fail by the checker, which is how a determinism break reaches the verdict."
+  },
+
+  "ladder": [
+    { "rung": 1, "action": "Halve the simulation resolution to 129. No visible loss - the render grid is unchanged.", "cost": "none visible" },
+    { "rung": 2, "action": "Shrink the active water window to the tiles within 1 of the camera.", "cost": "distant water stops updating" },
+    { "rung": 3, "action": "Channel graph on Android only. A real gameplay difference.", "cost": "Android water is not freely redirectable" },
+    { "rung": 4, "action": "Delay the Android tier. NOT the design.", "cost": "Linux-only slice" },
+    { "rung": 5, "action": "Water stops being redirectable. Revisit Deliverable 1.", "cost": "a pillar" }
+  ]
+}

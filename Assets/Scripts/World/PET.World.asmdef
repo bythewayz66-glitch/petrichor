@@ -1,0 +1,22 @@
+{
+    "name": "PET.World",
+    "rootNamespace": "PET.World",
+    "references": [
+        "PET.Core",
+        "PET.Data",
+        "PET.Edit",
+        "PET.Water",
+        "PET.Life",
+        "Unity.Collections",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
