@@ -16,6 +16,25 @@ name: Water Gate
 # Correctness is evaluated before budget. A fast wrong solver is the most
 # dangerous outcome this gate can produce, and the ordering makes it
 # impossible to mistake for a pass.
+#
+# ---------------------------------------------------------------------------
+# LFS POLICY
+#
+# Git LFS bandwidth is metered against the repository OWNER's account, and
+# every clone, pull and CI checkout that fetches an LFS object counts against
+# it. This gate measures a water solver: it needs no art, no audio and no
+# video. So:
+#
+#   * actions/checkout runs with `lfs: false` -- it never fetches LFS objects.
+#   * The LFS fetch is gated behind the `needs_art` input, which defaults to
+#     false. A job that does not need art does not download art.
+#   * When art IS needed, the object store is cached, because LFS objects are
+#     content-addressed and immutable: the same key always means the same
+#     object set, so a cache hit is always correct.
+#
+# Before this policy the gate pulled the full art set on every push. See the
+# README's LFS section for the arithmetic.
+# ---------------------------------------------------------------------------
 
 on:
   push:
@@ -43,6 +62,11 @@ on:
         required: true
         default: '0'
         type: string
+      needs_art:
+        description: 'Fetch LFS art objects (leave false: the gate does not need them)'
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -57,6 +81,8 @@ jobs:
   # This job exists so the workflow is committable and green from day one.
   # A repository that is red on every push because a secret is missing is a
   # repository whose CI everyone learns to ignore.
+  #
+  # It has no checkout, so it fetches nothing at all -- not even the tree.
   # ---------------------------------------------------------------------
   preflight:
     name: Preflight
@@ -83,8 +109,8 @@ jobs:
               echo ""
               echo "| Secret | For | Notes |"
               echo "|---|---|---|"
-              echo "| `UNITY_LICENSE` | Personal licence | Contents of the `.ulf` file |"
-              echo "| `UNITY_SERIAL` + `UNITY_EMAIL` + `UNITY_PASSWORD` | Plus / Pro | Serial from the licence page |"
+              echo "| \`UNITY_LICENSE\` | Personal licence | Contents of the \`.ulf\` file |"
+              echo "| \`UNITY_SERIAL\` + \`UNITY_EMAIL\` + \`UNITY_PASSWORD\` | Plus / Pro | Serial from the licence page |"
               echo ""
               echo "This is not a failure. The gate needs a licence and there is"
               echo "none, so the run is skipped rather than reported as broken."
@@ -100,18 +126,63 @@ jobs:
     if: needs.preflight.outputs.licensed == 'true'
     runs-on: ubuntu-latest
 
+    # Resolved once, so the LFS steps below read a single value rather than
+    # repeating the dispatch expression three times.
+    env:
+      NEEDS_ART: ${{ github.event_name == 'workflow_dispatch' && inputs.needs_art || 'false' }}
+
     strategy:
       fail-fast: false
       matrix:
         tier: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', inputs.tier)) || fromJSON('["linux"]') }}
 
     steps:
+      # lfs: false is EXPLICIT, not incidental.
+      #
+      # actions/checkout@v4 already defaults to lfs: false, but the default is
+      # not a contract: a future major version could change it, and a silent
+      # change would start billing the owner's LFS bandwidth on every push.
+      # Stating it here means the intent survives an action upgrade.
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          lfs: false
 
-      - name: Checkout LFS assets
-        run: git lfs pull
+      # LFS objects are content-addressed and immutable, so a cache keyed on
+      # the .gitattributes files is safe: the same key always means the same
+      # object set, and a cache hit can never be stale. This is what stops a
+      # re-run from re-downloading art it already has.
+      - name: Cache LFS objects
+        if: env.NEEDS_ART == 'true'
+        uses: actions/cache@v4
+        with:
+          path: .git/lfs/objects
+          key: lfs-${{ runner.os }}-${{ hashFiles('.gitattributes', 'Assets/Art/.gitattributes') }}
+          restore-keys: |
+            lfs-${{ runner.os }}-
+
+      # Gated, not unconditional. The gate measures a solver; it has no use
+      # for a 4K texture. Fetching art here would burn the owner's LFS
+      # bandwidth on every push for nothing.
+      - name: Fetch LFS assets
+        if: env.NEEDS_ART == 'true'
         continue-on-error: true
+        run: |
+          if git lfs pull; then
+            echo "LFS objects fetched."
+          else
+            echo "::warning title=LFS fetch failed::The job asked for art and did not get it. If this job needs art, its results are invalid."
+          fi
+
+      - name: Skip LFS assets
+        if: env.NEEDS_ART != 'true'
+        run: |
+          {
+            echo "### LFS"
+            echo ""
+            echo "LFS fetch skipped: this job does not need art."
+            echo "Bandwidth saved on this run."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Resolve the pinned editor version
         id: editor
@@ -207,10 +278,11 @@ jobs:
             echo "| | |"
             echo "|---|---|"
             echo "| Verdict | **${VERDICT:-not produced}** |"
-            echo "| Exit code | `${CODE:-?}` |"
-            echo "| Editor | `${{ steps.editor.outputs.version }}` |"
-            echo "| Rungs already applied | `${{ github.event_name == 'workflow_dispatch' && inputs.attempt || '0' }}` |"
-            echo "| Commit | `${{ github.sha }}` |"
+            echo "| Exit code | \`${CODE:-?}\` |"
+            echo "| Editor | \`${{ steps.editor.outputs.version }}\` |"
+            echo "| Rungs already applied | \`${{ github.event_name == 'workflow_dispatch' && inputs.attempt || '0' }}\` |"
+            echo "| LFS art fetched | \`${NEEDS_ART}\` |"
+            echo "| Commit | \`${{ github.sha }}\` |"
             echo ""
             echo "### Verdict detail"
             echo ""
