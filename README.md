@@ -32,9 +32,15 @@ m_EditorVersion: 6000.3.0f1
 m_EditorVersionWithRevision: 6000.3.0f1 (d1870ce95baf)
 ```
 
-The revision in parentheses is the **changeset**, and it is not decoration: it is what `unityhub://6000.3.0f1/d1870ce95baf` resolves to, and it is what CI uses to fetch the exact editor build. A `ProjectVersion.txt` whose revision reads `TBD` is a file Unity has not written yet, and the first CI run fails on it.
+The revision in parentheses is the **changeset**, and it is not decoration: it is what
+`unityhub://6000.3.0f1/d1870ce95baf` resolves to, and it is what CI uses to fetch the
+exact editor build. A `ProjectVersion.txt` whose revision reads `TBD` is a file Unity
+has not written yet, and the first CI run fails on it.
 
-> **If you install a different patch of the 6.3 line**, open the project once and let Unity rewrite this file, then copy both lines here. Do not hand-edit the changeset to match a version you have not installed — the two must agree or the editor will re-import the whole project on every open.
+> **If you install a different patch of the 6.3 line**, open the project once and let
+> Unity rewrite this file, then copy both lines here. Do not hand-edit the changeset to
+> match a version you have not installed — the two must agree or the editor will
+> re-import the whole project on every open.
 
 ---
 
@@ -45,7 +51,7 @@ Read these off **Package Manager** on the machine that created the project, and 
 | Package | Policy | Version on this machine |
 |---|---|---|
 | `com.unity.inputsystem` | **Pin 1.19.0** — verified release, targeted at the 2022.3 / 6.0 / 6.2 / 6.3 editor lines | `1.19.0` |
-| `com.unity.render-pipelines.universal` | **Do not pin.** SRP packages are tied to specific editor versions; hand-pinning causes missing types and permanent compile errors | **(editor bundled)** |
+| `com.unity.render-pipelines.universal` | **Do not pin.** SRP packages are tied to specific editor versions; hand-pinning causes missing types and permanent compile errors | *(editor bundled)* |
 | `com.unity.addressables` | Take the **"Recommended"** tag, not "Latest" — Recommended is the version actually tested against your editor | *(read from Package Manager)* |
 | `com.unity.test-framework` | Editor bundled. 1.5+ is Unity 6 only | *(editor bundled)* |
 | `com.unity.test-framework.performance` | Editor bundled. **Must also be listed in the manifest's `testables` array** or its attributes silently fail to resolve | *(editor bundled)* |
@@ -58,12 +64,6 @@ Read these off **Package Manager** on the machine that created the project, and 
 ---
 
 ## Repository layout
-
-> **This is the target layout, not the current contents.** Today the tree holds
-> `Assets/Scripts/` (twelve assemblies) and `Assets/Tests/Benchmarks/` only.
-> Everything else below arrives with the week that creates it — `Assets/Scenes/`
-> with W6.1, `Assets/Art/` with W14, and so on. A path in this block is a plan,
-> not a promise that the file is already there.
 
 ```
 Assets/
@@ -104,15 +104,35 @@ Builds/               # git-ignored
 
 ### Art-pipeline rules
 
-`Assets/Art/` carries its own `.gitignore` and `.gitattributes`. The root pair is the project's contract; the art pair covers the vendor and intermediate formats a purchased photoreal pipeline delivers — `.dds`, `.sbsar`, `.abc`, `.usd`, `.r16`, `.flac` and the rest — which the root file has no reason to know about. Git applies a `.gitattributes` to its own directory and everything below it, so the split is safe.
+`Assets/Art/` carries its own `.gitignore` and `.gitattributes`. The root pair is the
+project's contract; the art pair covers the vendor and intermediate formats a purchased
+photoreal pipeline delivers — `.dds`, `.sbsar`, `.abc`, `.usd`, `.r16`, `.flac` and the
+rest — which the root file has no reason to know about. Git applies a `.gitattributes`
+to its own directory and everything below it, so the split is safe.
 
-The reason for the split is that the two files change for different reasons. The root file changes when the *project* changes; the art file changes when a *vendor pack* arrives. Keeping them apart means a new vendor format is added in the same commit that adds the first asset of that type, without touching the project's contract.
+The reason for the split is that the two files change for different reasons. The root
+file changes when the *project* changes; the art file changes when a *vendor pack*
+arrives. Keeping them apart means a new vendor format is added in the same commit that
+adds the first asset of that type, without touching the project's contract.
 
-> **LFS storage is a real budget, not a formality.** GitHub Free and Pro include **10 GiB** of LFS storage and **10 GiB** of bandwidth per month; Team and Enterprise Cloud include **250 GiB** of each. The estimated art set for the 4 km² slice is **≈ 1.4 GB** — about 15% of the Free tier's storage. See the storage budget table in the repository rules page for the per-category breakdown.
+> **LFS storage is a real budget, not a formality.** GitHub Free and Pro include **10 GiB**
+> of LFS storage and **10 GiB** of bandwidth per month; Team and Enterprise Cloud include
+> **250 GiB** of each. The estimated art set for the 4 km² slice is **≈ 1.4 GB** — about
+> 15% of the Free tier's storage. See the storage budget table in the repository rules
+> page for the per-category breakdown.
 >
-> **Bandwidth, not storage, is what runs out first.** Every clone, pull and CI checkout that fetches an LFS object counts against the bandwidth quota, and it counts against the *repository owner's* account — including clones by other people. A full checkout of the ≈ 1.4 GB art set is **~7 fetches** against a 10 GiB monthly quota. A CI job that pulled art on every push would exhaust a month's bandwidth in about seven pushes.
+> **Bandwidth, not storage, is what runs out first.** Every clone, pull and CI checkout
+> that fetches an LFS object counts against the bandwidth quota, and it counts against
+> the *repository owner's* account — including clones by other people. A full checkout of
+> the ≈ 1.4 GB art set is **~7 fetches** against a 10 GiB monthly quota. A CI job that
+> pulled art on every push would exhaust a month's bandwidth in about seven pushes.
 >
-> **The mitigation is in the workflow, not the plan.** `water-gate.yml` checks out with `lfs: false` and gates its LFS fetch behind a `needs_art` input that defaults to false, so the gate fetches **zero** LFS bytes — it measures a solver and has no use for a texture. When a job genuinely needs art, the object store is cached under `.git/lfs/objects`, keyed on the `.gitattributes` files. LFS objects are content-addressed and immutable, so a cache hit can never be stale.
+> **The mitigation is in the workflow, not the plan.** `water-gate.yml` checks out with
+> `lfs: false` and gates its LFS fetch behind a `needs_art` input that defaults to false,
+> so the gate fetches **zero** LFS bytes — it measures a solver and has no use for a
+> texture. When a job genuinely needs art, the object store is cached under
+> `.git/lfs/objects`, keyed on the `.gitattributes` files. LFS objects are
+> content-addressed and immutable, so a cache hit can never be stale.
 
 ### The twelve assemblies
 
@@ -152,11 +172,12 @@ An assembly may only reference assemblies **below** it. The rule is enforced by 
    - **Color Space** = *Linear*
    - **Api Compatibility Level** = *.NET Standard 2.1* (unless a package demands otherwise)
 6. Open `Assets/Scenes/SC_Boot.unity` and press Play. The boot scene loads `SC_Persistent` additively and unloads itself.
-   **Not available yet** — `Assets/Scenes/` does not exist until W6.1. Until then, run the gate instead (see *Running the gate* below).
 
 ### Configure git before your first commit
 
-Four commands, once per clone. They are not optional and they are not per-machine preferences — two of them are what make a Unity repository mergeable at all.
+Four commands, once per clone. They are not optional and they are not
+per-machine preferences — two of them are what make a Unity repository
+mergeable at all.
 
 ```bash
 git lfs install
@@ -166,7 +187,10 @@ git config merge.unityyamlmerge.driver "<UNITYYAMLMERGE> merge -p --force %O %B 
 git config merge.unityyamlmerge.recursive binary
 ```
 
-**`<UNITYYAMLMERGE>` is the full path to the tool inside your editor install.** Unity does not put it on `PATH`, and the path contains the editor version, so it is different on every machine. Substitute the line that matches your platform — this is the documented layout of a Unity Hub install:
+**`<UNITYYAMLMERGE>` is the full path to the tool inside your editor install.**
+Unity does not put it on `PATH`, and the path contains the editor version, so it
+is different on every machine. Substitute the line that matches your platform —
+this is the documented layout of a Unity Hub install:
 
 | Platform | Path |
 |---|---|
@@ -174,19 +198,23 @@ git config merge.unityyamlmerge.recursive binary
 | **macOS** | `/Applications/Unity/Hub/Editor/<version>/Unity.app/Contents/Tools/UnityYAMLMerge` |
 | **Linux** | `~/Unity/Hub/Editor/<version>/Editor/Data/Tools/UnityYAMLMerge` |
 
-Windows users: in Git Bash use forward slashes and quote the whole path, or the backslashes are eaten before git sees them.
+Windows users: in Git Bash use forward slashes and quote the whole path, or the
+backslashes are eaten before git sees them.
 
 ```bash
 git config merge.unityyamlmerge.driver "/c/Program\ Files/Unity/Hub/Editor/6000.3.0f1/Editor/Data/Tools/UnityYAMLMerge.exe merge -p --force %O %B %A %A"
 ```
 
-**Verify the path before you trust it.** The install location depends on where Unity Hub put the editor and whether you used a custom install root. Check with:
+**Verify the path before you trust it.** The install location depends on where
+Unity Hub put the editor and whether you used a custom install root. Check with:
 
 ```bash
 ls "$(dirname "$(command -v unity-hub 2>/dev/null || echo /Applications/Unity/Hub/Editor)")"   # or just browse to it
 ```
 
-If the path is wrong, git will silently fall back to a line-based text merge on the next conflicting `.unity` file, which produces a corrupt scene rather than a conflict marker. Confirm the driver resolves:
+If the path is wrong, git will silently fall back to a line-based text merge on
+the next conflicting `.unity` file, which produces a corrupt scene rather than a
+conflict marker. Confirm the driver resolves:
 
 ```bash
 git config --get merge.unityyamlmerge.driver
@@ -201,9 +229,16 @@ git config --get merge.unityyamlmerge.driver
 | `merge.unityyamlmerge.driver` | Runs Unity's semantic merge on conflicting YAML assets | The default line-based merge does not understand Unity's YAML structure and will happily produce a `.unity` file that no longer opens |
 | `merge.unityyamlmerge.recursive binary` | Declares the driver binary, so it is used when merging a merge | An unset recursive driver degrades to a text merge inside a recursive merge — the case where a scene conflict is most likely |
 
-**`merge=unityyamlmerge` is already declared per file type in `.gitattributes`.** These commands register the DRIVER that attribute names. Without both halves, neither does anything: the attribute alone points at a driver that does not exist, and the driver alone is never selected for any file.
+**`merge=unityyamlmerge` is already declared per file type in `.gitattributes`.**
+These commands register the DRIVER that attribute names. Without both halves,
+neither does anything: the attribute alone points at a driver that does not
+exist, and the driver alone is never selected for any file.
 
-The four asset types carrying that attribute are `.unity`, `.prefab`, `.asset` and `.mat` — all Force Text with LF normalisation, which is exactly what the semantic merge needs. `TerrainData` is deliberately absent: it stays binary under LFS, because Unity does not serialise it as text (see CONTRIBUTING §6).
+The four asset types carrying that attribute are `.unity`, `.prefab`,
+`.asset` and `.mat` — all Force Text with LF normalisation, which is exactly
+what the semantic merge needs. `TerrainData` is deliberately absent: it stays
+binary under LFS, because Unity does not serialise it as text (see
+CONTRIBUTING §6).
 
 ### Running the tests
 
@@ -271,7 +306,9 @@ The design package is five documents plus three follow-on artifacts. They are th
 | — | **README / CONTRIBUTING** | This file, and the working rules |
 | — | **Repository rules** | Every `.gitignore` and `.gitattributes` rule, with the reason it exists |
 
-The repository-rules page exists because a `.gitignore` line with no justification is a line somebody deletes. Every entry there is paired with what breaks without it.
+The repository-rules page exists because a `.gitignore` line with no
+justification is a line somebody deletes. Every entry there is paired with what
+breaks without it.
 
 ---
 
@@ -319,13 +356,21 @@ What changes if you use a different device:
 
 ## Continuous integration
 
-`.github/workflows/water-gate.yml` runs the week-one gate on every push that touches `Assets/Scripts/Water/**`, `Assets/Tests/Benchmarks/**`, `Tools/**` or the workflow itself, and on every pull request against those paths. It can also be run by hand from the Actions tab (`workflow_dispatch`), with a `tier` input (`linux` or `android`) and an `attempt` input naming how many rungs of the ladder are already applied.
+`.github/workflows/water-gate.yml` runs the week-one gate on every push that touches
+`Assets/Scripts/Water/**`, `Assets/Tests/Benchmarks/**`, `Tools/**` or the workflow
+itself, and on every pull request against those paths. It can also be run by hand from
+the Actions tab (`workflow_dispatch`), with a `tier` input (`linux` or `android`) and an
+`attempt` input naming how many rungs of the ladder are already applied.
 
 ### It needs a Unity licence, and it does not have one yet
 
-**The gate job is skipped until a licence secret exists.** The `preflight` job checks for one and, if it is absent, writes a skip notice to the job summary and exits green. That is deliberate: a repository that is red on every push because a secret is missing is a repository whose CI everyone learns to ignore.
+**The gate job is skipped until a licence secret exists.** The `preflight` job checks for
+one and, if it is absent, writes a skip notice to the job summary and exits green. That is
+deliberate: a repository that is red on every push because a secret is missing is a
+repository whose CI everyone learns to ignore.
 
-Add **one** of the following at *Settings → Secrets and variables → Actions → New repository secret*:
+Add **one** of the following at *Settings → Secrets and variables → Actions → New
+repository secret*:
 
 | Secret | For | Where the value comes from |
 |---|---|---|
@@ -334,12 +379,20 @@ Add **one** of the following at *Settings → Secrets and variables → Actions 
 
 **Obtaining a `UNITY_LICENSE` value (personal licence route):**
 
-1. Activate a personal licence on a machine with the editor installed, so Unity writes `Unity_lic.ulf` to disk. On Linux that is `~/.local/share/unity3d/Unity/Unity_lic.ulf`; on Windows `C:\ProgramData\Unity\Unity_lic.ulf`; on macOS `/Library/Application Support/Unity/Unity_lic.ulf`.
-2. Open the file in a text editor and copy **the whole file**, including the `<?xml ... ?>` declaration and the closing `</root>` tag.
+1. Activate a personal licence on a machine with the editor installed, so Unity writes
+   `Unity_lic.ulf` to disk. On Linux that is
+   `~/.local/share/unity3d/Unity/Unity_lic.ulf`; on Windows
+   `C:\ProgramData\Unity\Unity_lic.ulf`; on macOS
+   `/Library/Application Support/Unity/Unity_lic.ulf`.
+2. Open the file in a text editor and copy **the whole file**, including the
+   `<?xml ... ?>` declaration and the closing `</root>` tag.
 3. Paste it as the value of a repository secret named exactly `UNITY_LICENSE`.
 4. Re-run the workflow. The `gate` job will now execute.
 
-> **A personal licence is machine-bound.** The `.ulf` is issued to the machine that activated it, and GameCI's activation step re-issues it for the runner. If activation fails with a licence error, the usual cause is that the personal licence is already active on too many machines — deactivate one from the Unity account page and retry.
+> **A personal licence is machine-bound.** The `.ulf` is issued to the machine that
+> activated it, and GameCI's activation step re-issues it for the runner. If activation
+> fails with a licence error, the usual cause is that the personal licence is already
+> active on too many machines — deactivate one from the Unity account page and retry.
 
 ### What the workflow does, and what fails the build
 
@@ -351,19 +404,37 @@ Add **one** of the following at *Settings → Secrets and variables → Actions 
 | `3` | INPUT ERROR | **fails** | The checker could not read its inputs; the run is invalid |
 | anything else | no verdict | **fails** | Treated as an input error, never as a pass |
 
-Correctness is evaluated before budget, so a fast wrong solver cannot be mistaken for a pass. The verdict, not the test runner's exit code, is authoritative — which is why the benchmark step carries `continue-on-error` and the enforcement happens in one final step.
+Correctness is evaluated before budget, so a fast wrong solver cannot be mistaken for a
+pass. The verdict, not the test runner's exit code, is authoritative — which is why the
+benchmark step carries `continue-on-error` and the enforcement happens in one final step.
 
-Raw samples are uploaded for 30 days; the verdict file for 90. `Library/` is cached on a key that includes `Packages/packages-lock.json` and every `.asmdef`, so a dependency change invalidates the cache rather than producing a stale import.
+Raw samples are uploaded for 30 days; the verdict file for 90. `Library/` is cached on a
+key that includes `Packages/packages-lock.json` and every `.asmdef`, so a dependency
+change invalidates the cache rather than producing a stale import.
 
 ### LFS bandwidth
 
-The gate checks out with `lfs: false` and gates its LFS fetch behind a `needs_art` input that defaults to false, so a gate run fetches **zero** LFS bytes. When a job genuinely needs art, `.git/lfs/objects` is cached, keyed on the `.gitattributes` files — LFS objects are content-addressed and immutable, so a cache hit can never be stale.
+The gate checks out with `lfs: false` and gates its LFS fetch behind a `needs_art` input
+that defaults to false, so a gate run fetches **zero** LFS bytes. When a job genuinely
+needs art, `.git/lfs/objects` is cached, keyed on the `.gitattributes` files — LFS objects
+are content-addressed and immutable, so a cache hit can never be stale.
 
 | | Before | After |
 |---|---|---|
 | LFS bytes per gate run | ≈ 1.4 GB (full art set) | **0** |
 | Gate runs before the 10 GiB monthly quota is gone | ~7 | unbounded |
 | LFS bytes when art *is* needed | ≈ 1.4 GB every run | ≈ 1.4 GB once, then cache hits |
+
+### Committed gate reports
+
+A run that produces a verdict gets a report committed to **`docs/gate-reports/`**, named
+`gate-<yyyymmdd>-<Mnn>-<tier>-<run>.md` so a plain `ls` sorts chronologically. The format
+is `docs/GATE_REPORT_TEMPLATE.md`; the naming, provenance and retention rules are in
+`docs/gate-reports/README.md`.
+
+**A report is never committed for a run whose `gate` job was skipped.** A skipped gate
+produced no verdict, and a report written from one would record a pass that never
+happened. As of this writing that is every run the workflow has ever had.
 
 ---
 
