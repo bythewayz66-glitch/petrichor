@@ -62,6 +62,12 @@ on:
         required: true
         default: '0'
         type: string
+      solver:
+        description: 'Solver under test (heightfield = reference, channel-graph = ladder rung 3)'
+        required: true
+        default: heightfield
+        type: choice
+        options: [heightfield, channel-graph]
       needs_art:
         description: 'Fetch LFS art objects (leave false: the gate does not need them)'
         required: true
@@ -223,6 +229,12 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           PET_BENCH_TIER: ${{ matrix.tier }}
+          # Which solver the harness constructs. Defaults to the reference
+          # heightfield solver, so a run that does not set it measures exactly
+          # what it measured before this input existed. The harness throws on an
+          # unrecognised value, which fails the NUnit run, which the checker
+          # reads as a HARD FAIL - so a typo here is loud, not silent.
+          PET_BENCH_SOLVER: ${{ github.event_name == 'workflow_dispatch' && inputs.solver || 'heightfield' }}
         with:
           unityVersion: ${{ steps.editor.outputs.version }}
           testMode: EditMode
@@ -241,19 +253,38 @@ jobs:
       # Exit codes: 0 PASS, 1 BUDGET, 2 HARD FAIL, 3 INPUT ERROR.
       # continue-on-error keeps the job alive so the summary and artifacts
       # always happen; the verdict is enforced in the final step.
+      #
+      # TWO DIRECTORIES, AND THEY ARE NOT INTERCHANGEABLE.
+      #
+      #   BenchResults/      game-ci's own artifact directory. It holds the
+      #                      NUnit results XML, which is why --results-xml
+      #                      points there.
+      #   BenchmarkResults/  the harness's output directory, named by
+      #                      BenchmarkHarness.OutputDirName. It holds the
+      #                      summary_<scenario>.json files the checker reads
+      #                      first, and the verdict file.
+      #
+      # This step used to pass --results-dir BenchResults, which is not where
+      # the harness writes. The checker found no summaries, fell back to the
+      # XML for timings, and - because the hard-fail checks read the summaries
+      # and nothing else - silently skipped the NaN, mass-balance and hash
+      # checks entirely. A gate that cannot see its own correctness data is
+      # worse than no gate, because it still returns a verdict.
       - name: Check thresholds
         id: check
         continue-on-error: true
         run: |
           ATTEMPT="${{ github.event_name == 'workflow_dispatch' && inputs.attempt || '0' }}"
+          SOLVER="${{ github.event_name == 'workflow_dispatch' && inputs.solver || 'heightfield' }}"
           set +e
           python3 Tools/check_thresholds.py \
             --tier "${{ matrix.tier }}" \
-            --results-dir BenchResults \
+            --results-dir BenchmarkResults \
             --results-xml "${{ steps.results.outputs.xml }}" \
             --thresholds Tools/bench_thresholds.json \
             --attempt "$ATTEMPT" \
-            --out "BenchResults/verdict_${{ matrix.tier }}.txt"
+            --solver "$SOLVER" \
+            --out "BenchmarkResults/verdict_${{ matrix.tier }}.txt"
           CODE=$?
           echo "code=$CODE" >> "$GITHUB_OUTPUT"
           echo "exit_code=$CODE" >> "$GITHUB_OUTPUT"
@@ -281,14 +312,15 @@ jobs:
             echo "| Exit code | \`${CODE:-?}\` |"
             echo "| Editor | \`${{ steps.editor.outputs.version }}\` |"
             echo "| Rungs already applied | \`${{ github.event_name == 'workflow_dispatch' && inputs.attempt || '0' }}\` |"
+            echo "| Solver | \`${{ github.event_name == 'workflow_dispatch' && inputs.solver || 'heightfield' }}\` |"
             echo "| LFS art fetched | \`${NEEDS_ART}\` |"
             echo "| Commit | \`${{ github.sha }}\` |"
             echo ""
             echo "### Verdict detail"
             echo ""
             echo '```'
-            if [ -f "BenchResults/verdict_$TIER.txt" ]; then
-              cat "BenchResults/verdict_$TIER.txt"
+            if [ -f "BenchmarkResults/verdict_$TIER.txt" ]; then
+              cat "BenchmarkResults/verdict_$TIER.txt"
             else
               echo "No verdict file. The checker did not run, or did not"
               echo "reach the point of writing one. Treat this as an INPUT ERROR."
@@ -316,7 +348,7 @@ jobs:
       - name: Annotate the budget failure
         if: always() && steps.check.outputs.exit_code == '1'
         run: |
-          RUNG="$(grep -m1 'NEXT RUNG:' BenchResults/verdict_${{ matrix.tier }}.txt 2>/dev/null || echo 'NEXT RUNG: see summary')"
+          RUNG="$(grep -m1 'NEXT RUNG:' BenchmarkResults/verdict_${{ matrix.tier }}.txt 2>/dev/null || echo 'NEXT RUNG: see summary')"
           echo "::warning title=Water Gate BUDGET FAIL (${{ matrix.tier }})::${RUNG}"
 
       - name: Upload raw samples
@@ -335,7 +367,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: water-gate-verdict-${{ matrix.tier }}-${{ github.sha }}
-          path: BenchResults/verdict_${{ matrix.tier }}.txt
+          path: BenchmarkResults/verdict_${{ matrix.tier }}.txt
           retention-days: 90
           if-no-files-found: warn
 
