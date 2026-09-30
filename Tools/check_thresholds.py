@@ -19,6 +19,21 @@ The authoritative timings come from the harness's own summary files, which the
 harness writes with a Stopwatch. The NUnit XML is read for two things only: a
 failed test case (which is a hard fail regardless of the numbers) and a
 fallback source of timings if a summary is missing.
+
+THE SOLVER FIELD
+----------------
+Every summary carries a "solver" key naming the IWaterSolver implementation
+that produced it. The checker reads it for two reasons:
+
+  * A run's numbers are only meaningful if you know which solver produced them.
+    The fallback ladder changes the solver, so a report that cannot name the
+    solver cannot be acted on.
+  * A results directory holding summaries from two different solvers is not a
+    measurement of either. That is an INPUT ERROR, not a pass.
+
+A summary with no "solver" key at all is also an INPUT ERROR: it means the
+directory contains output from a harness older than this field, and mixing
+generations of output is the same defect as mixing solvers.
 """
 
 import argparse
@@ -34,6 +49,8 @@ EXIT_INPUT = 3
 
 BUDGET_SCENARIOS = ["A_StaticSoak", "B_StepFlood", "C_FastForward"]
 ALL_SCENARIOS = BUDGET_SCENARIOS + ["D_Determinism"]
+
+SOLVER_KEY = "solver"
 
 
 def load_thresholds(path):
@@ -60,6 +77,55 @@ def load_summaries(results_dir):
             # A malformed summary is an input error, not a silent skip.
             raise
     return summaries
+
+
+def check_solver(summaries, expected):
+    """Return (solver_name, list_of_input_error_reasons).
+
+    The solver name is taken from the summaries, not from the command line, so
+    the verdict reports what actually ran. The command line value, when given,
+    is an assertion about what was ASKED for - a mismatch means the run is not
+    the run that was requested, which is an input error rather than a verdict.
+    """
+    reasons = []
+    seen = {}
+
+    for scenario in ALL_SCENARIOS:
+        s = summaries.get(scenario)
+        if s is None:
+            continue
+
+        if SOLVER_KEY not in s:
+            reasons.append(
+                "%s: summary has no '%s' key. The results directory contains "
+                "output from a harness older than this field. Clear it and "
+                "re-run." % (scenario, SOLVER_KEY)
+            )
+            continue
+
+        name = str(s[SOLVER_KEY])
+        seen.setdefault(name, []).append(scenario)
+
+    if len(seen) > 1:
+        detail = "; ".join(
+            "%s from %s" % (name, ", ".join(sorted(scenarios)))
+            for name, scenarios in sorted(seen.items())
+        )
+        reasons.append(
+            "summaries disagree about which solver ran (%s). A directory "
+            "holding output from two solvers is not a measurement of either."
+            % detail
+        )
+
+    solver = sorted(seen)[0] if len(seen) == 1 else None
+
+    if expected and solver and solver != expected:
+        reasons.append(
+            "the run was asked for solver '%s' but the summaries say '%s'. "
+            "The run is not the run that was requested." % (expected, solver)
+        )
+
+    return solver, reasons
 
 
 def load_xml(results_xml):
@@ -179,6 +245,13 @@ def main():
              "The checker uses this to name the NEXT rung, so the rung is a "
              "function of the run's history rather than a judgement call.",
     )
+    parser.add_argument(
+        "--solver",
+        default=None,
+        help="Assert which solver the run was asked for. Optional: the verdict "
+             "always reports the solver the summaries name, and this only adds "
+             "a check that the run is the one that was requested.",
+    )
     parser.add_argument("--out", required=True, help="Verdict file to write.")
     args = parser.parse_args()
 
@@ -219,9 +292,33 @@ def main():
               % (args.results_dir, args.results_xml))
         return EXIT_INPUT
 
+    # Which solver produced these numbers. An inconsistency here is an input
+    # error, not a verdict: the run cannot be attributed, so it cannot be acted
+    # on, and reporting PASS or FAIL from it would be reporting a number that
+    # does not describe anything.
+    solver, solver_reasons = check_solver(summaries, args.solver)
+
+    if solver_reasons:
+        lines = []
+        lines.append("PETRICHOR week-one water gate")
+        lines.append("tier: %s (%s)" % (args.tier, tier_cfg.get("label", "")))
+        lines.append("attempt: %d" % args.attempt)
+        lines.append("")
+        lines.append("VERDICT: INPUT ERROR")
+        lines.append("")
+        lines.append("The run cannot be attributed to a solver, so its numbers")
+        lines.append("do not describe anything and no verdict can be given.")
+        lines.append("")
+        for reason in solver_reasons:
+            lines.append("  - %s" % reason)
+        write_verdict(args.out, lines)
+        print("\n".join(lines))
+        return EXIT_INPUT
+
     lines = []
     lines.append("PETRICHOR week-one water gate")
     lines.append("tier: %s (%s)" % (args.tier, tier_cfg.get("label", "")))
+    lines.append("solver: %s" % (solver if solver else "unknown"))
     lines.append("attempt: %d" % args.attempt)
     lines.append("")
 
