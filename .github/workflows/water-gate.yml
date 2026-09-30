@@ -6,10 +6,10 @@ name: Water Gate
 # THE EXIT-CODE CONTRACT (Tools/check_thresholds.py):
 #   0  PASS          green
 #   1  BUDGET FAIL   walk the named rung. Surfaces the rung in the summary;
-#                    does NOT fail the build, because a budget miss is a
-#                    project event to be acted on, not a broken commit.
+#                  does NOT fail the build, because a budget miss is a
+#                  project event to be acted on, not a broken commit.
 #   2  HARD FAIL     FAILS THE BUILD. NaN, mass imbalance or a red test.
-#                    The ladder cannot fix these.
+#                  The ladder cannot fix these.
 #   3  INPUT ERROR   FAILS THE BUILD. The checker could not read its inputs,
 #                    which means the harness did not produce what it promised.
 #
@@ -17,7 +17,7 @@ name: Water Gate
 # dangerous outcome this gate can produce, and the ordering makes it
 # impossible to mistake for a pass.
 #
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # LFS POLICY
 #
 # Git LFS bandwidth is metered against the repository OWNER's account, and
@@ -34,7 +34,7 @@ name: Water Gate
 #
 # Before this policy the gate pulled the full art set on every push. See the
 # README's LFS section for the arithmetic.
-# ---------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 
 on:
   push:
@@ -75,7 +75,7 @@ env:
   UNITY_VERSION_FALLBACK: 6000.3.0f1
 
 jobs:
-  # ---------------------------------------------------------------------
+  # ----------------------------------------------------------------------
   # Preflight: is there a licence to run with?
   #
   # This job exists so the workflow is committable and green from day one.
@@ -110,16 +110,16 @@ jobs:
               echo "| Secret | For | Notes |"
               echo "|---|---|---|"
               echo "| \`UNITY_LICENSE\` | Personal licence | Contents of the \`.ulf\` file |"
-              echo "| \`UNITY_SERIAL\` + \`UNITY_EMAIL\` + \`UNITY_PASSWORD\` | Plus / Pro | Serial from the licence page |"
+              echo "| \`UNITY_SERIAL\` + \`UNITY_EMAIL\` + \`UNITY_PASSWORD\` | Plus / Pro | Serial from the license page |"
               echo ""
               echo "This is not a failure. The gate needs a licence and there is"
               echo "none, so the run is skipped rather than reported as broken."
             } >> "$GITHUB_STEP_SUMMARY"
           fi
 
-  # ---------------------------------------------------------------------
+  # ----------------------------------------------------------------------
   # The gate itself.
-  # ---------------------------------------------------------------------
+  # ----------------------------------------------------------------------
   gate:
     name: Gate (${{ matrix.tier }})
     needs: preflight
@@ -339,13 +339,13 @@ jobs:
           retention-days: 90
           if-no-files-found: warn
 
-      # -----------------------------------------------------------------
+      # -------------------------------------------------------------------
       # THE ENFORCEMENT STEP.
       #
       # Everything above is designed to always produce output. This is the
       # only step whose exit code decides the build, and it encodes exactly
       # the contract: 2 and 3 fail the build, 1 does not.
-      # -----------------------------------------------------------------
+      # --------------------------------------------------------------------
       - name: Enforce the verdict
         if: always()
         run: |
