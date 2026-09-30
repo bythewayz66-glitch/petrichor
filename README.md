@@ -173,6 +173,10 @@ An assembly may only reference assemblies **below** it. The rule is enforced by 
    - **Api Compatibility Level** = *.NET Standard 2.1* (unless a package demands otherwise)
 6. Open `Assets/Scenes/SC_Boot.unity` and press Play. The boot scene loads `SC_Persistent` additively and unloads itself.
 
+> **Not available yet.** `Assets/Scenes/` does not exist — the tree above is the target
+> layout, not the current contents. Step 6 is the first thing that will work once the
+> scenes are authored (W6.1). Until then the only thing that can be run is the gate.
+
 ### Configure git before your first commit
 
 Four commands, once per clone. They are not optional and they are not
@@ -255,11 +259,27 @@ Window → General → Test Runner → Run All
 ### Running the week-one gate
 
 ```bash
-Tools/run_bench.sh linux
-Tools/run_bench.sh android
+Tools/run_bench.sh --tier linux   --attempt 0
+Tools/run_bench.sh --tier android --attempt 0
+
+# Measure a ladder rung instead of the reference solver
+Tools/run_bench.sh --tier android --attempt 0 --solver channel-graph
 ```
 
-Each run writes `BenchResults/results_<tier>.xml`, `samples_<tier>.json` and `verdict_<tier>.txt`. The verdict is one of `PASS`, `RUNG 1`–`RUNG 5`, or `HARD FAIL`. See the harness specification for what each means.
+`--attempt` names how many rungs of the ladder are already applied; the checker
+returns the **next** rung rather than choosing one. `--solver` selects the
+implementation under test and defaults to `heightfield`, so a run that omits it
+measures exactly what it measured before the option existed.
+
+Each run writes `BenchmarkResults/results_<tier>.xml`, `summary_<scenario>.json`
+and `verdict_<tier>.txt`. The verdict is one of `PASS`, `BUDGET FAIL`,
+`HARD FAIL` or `INPUT ERROR` — the rung, when there is one, is named inside the
+verdict as `NEXT RUNG: n`. See the harness specification for what each means.
+
+> **`BenchResults/` and `BenchmarkResults/` are different directories.** The
+> first is game-ci's artifact directory and holds the NUnit results XML; the
+> second is the harness's own output directory and holds the summaries and the
+> verdict. The checker reads the XML from one and the summaries from the other.
 
 ---
 
@@ -359,8 +379,9 @@ What changes if you use a different device:
 `.github/workflows/water-gate.yml` runs the week-one gate on every push that touches
 `Assets/Scripts/Water/**`, `Assets/Tests/Benchmarks/**`, `Tools/**` or the workflow
 itself, and on every pull request against those paths. It can also be run by hand from
-the Actions tab (`workflow_dispatch`), with a `tier` input (`linux` or `android`) and an
-`attempt` input naming how many rungs of the ladder are already applied.
+the Actions tab (`workflow_dispatch`), with a `tier` input (`linux` or `android`), an
+`attempt` input naming how many rungs of the ladder are already applied, and a `solver`
+input selecting the implementation under test (`heightfield` or `channel-graph`).
 
 ### It needs a Unity licence, and it does not have one yet
 
@@ -435,6 +456,14 @@ is `docs/GATE_REPORT_TEMPLATE.md`; the naming, provenance and retention rules ar
 **A report is never committed for a run whose `gate` job was skipped.** A skipped gate
 produced no verdict, and a report written from one would record a pass that never
 happened. As of this writing that is every run the workflow has ever had.
+
+### Decision records
+
+**`docs/decisions/`** holds one short record per decision that was made and could have
+gone the other way — what was rejected, and why. The design package records what was
+chosen; it does not record what was rejected, and a rejected option is the thing that
+gets re-proposed six weeks later. The convention and template are in
+`docs/decisions/README.md`.
 
 ---
 
