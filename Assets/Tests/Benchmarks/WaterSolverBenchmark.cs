@@ -1,3 +1,4 @@
+using System;
 using NUnit.Framework;
 using Unity.PerformanceTesting;
 using PET.Water;
@@ -51,16 +52,73 @@ namespace PET.Benchmarks
     public class WaterSolverBenchmark
     {
         /// <summary>
+        /// The environment variable that selects the solver under test.
+        ///
+        /// Read once per test, in <see cref="MakeSolver"/>. Named alongside
+        /// <c>PET_BENCH_TIER</c>, which the harness already reads, so the two
+        /// knobs a run has are both environment variables and neither needs a
+        /// code change to turn.
+        /// </summary>
+        public const string SolverEnvVar = "PET_BENCH_SOLVER";
+
+        /// <summary>
         /// The solver under test. Constructed per test so no state leaks between
         /// scenarios - the reference heightfield solver is stateless, but the
         /// rung-3 channel graph is not, and the harness must be correct for both.
+        ///
+        /// SELECTION
+        /// ---------
+        /// The implementation is chosen by <see cref="SolverEnvVar"/> so the gate
+        /// can measure a ladder rung without a code change. The default is the
+        /// reference heightfield solver, so a run that does not set the variable
+        /// constructs exactly the object it constructed before this method
+        /// learned to choose - same type, same three arguments, same order.
+        ///
+        /// WHY AN UNKNOWN VALUE THROWS INSTEAD OF FALLING BACK
+        /// ---------------------------------------------------
+        /// A silent fallback would produce a report attributed to the wrong
+        /// solver, and that is worse than no report at all. The entire purpose of
+        /// the ladder is to tell the rungs apart; a run that quietly measured the
+        /// reference solver while the operator believed it was measuring rung 3
+        /// would send the project down a rung it never tested, and the numbers
+        /// would look fine while doing it. A typo in an environment variable is
+        /// cheap to fix and expensive to miss.
+        ///
+        /// The accepted values are the solvers' own <c>SolverName</c> constants
+        /// rather than string literals, so a rename cannot leave this switch
+        /// pointing at a name no solver answers to.
         /// </summary>
         private static IWaterSolver MakeSolver()
         {
-            return new HeightfieldWaterSolver(
-                BenchmarkScenarios.TileRes,
-                BenchmarkScenarios.CellSize,
-                BenchmarkScenarios.Dt);
+            string requested = Environment.GetEnvironmentVariable(SolverEnvVar);
+
+            if (string.IsNullOrEmpty(requested))
+            {
+                requested = HeightfieldWaterSolver.SolverName;
+            }
+
+            switch (requested)
+            {
+                case HeightfieldWaterSolver.SolverName:
+                    return new HeightfieldWaterSolver(
+                        BenchmarkScenarios.TileRes,
+                        BenchmarkScenarios.CellSize,
+                        BenchmarkScenarios.Dt);
+
+                case ChannelGraphWaterSolver.SolverName:
+                    return new ChannelGraphWaterSolver(
+                        BenchmarkScenarios.TileRes,
+                        BenchmarkScenarios.CellSize,
+                        BenchmarkScenarios.Dt);
+
+                default:
+                    throw new ArgumentException(
+                        $"{SolverEnvVar}='{requested}' is not a known solver. " +
+                        $"Accepted values: '{HeightfieldWaterSolver.SolverName}', " +
+                        $"'{ChannelGraphWaterSolver.SolverName}'. " +
+                        "Refusing to fall back, because a report attributed to " +
+                        "the wrong solver is worse than no report.");
+            }
         }
 
         [Test, Performance]
