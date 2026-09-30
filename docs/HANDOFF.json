@@ -41,7 +41,8 @@
     "milestones": 13,
     "board_items": 144,
     "assemblies": 12,
-    "csharp_files": 15,
+    "csharp_files": 14,
+    "csharp_files_note": "Recounted from the committed tree. Was 15, which was wrong: the tree holds 6 under Assets/Scripts/Water and 8 under Assets/Tests/Benchmarks.",
     "committed_gate_reports": 0,
     "verified_by": "GraphQL totalCount queries"
   },
