@@ -32,6 +32,25 @@ namespace PET.Benchmarks
     {
         public string Scenario;
         public string Tier;
+
+        /// <summary>
+        /// Which solver produced these numbers, from <c>IWaterSolver.Name</c>.
+        ///
+        /// WHY THIS FIELD EXISTS
+        /// ---------------------
+        /// The fallback ladder changes the solver, and the whole point of the
+        /// ladder is to tell the rungs apart. Before this field the only record
+        /// of which solver ran was a <c>Debug.Log</c> line in the Unity log,
+        /// which the checker does not read and which is not uploaded as an
+        /// artifact - so two runs against different solvers produced
+        /// indistinguishable JSON, and a report could not be attributed.
+        ///
+        /// The checker reads this key and refuses a run whose summaries disagree
+        /// about it: a directory of summaries from two different solvers is not
+        /// a measurement of either.
+        /// </summary>
+        public string Solver;
+
         public int TileRes;
         public int TileCount;
         public float Dt;
@@ -73,6 +92,7 @@ namespace PET.Benchmarks
             sb.Append('{');
             sb.Append("\"scenario\":\"").Append(Escape(Scenario)).Append("\",");
             sb.Append("\"tier\":\"").Append(Escape(Tier)).Append("\",");
+            sb.Append("\"solver\":\"").Append(Escape(Solver)).Append("\",");
             sb.Append("\"tile_res\":").Append(TileRes).Append(',');
             sb.Append("\"tile_count\":").Append(TileCount).Append(',');
             sb.Append("\"dt\":").Append(F(Dt)).Append(',');
@@ -135,10 +155,17 @@ namespace PET.Benchmarks
             return sorted[idx];
         }
 
-        /// <summary>Build a result from a raw sample array.</summary>
+        /// <summary>
+        /// Build a result from a raw sample array.
+        ///
+        /// <paramref name="solver"/> is the solver's own <c>Name</c>, passed in
+        /// rather than read from a static, so the value recorded is the one the
+        /// scenario actually ran against.
+        /// </summary>
         public static ScenarioResult FromSamples(
             string scenario,
             string tier,
+            string solver,
             int tileRes,
             int tileCount,
             float dt,
@@ -156,6 +183,7 @@ namespace PET.Benchmarks
             {
                 Scenario = scenario,
                 Tier = tier,
+                Solver = solver,
                 TileRes = tileRes,
                 TileCount = tileCount,
                 Dt = dt,

@@ -48,6 +48,23 @@ namespace PET.Benchmarks
     /// versions, and a gate that breaks when a package updates is a gate that
     /// gets disabled. The numbers written to disk are produced by the same code
     /// that ran the measurement, so they cannot disagree with it.
+    ///
+    /// SOLVER LIFETIME
+    /// ---------------
+    /// Every test disposes its solver in a <c>finally</c>. This is not
+    /// defensive habit: the rung-3 channel graph holds eight
+    /// <c>Allocator.Persistent</c> arrays, and before this the harness never
+    /// disposed a solver at all - four tests meant four leaked solver instances
+    /// per run, which is a leak warning in the editor and a failure under a
+    /// leak-detecting test run.
+    ///
+    /// The cast is required because <c>IWaterSolver</c> does not extend
+    /// <c>IDisposable</c>, and the interface is deliberately not being changed:
+    /// the reference heightfield solver allocates nothing and has nothing to
+    /// dispose, so putting <c>IDisposable</c> on the interface would force every
+    /// implementation to carry a method that is a no-op for the one that runs in
+    /// the shipping game. <c>as IDisposable</c> disposes the solver that needs it
+    /// and is a null-conditional no-op for the one that does not.
     /// </summary>
     public class WaterSolverBenchmark
     {
@@ -124,19 +141,43 @@ namespace PET.Benchmarks
         [Test, Performance]
         public void A_StaticSoak()
         {
-            BenchmarkHarness.Write(StaticSoakScenario.Run(MakeSolver(), BenchmarkHarness.Tier));
+            var solver = MakeSolver();
+            try
+            {
+                BenchmarkHarness.Write(StaticSoakScenario.Run(solver, BenchmarkHarness.Tier));
+            }
+            finally
+            {
+                (solver as IDisposable)?.Dispose();
+            }
         }
 
         [Test, Performance]
         public void B_StepFlood()
         {
-            BenchmarkHarness.Write(StepFloodScenario.Run(MakeSolver(), BenchmarkHarness.Tier));
+            var solver = MakeSolver();
+            try
+            {
+                BenchmarkHarness.Write(StepFloodScenario.Run(solver, BenchmarkHarness.Tier));
+            }
+            finally
+            {
+                (solver as IDisposable)?.Dispose();
+            }
         }
 
         [Test, Performance]
         public void C_FastForward()
         {
-            BenchmarkHarness.Write(FastForwardScenario.Run(MakeSolver(), BenchmarkHarness.Tier));
+            var solver = MakeSolver();
+            try
+            {
+                BenchmarkHarness.Write(FastForwardScenario.Run(solver, BenchmarkHarness.Tier));
+            }
+            finally
+            {
+                (solver as IDisposable)?.Dispose();
+            }
         }
 
         /// <summary>
@@ -147,7 +188,15 @@ namespace PET.Benchmarks
         [Test]
         public void D_Determinism()
         {
-            CorrectnessScenario.Run(MakeSolver());
+            var solver = MakeSolver();
+            try
+            {
+                CorrectnessScenario.Run(solver);
+            }
+            finally
+            {
+                (solver as IDisposable)?.Dispose();
+            }
         }
     }
 }

@@ -86,7 +86,7 @@ namespace PET.Benchmarks
             BenchmarkScenarios.AssertCorrectness(field, massBefore, inflowTotal, Name);
 
             return ScenarioResult.FromSamples(
-                Name, tier,
+                Name, tier, solver.Name,
                 BenchmarkScenarios.TileRes, BenchmarkScenarios.TileCount, BenchmarkScenarios.Dt,
                 samples,
                 field.NaNCount(), massBefore, inflowTotal, field.TotalMass(), field.Hash());
