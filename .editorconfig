@@ -1,0 +1,302 @@
+# ==============================================================================
+# PETRICHOR — .editorconfig
+# ==============================================================================
+# CONTRIBUTING.md section 4 says: "Four spaces, no tabs. `.editorconfig` is
+# committed and authoritative." This file is that authority. Where it and a
+# habit disagree, this file wins.
+#
+# It encodes the rules CONTRIBUTING section 4 states, and nothing else. A rule
+# that is not written down in CONTRIBUTING does not belong here, because a
+# style rule nobody agreed to is a style rule that gets argued about in a
+# commit that was supposed to be about water.
+#
+# Editor support: Unity 6.3 reads this file for its Roslyn analyzers, and
+# Rider / VS Code / Visual Studio read it natively. The `dotnet_diagnostic.*`
+# severities below are what turn a naming rule from a suggestion into a
+# squiggle.
+# ==============================================================================
+
+root = true
+
+# ------------------------------------------------------------------------------
+# Defaults for every file type
+# ------------------------------------------------------------------------------
+# No indent_size here on purpose: the correct indent width is a property of the
+# file type, not of the repository. Setting it globally would silently impose
+# 4 spaces on YAML, where 4 is wrong.
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# ------------------------------------------------------------------------------
+# C# — Assets/Scripts/** and Assets/Tests/**
+# ------------------------------------------------------------------------------
+# CONTRIBUTING section 4, "C#":
+#   - Four spaces, no tabs
+#   - _camelCase private fields, PascalCase public members and types,
+#     camelCase locals and parameters
+#   - Explicit access modifiers on everything, including private
+#   - Braces on their own line for types and methods; inline for
+#     single-statement guards is acceptable
+#   - var only when the type is obvious from the right-hand side
+#   - No Region
+[*.cs]
+indent_style = space
+indent_size = 4
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# --- Braces -------------------------------------------------------------------
+# "Braces on their own line for types and methods." `all` is the Allman style
+# CONTRIBUTING describes. The single-statement-guard exception is expressed by
+# the two `preserve_single_line_*` keys below, not by weakening this one: a
+# guard written `if (x) { return; }` stays on one line, while a multi-line
+# block still opens on its own line.
+csharp_new_line_before_open_brace = all
+csharp_preserve_single_line_blocks = true
+csharp_preserve_single_line_statements = true
+
+# Braces are still preferred even where they are optional. `suggestion`, not
+# `warning`: CONTRIBUTING permits the inline guard, so this must not fail a
+# build.
+csharp_prefer_braces = true:suggestion
+
+# --- Indentation --------------------------------------------------------------
+csharp_indent_case_contents = true
+csharp_indent_case_contents_when_block = true
+csharp_indent_switch_labels = true
+csharp_indent_labels = one_less_than_current
+csharp_indent_block_contents = true
+csharp_indent_braces = false
+
+# --- Spacing ------------------------------------------------------------------
+# `csharp_space_after_cast = false` gives `(int)x`, not `(int) x`. This is the
+# dominant C# convention and the one the existing solver code uses.
+csharp_space_after_cast = false
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_between_method_declaration_parameter_list_parentheses = false
+csharp_space_between_method_call_parameter_list_parentheses = false
+csharp_space_between_method_declaration_empty_parameter_list_parentheses = false
+csharp_space_between_method_call_empty_parameter_list_parentheses = false
+csharp_space_between_method_declaration_name_and_open_parenthesis = false
+csharp_space_between_method_call_name_and_opening_parenthesis = false
+csharp_space_between_parentheses = false
+csharp_space_around_binary_operators = before_and_after
+csharp_space_around_declaration_statements = false
+csharp_space_before_open_square_brackets = false
+csharp_space_between_empty_square_brackets = false
+csharp_space_before_colon_in_inheritance_clause = true
+csharp_space_after_colon_in_inheritance_clause = true
+csharp_space_before_comma = false
+csharp_space_after_comma = true
+csharp_space_before_dot = false
+csharp_space_after_dot = false
+csharp_space_before_semicolon_in_for_statement = false
+csharp_space_after_semicolon_in_for_statement = true
+
+# --- using directives ---------------------------------------------------------
+# System first, then a blank line, then everything else. This is the ordering
+# the existing files already use.
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+csharp_using_directive_placement = outside_namespace:warning
+
+# --- var ----------------------------------------------------------------------
+# CONTRIBUTING: "var only when the type is obvious from the right-hand side.
+# `var field = new WaterField(...)` is fine; `var x = Compute()` is not."
+# These three keys are that sentence, exactly.
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# --- Expression bodies --------------------------------------------------------
+# Not mentioned in CONTRIBUTING, so left at the C# default rather than
+# invented. Recorded explicitly so a future reader can see it was a decision.
+csharp_style_expression_bodied_methods = false:silent
+csharp_style_expression_bodied_constructors = false:silent
+csharp_style_expression_bodied_operators = false:silent
+csharp_style_expression_bodied_properties = true:silent
+csharp_style_expression_bodied_indexers = true:silent
+csharp_style_expression_bodied_accessors = true:silent
+csharp_style_expression_bodied_lambdas = true:silent
+csharp_style_expression_bodied_local_functions = false:silent
+
+# --- Namespaces ---------------------------------------------------------------
+# Block-scoped, because the existing files use block-scoped namespaces and a
+# mixed repository is worse than either choice.
+csharp_style_namespace_declarations = block_scoped:silent
+
+# --- Naming: private fields are _camelCase ------------------------------------
+# CONTRIBUTING: "_camelCase for private fields".
+dotnet_naming_rule.private_fields_underscore_camel.severity = warning
+dotnet_naming_rule.private_fields_underscore_camel.symbols = private_fields
+dotnet_naming_rule.private_fields_underscore_camel.style = underscore_camel
+
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_fields.required_modifiers =
+
+dotnet_naming_style.underscore_camel.required_prefix = _
+dotnet_naming_style.underscore_camel.capitalization = camel_case
+
+# --- Naming: public and internal members are PascalCase -----------------------
+# CONTRIBUTING: "PascalCase for public members and types".
+dotnet_naming_rule.public_members_pascal.severity = warning
+dotnet_naming_rule.public_members_pascal.symbols = public_members
+dotnet_naming_rule.public_members_pascal.style = pascal
+
+dotnet_naming_symbols.public_members.applicable_kinds = property, method, field, event, delegate
+dotnet_naming_symbols.public_members.applicable_accessibilities = public, internal, protected, protected_internal
+
+dotnet_naming_style.pascal.capitalization = pascal_case
+
+# --- Naming: types are PascalCase ---------------------------------------------
+dotnet_naming_rule.types_pascal.severity = warning
+dotnet_naming_rule.types_pascal.symbols = types
+dotnet_naming_rule.types_pascal.style = pascal
+
+dotnet_naming_symbols.types.applicable_kinds = class, struct, interface, enum, delegate
+
+# --- Naming: locals and parameters are camelCase ------------------------------
+# CONTRIBUTING: "camelCase for locals and parameters".
+dotnet_naming_rule.locals_camel.severity = warning
+dotnet_naming_rule.locals_camel.symbols = locals_and_parameters
+dotnet_naming_rule.locals_camel.style = camel
+
+dotnet_naming_symbols.locals_and_parameters.applicable_kinds = local, parameter
+
+dotnet_naming_style.camel.capitalization = camel_case
+
+# --- Naming: interfaces are IPascalCase ---------------------------------------
+# Not stated in CONTRIBUTING, but IWaterSolver.cs already establishes it and an
+# interface without the I prefix would be the odd one out.
+dotnet_naming_rule.interfaces_i_pascal.severity = warning
+dotnet_naming_rule.interfaces_i_pascal.symbols = interfaces
+dotnet_naming_rule.interfaces_i_pascal.style = i_pascal
+
+dotnet_naming_symbols.interfaces.applicable_kinds = interface
+
+dotnet_naming_style.i_pascal.required_prefix = I
+dotnet_naming_style.i_pascal.capitalization = pascal_case
+
+# --- Diagnostics --------------------------------------------------------------
+# IDE0040 — "Explicit access modifiers on everything, including private."
+# Raised to `warning` so the rule is visible while typing rather than at review.
+dotnet_diagnostic.IDE0040.severity = warning
+
+# IDE1006 — the naming rules above. Without this the rules are inert.
+dotnet_diagnostic.IDE1006.severity = warning
+
+# IDE0055 — formatting. `suggestion`, not `warning`: a formatting squiggle in
+# the middle of a solver rewrite is noise, and the gate is what protects main.
+dotnet_diagnostic.IDE0055.severity = suggestion
+
+# IDE0005 — unnecessary using directives.
+dotnet_diagnostic.IDE0005.severity = suggestion
+
+# IDE0161 — file-scoped namespace. Silenced because we chose block-scoped.
+dotnet_diagnostic.IDE0161.severity = none
+
+# CA1707 — "identifiers should not contain underscores". This analyzer
+# CONTRADICTS CONTRIBUTING's `_camelCase` private fields. It is off by default
+# in Unity, and it is explicitly disabled here so that enabling a broader
+# analyzer set later cannot turn every private field into a warning.
+dotnet_diagnostic.CA1707.severity = none
+
+# --- Not machine-enforceable --------------------------------------------------
+# CONTRIBUTING also says "No Region." There is no Roslyn analyzer for regions,
+# so this cannot be expressed as a key. It is enforced by review. Recorded here
+# so the omission is visibly deliberate rather than an oversight.
+
+# ------------------------------------------------------------------------------
+# Python — Tools/*.py
+# ------------------------------------------------------------------------------
+# CONTRIBUTING does not state a Python style, so this is PEP 8, which is what
+# check_thresholds.py already follows.
+[*.py]
+indent_style = space
+indent_size = 4
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 100
+
+# ------------------------------------------------------------------------------
+# Shell — Tools/*.sh
+# ------------------------------------------------------------------------------
+# 2 spaces, not 4: run_bench.sh is indented with 2, and a shell script is not
+# C#. Changing this would reformat the file for no benefit.
+[*.sh]
+indent_style = space
+indent_size = 2
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# ------------------------------------------------------------------------------
+# YAML — .github/workflows/*.yml
+# ------------------------------------------------------------------------------
+# 2 spaces is not a preference here: YAML forbids tabs outright, and 2 is what
+# every GitHub Actions example and the existing workflow use.
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# ------------------------------------------------------------------------------
+# JSON — Tools/bench_thresholds.json, Packages/manifest.json, *.asmdef
+# ------------------------------------------------------------------------------
+[*.json]
+indent_style = space
+indent_size = 2
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Unity assembly definitions are JSON and are hand-edited, so they get the same
+# treatment rather than falling through to [*].
+[*.{asmdef,asmref}]
+indent_style = space
+indent_size = 2
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# ------------------------------------------------------------------------------
+# Markdown — README.md, CONTRIBUTING.md, docs/*.md
+# ------------------------------------------------------------------------------
+# trim_trailing_whitespace is FALSE here, and that is deliberate: two trailing
+# spaces are a hard line break in Markdown. Trimming them silently reflows
+# every document that uses one.
+[*.md]
+indent_style = space
+indent_size = 2
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = false
+
+# ------------------------------------------------------------------------------
+# Unity YAML — *.meta, *.unity, *.prefab, *.asset
+# ------------------------------------------------------------------------------
+# Unity writes these with 2-space indent and LF (enforced by .gitattributes).
+# They are machine-generated: the editor rewrites them on every save, so these
+# keys exist to stop a human editor from fighting Unity, not to set a style.
+[*.{meta,unity,prefab,asset,mat,controller,anim,overrideController,physicMaterial,physicsMaterial2D,preset}]
+indent_style = space
+indent_size = 2
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
