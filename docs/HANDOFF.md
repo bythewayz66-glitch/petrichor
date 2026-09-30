@@ -204,7 +204,8 @@ Tools/run_bench.sh --tier android --attempt 0
 ```
 
 Then write the report from `docs/GATE_REPORT_TEMPLATE.md` into
-`docs/gate-reports/M1-water-gate-<tier>-<YYYY-MM-DD>.md` and commit it.
+`docs/gate-reports/gate-<yyyymmdd>-<Mnn>-<tier>-<run>.md` and commit it. The
+naming convention is defined in `docs/gate-reports/README.md`.
 
 ### Step 3 — Work the tickets in order
 
