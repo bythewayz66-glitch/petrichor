@@ -301,7 +301,7 @@ The design package is five documents plus three follow-on artifacts. They are th
 | 3 | **Systems Breakdown** | Seven loop states, fracture as a mask, water re-derived not stored, a journal not a snapshot |
 | 4 | **Technical Architecture** | One project with tiers as data, twelve assemblies, sixty-four tile scenes, the week-one gate |
 | 5 | **Implementation Roadmap** | Ten bootstrap steps, sixteen weeks, ten milestones, fourteen risks, a written cut order |
-| — | **Tracked Project Board** | The sixteen weeks as tracked items, plus sixty-three tickets for weeks 1–7 |
+| — | **Tracked Project Board** | The sixteen weeks as tracked items, plus one hundred and forty-four tickets for weeks 1–16 |
 | — | **Harness Specification** | The week-one gate in full: solver interface, scenarios, thresholds, the checker, the ladder |
 | — | **README / CONTRIBUTING** | This file, and the working rules |
 | — | **Repository rules** | Every `.gitignore` and `.gitattributes` rule, with the reason it exists |
