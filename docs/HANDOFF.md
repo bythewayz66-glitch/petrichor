@@ -28,8 +28,8 @@
 | Milestones | **13** | GraphQL `milestones.totalCount` |
 | Projects v2 board items | **144** | GraphQL `projectV2.items.totalCount` |
 | Assemblies (`.asmdef`) | 12 | `find Assets -name '*.asmdef'` |
-| C# source files | 15 | `find Assets -name '*.cs'` |
-| Committed gate reports | **0** | `ls docs/gate-reports/` — the directory does not exist yet |
+| C# source files | 14 | `find Assets -name '*.cs'` — 6 under `Assets/Scripts/Water`, 8 under `Assets/Tests/Benchmarks` |
+| Committed gate reports | **0** | `ls docs/gate-reports/` — the directory exists and holds its convention README only |
 
 The board, the issue set and the milestone set are **mutually consistent**: 144
 board items for 144 issues, and every issue carries exactly one milestone.
@@ -63,9 +63,9 @@ weeks 3–4, #37–#45 week 5, #46–#54 week 6, #55–#63 week 7, #64–#72 wee
 
 ### 1.3 What does **not** exist
 
-- **No gate report.** `docs/gate-reports/` has never been created. The template
-  is at `docs/GATE_REPORT_TEMPLATE.md`; no report has been written from it.
-- **No benchmark result of any kind.** No `BenchResults/`, no `verdict_*.txt`,
+- **No gate report.** `docs/gate-reports/` exists and holds its convention
+  README, but no report has been written from `docs/GATE_REPORT_TEMPLATE.md`.
+- **No benchmark result of any kind.** No `BenchmarkResults/`, no `verdict_*.txt`,
   no `summary_*.json`. The harness has never executed.
 - **No art.** `Assets/Art/` contains only its `.gitignore` and `.gitattributes`.
   No purchased packs have been imported.
@@ -73,7 +73,6 @@ weeks 3–4, #37–#45 week 5, #46–#54 week 6, #55–#63 week 7, #64–#72 wee
   code and assembly definitions only.
 - **No `Packages/packages-lock.json`.** The manifest exists; the lock file is
   written by the editor on first open.
-- **No `.editorconfig`**, though CONTRIBUTING §4 calls it authoritative.
 
 ---
 
@@ -352,10 +351,16 @@ deciding what to cut, which is the worst possible arrangement for that decision.
 ```bash
 Tools/run_bench.sh --tier linux   --attempt 0
 Tools/run_bench.sh --tier android --attempt 0
+
+# Measure a ladder rung instead of the reference solver
+Tools/run_bench.sh --tier android --attempt 0 --solver channel-graph
 ```
 
 `--attempt` names how many rungs of the ladder are already applied. The checker
-returns the **next** rung; it does not choose one for you.
+returns the **next** rung; it does not choose one for you. `--solver` selects the
+implementation under test and defaults to `heightfield`, so a run that omits it
+measures exactly what it measured before the option existed. An unrecognised
+value fails the NUnit run, which the checker reads as a HARD FAIL.
 
 ### Re-running the checker alone
 
@@ -368,6 +373,7 @@ python3 Tools/check_thresholds.py \
   --results-xml BenchmarkResults/results_linux.xml \
   --thresholds Tools/bench_thresholds.json \
   --attempt 0 \
+  --solver heightfield \
   --out BenchmarkResults/verdict_linux.txt
 echo "exit: $?"
 ```
@@ -395,7 +401,11 @@ cat BenchmarkResults/summary_A_StaticSoak.json
 {
   "scenario": "A_StaticSoak",
   "tier": "linux",
-  "steps_per_sample": 600,
+  "solver": "heightfield",
+  "tile_res": 257,
+  "tile_count": 4,
+  "dt": 0.033333335,
+  "samples": 500,
   "p50_ms": 0.941,
   "p95_ms": 1.872,
   "max_ms": 3.418,
@@ -403,11 +413,17 @@ cat BenchmarkResults/summary_A_StaticSoak.json
   "mass_before": 1284.5000,
   "mass_inflow": 0.0000,
   "mass_after": 1284.5000,
-  "hash": 2918473625
+  "hash": 2918473625,
+  "device": "unknown",
+  "gpu": "unknown",
+  "gpu_driver": "unknown"
 }
 ```
 
 > The numbers above are **illustrative, not measurements.** No gate has run.
+> The `solver` key is what makes a run attributable: the checker refuses a
+> results directory whose summaries disagree about it, and refuses one whose
+> summaries have no `solver` key at all.
 
 ### Thresholds
 
