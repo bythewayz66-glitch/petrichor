@@ -1,7 +1,8 @@
 # PETRICHOR — Week-One Water Gate Report
 
-> **This is a template.** Copy it to `docs/gate-reports/M1-water-gate-<tier>-<YYYY-MM-DD>.md`
-> and fill every `<...>` placeholder.
+> **This is a template.** Copy it to `docs/gate-reports/gate-<yyyymmdd>-<Mnn>-<tier>-<run>.md`
+> and fill every `<...>` placeholder. The naming convention is defined in
+> `docs/gate-reports/README.md` — read it before you name the file.
 >
 > **A placeholder left in a committed report is an incomplete gate, and an incomplete
 > gate is not a verdict.** The whole value of a gate is that it is binary. A report
