@@ -1,0 +1,97 @@
+# =============================================================================
+# PETRICHOR — Assets/Art/.gitattributes
+# =============================================================================
+# Art-pipeline LFS rules.
+#
+# The root .gitattributes covers the formats the PROJECT produces and consumes.
+# This file covers the formats a PURCHASED photoreal pipeline DELIVERS — the
+# vendor and intermediate formats that the root file has no reason to know
+# about.
+#
+# Patterns here are relative to Assets/Art/, so `*.dds` means
+# `Assets/Art/**/*.dds`. Git applies a .gitattributes to its own directory and
+# everything below it.
+#
+# The split is deliberate: the root file is the project's contract, this file
+# is the art pipeline's. When a new vendor format appears, it is added here in
+# the same commit that adds the first asset of that type.
+#
+# See CONTRIBUTING.md section 6 for the LFS policy.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Delivered texture formats
+# -----------------------------------------------------------------------------
+# Compressed and intermediate texture formats a vendor pack ships. None of
+# these are diffable or mergeable, and several are large enough that a single
+# file would bloat the object database on its own.
+*.dds         filter=lfs diff=lfs merge=lfs -text
+*.ktx         filter=lfs diff=lfs merge=lfs -text
+*.ktx2        filter=lfs diff=lfs merge=lfs -text
+*.tx          filter=lfs diff=lfs merge=lfs -text
+*.rat         filter=lfs diff=lfs merge=lfs -text
+*.sbsar       filter=lfs diff=lfs merge=lfs -text
+*.vdb         filter=lfs diff=lfs merge=lfs -text
+
+# -----------------------------------------------------------------------------
+# 2. Delivered mesh and scene formats
+# -----------------------------------------------------------------------------
+# USD and Alembic are increasingly common in purchased packs, and neither is in
+# the root file because the project does not author them.
+*.abc         filter=lfs diff=lfs merge=lfs -text
+*.usd         filter=lfs diff=lfs merge=lfs -text
+*.usda        filter=lfs diff=lfs merge=lfs -text
+*.usdc        filter=lfs diff=lfs merge=lfs -text
+*.usdz        filter=lfs diff=lfs merge=lfs -text
+*.st          filter=lfs diff=lfs merge=lfs -text
+*.spm         filter=lfs diff=lfs merge=lfs -text
+
+# -----------------------------------------------------------------------------
+# 3. Delivered terrain and landscape formats
+# -----------------------------------------------------------------------------
+# World-machine output. The 4 km squared slice is authored in an external tool
+# and delivered as a heightfield plus splatmaps; these are the delivery
+# formats.
+*.r16         filter=lfs diff=lfs merge=lfs -text
+*.r32         filter=lfs diff=lfs merge=lfs -text
+*.raw         filter=lfs diff=lfs merge=lfs -text
+*.tgd         filter=lfs diff=lfs merge=lfs -text
+*.gproj       filter=lfs diff=lfs merge=lfs -text
+*.wcproj      filter=lfs diff=lfs merge=lfs -text
+
+# -----------------------------------------------------------------------------
+# 4. Delivered audio and video
+# -----------------------------------------------------------------------------
+# Higher-fidelity masters than the root file covers. The project ships
+# compressed audio; these are the sources it is compressed from.
+*.flac        filter=lfs diff=lfs merge=lfs -text
+*.aif         filter=lfs diff=lfs merge=lfs -text
+*.aiff        filter=lfs diff=lfs merge=lfs -text
+*.bwf         filter=lfs diff=lfs merge=lfs -text
+*.mkv         filter=lfs diff=lfs merge=lfs -text
+*.mxf         filter=lfs diff=lfs merge=lfs -text
+*.r3d         filter=lfs diff=lfs merge=lfs -text
+*.braw        filter=lfs diff=lfs merge=lfs -text
+
+# -----------------------------------------------------------------------------
+# 5. Unity art asset formats
+# -----------------------------------------------------------------------------
+# Terrain layers and the art-side ScriptableObjects. These are Unity assets, so
+# they are Force Text and mergeable — except the terrain data, which Unity does
+# not serialise as text and which therefore stays binary under LFS.
+*.terrainlayer  filter=lfs diff=lfs merge=lfs -text
+*.asset.terrain filter=lfs diff=lfs merge=lfs -text
+
+# Art-side Unity YAML: materials, presets and the art ScriptableObjects. These
+# ARE mergeable, so they get the semantic merge driver rather than LFS.
+*.mat         text eol=lf merge=unityyamlmerge
+*.asset       text eol=lf merge=unityyamlmerge
+*.preset      text eol=lf merge=unityyamlmerge
+*.meta        text eol=lf
+
+# -----------------------------------------------------------------------------
+# 6. Generated art metadata
+# -----------------------------------------------------------------------------
+# The import-settings sidecar and the art manifest are generated by the import
+# tooling. Marked generated so GitHub collapses them in a diff.
+/art_manifest.json  linguist-generated=true

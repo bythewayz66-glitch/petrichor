@@ -1,0 +1,406 @@
+name: Water Gate
+
+# Runs the week-one water benchmark on every push that touches the solver,
+# the harness or the thresholds, and returns a verdict.
+#
+# THE EXIT-CODE CONTRACT (Tools/check_thresholds.py):
+#   0  PASS          green
+#   1  BUDGET FAIL   walk the named rung. Surfaces the rung in the summary;
+#                  does NOT fail the build, because a budget miss is a
+#                  project event to be acted on, not a broken commit.
+#   2  HARD FAIL     FAILS THE BUILD. NaN, mass imbalance or a red test.
+#                  The ladder cannot fix these.
+#   3  INPUT ERROR   FAILS THE BUILD. The checker could not read its inputs,
+#                    which means the harness did not produce what it promised.
+#
+# Correctness is evaluated before budget. A fast wrong solver is the most
+# dangerous outcome this gate can produce, and the ordering makes it
+# impossible to mistake for a pass.
+#
+# ----------------------------------------------------------------------------
+# LFS POLICY
+#
+# Git LFS bandwidth is metered against the repository OWNER's account, and
+# every clone, pull and CI checkout that fetches an LFS object counts against
+# it. This gate measures a water solver: it needs no art, no audio and no
+# video. So:
+#
+#   * actions/checkout runs with `lfs: false` -- it never fetches LFS objects.
+#   * The LFS fetch is gated behind the `needs_art` input, which defaults to
+#     false. A job that does not need art does not download art.
+#   * When art IS needed, the object store is cached, because LFS objects are
+#     content-addressed and immutable: the same key always means the same
+#     object set, so a cache hit is always correct.
+#
+# Before this policy the gate pulled the full art set on every push. See the
+# README's LFS section for the arithmetic.
+# ----------------------------------------------------------------------------
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Assets/Scripts/Water/**'
+      - 'Assets/Tests/Benchmarks/**'
+      - 'Tools/**'
+      - '.github/workflows/water-gate.yml'
+  pull_request:
+    paths:
+      - 'Assets/Scripts/Water/**'
+      - 'Assets/Tests/Benchmarks/**'
+      - 'Tools/**'
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: 'Tier to gate'
+        required: true
+        default: linux
+        type: choice
+        options: [linux, android]
+      attempt:
+        description: 'Rungs already applied to this build'
+        required: true
+        default: '0'
+        type: string
+      solver:
+        description: 'Solver under test (heightfield = reference, channel-graph = ladder rung 3)'
+        required: true
+        default: heightfield
+        type: choice
+        options: [heightfield, channel-graph]
+      needs_art:
+        description: 'Fetch LFS art objects (leave false: the gate does not need them)'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+env:
+  UNITY_VERSION_FALLBACK: 6000.3.0f1
+
+jobs:
+  # ----------------------------------------------------------------------
+  # Preflight: is there a licence to run with?
+  #
+  # This job exists so the workflow is committable and green from day one.
+  # A repository that is red on every push because a secret is missing is a
+  # repository whose CI everyone learns to ignore.
+  #
+  # It has no checkout, so it fetches nothing at all -- not even the tree.
+  # ---------------------------------------------------------------------
+  preflight:
+    name: Preflight
+    runs-on: ubuntu-latest
+    outputs:
+      licensed: ${{ steps.check.outputs.licensed }}
+    steps:
+      - name: Check for a Unity licence secret
+        id: check
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        run: |
+          if [ -n "$UNITY_LICENSE" ] || [ -n "$UNITY_SERIAL" ]; then
+            echo "licensed=true" >> "$GITHUB_OUTPUT"
+            echo "A Unity licence secret is present."
+          else
+            echo "licensed=false" >> "$GITHUB_OUTPUT"
+            {
+              echo "## Water Gate: SKIPPED - no Unity licence configured"
+              echo ""
+              echo "The gate did not run. To enable it, add ONE of the following"
+              echo "repository secrets (Settings -> Secrets and variables -> Actions):"
+              echo ""
+              echo "| Secret | For | Notes |"
+              echo "|---|---|---|"
+              echo "| \`UNITY_LICENSE\` | Personal licence | Contents of the \`.ulf\` file |"
+              echo "| \`UNITY_SERIAL\` + \`UNITY_EMAIL\` + \`UNITY_PASSWORD\` | Plus / Pro | Serial from the license page |"
+              echo ""
+              echo "This is not a failure. The gate needs a licence and there is"
+              echo "none, so the run is skipped rather than reported as broken."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  # ----------------------------------------------------------------------
+  # The gate itself.
+  # ----------------------------------------------------------------------
+  gate:
+    name: Gate (${{ matrix.tier }})
+    needs: preflight
+    if: needs.preflight.outputs.licensed == 'true'
+    runs-on: ubuntu-latest
+
+    # Resolved once, so the LFS steps below read a single value rather than
+    # repeating the dispatch expression three times.
+    env:
+      NEEDS_ART: ${{ github.event_name == 'workflow_dispatch' && inputs.needs_art || 'false' }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        tier: ${{ github.event_name == 'workflow_dispatch' && fromJSON(format('["{0}"]', inputs.tier)) || fromJSON('["linux"]') }}
+
+    steps:
+      # lfs: false is EXPLICIT, not incidental.
+      #
+      # actions/checkout@v4 already defaults to lfs: false, but the default is
+      # not a contract: a future major version could change it, and a silent
+      # change would start billing the owner's LFS bandwidth on every push.
+      # Stating it here means the intent survives an action upgrade.
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      # LFS objects are content-addressed and immutable, so a cache keyed on
+      # the .gitattributes files is safe: the same key always means the same
+      # object set, and a cache hit can never be stale. This is what stops a
+      # re-run from re-downloading art it already has.
+      - name: Cache LFS objects
+        if: env.NEEDS_ART == 'true'
+        uses: actions/cache@v4
+        with:
+          path: .git/lfs/objects
+          key: lfs-${{ runner.os }}-${{ hashFiles('.gitattributes', 'Assets/Art/.gitattributes') }}
+          restore-keys: |
+            lfs-${{ runner.os }}-
+
+      # Gated, not unconditional. The gate measures a solver; it has no use
+      # for a 4K texture. Fetching art here would burn the owner's LFS
+      # bandwidth on every push for nothing.
+      - name: Fetch LFS assets
+        if: env.NEEDS_ART == 'true'
+        continue-on-error: true
+        run: |
+          if git lfs pull; then
+            echo "LFS objects fetched."
+          else
+            echo "::warning title=LFS fetch failed::The job asked for art and did not get it. If this job needs art, its results are invalid."
+          fi
+
+      - name: Skip LFS assets
+        if: env.NEEDS_ART != 'true'
+        run: |
+          {
+            echo "### LFS"
+            echo ""
+            echo "LFS fetch skipped: this job does not need art."
+            echo "Bandwidth saved on this run."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Resolve the pinned editor version
+        id: editor
+        run: |
+          VERSION="$UNITY_VERSION_FALLBACK"
+          if [ -f ProjectSettings/ProjectVersion.txt ]; then
+            PARSED="$(grep -m1 'm_EditorVersion:' ProjectSettings/ProjectVersion.txt | awk '{print $2}')"
+            if [ -n "$PARSED" ]; then VERSION="$PARSED"; fi
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Pinned editor: $VERSION"
+
+      # Caching Library/ is the single biggest CI speedup for a Unity project.
+      # The key includes packages-lock.json, so a dependency change
+      # invalidates the cache rather than producing a stale import.
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ matrix.tier }}-${{ steps.editor.outputs.version }}-${{ hashFiles('Packages/packages-lock.json', 'Assets/**/*.asmdef') }}
+          restore-keys: |
+            Library-${{ matrix.tier }}-${{ steps.editor.outputs.version }}-
+            Library-${{ matrix.tier }}-
+
+      # continue-on-error is DELIBERATE and load-bearing.
+      # A red NUnit test means the harness found a correctness failure, which
+      # is a hard fail. We want that recorded, but we also want the checker to
+      # run afterwards and produce a verdict -- the checker reads the results
+      # XML and treats a failed test case as a hard fail. The verdict, not the
+      # test runner's exit code, is the authoritative output.
+      - name: Run the benchmark
+        id: bench
+        uses: game-ci/unity-test-runner@v4
+        continue-on-error: true
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          PET_BENCH_TIER: ${{ matrix.tier }}
+          # Which solver the harness constructs. Defaults to the reference
+          # heightfield solver, so a run that does not set it measures exactly
+          # what it measured before this input existed. The harness throws on an
+          # unrecognised value, which fails the NUnit run, which the checker
+          # reads as a HARD FAIL - so a typo here is loud, not silent.
+          PET_BENCH_SOLVER: ${{ github.event_name == 'workflow_dispatch' && inputs.solver || 'heightfield' }}
+        with:
+          unityVersion: ${{ steps.editor.outputs.version }}
+          testMode: EditMode
+          artifactsPath: BenchResults
+          customParameters: -testFilter PET.Benchmarks
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Water Gate (${{ matrix.tier }})
+
+      - name: Locate the results XML
+        id: results
+        run: |
+          XML="$(find BenchResults -name '*.xml' -print -quit 2>/dev/null || true)"
+          echo "xml=$XML" >> "$GITHUB_OUTPUT"
+          echo "Results XML: ${XML:-<none>}"
+
+      # Exit codes: 0 PASS, 1 BUDGET, 2 HARD FAIL, 3 INPUT ERROR.
+      # continue-on-error keeps the job alive so the summary and artifacts
+      # always happen; the verdict is enforced in the final step.
+      #
+      # TWO DIRECTORIES, AND THEY ARE NOT INTERCHANGEABLE.
+      #
+      #   BenchResults/      game-ci's own artifact directory. It holds the
+      #                      NUnit results XML, which is why --results-xml
+      #                      points there.
+      #   BenchmarkResults/  the harness's output directory, named by
+      #                      BenchmarkHarness.OutputDirName. It holds the
+      #                      summary_<scenario>.json files the checker reads
+      #                      first, and the verdict file.
+      #
+      # This step used to pass --results-dir BenchResults, which is not where
+      # the harness writes. The checker found no summaries, fell back to the
+      # XML for timings, and - because the hard-fail checks read the summaries
+      # and nothing else - silently skipped the NaN, mass-balance and hash
+      # checks entirely. A gate that cannot see its own correctness data is
+      # worse than no gate, because it still returns a verdict.
+      - name: Check thresholds
+        id: check
+        continue-on-error: true
+        run: |
+          ATTEMPT="${{ github.event_name == 'workflow_dispatch' && inputs.attempt || '0' }}"
+          SOLVER="${{ github.event_name == 'workflow_dispatch' && inputs.solver || 'heightfield' }}"
+          set +e
+          python3 Tools/check_thresholds.py \
+            --tier "${{ matrix.tier }}" \
+            --results-dir BenchmarkResults \
+            --results-xml "${{ steps.results.outputs.xml }}" \
+            --thresholds Tools/bench_thresholds.json \
+            --attempt "$ATTEMPT" \
+            --solver "$SOLVER" \
+            --out "BenchmarkResults/verdict_${{ matrix.tier }}.txt"
+          CODE=$?
+          echo "code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "exit_code=$CODE" >> "$GITHUB_OUTPUT"
+          case "$CODE" in
+            0) echo "verdict=PASS" >> "$GITHUB_OUTPUT" ;;
+            1) echo "verdict=BUDGET FAIL" >> "$GITHUB_OUTPUT" ;;
+            2) echo "verdict=HARD FAIL" >> "$GITHUB_OUTPUT" ;;
+            3) echo "verdict=INPUT ERROR" >> "$GITHUB_OUTPUT" ;;
+            *) echo "verdict=UNKNOWN" >> "$GITHUB_OUTPUT" ;;
+          esac
+          exit 0
+
+      - name: Write the job summary
+        if: always()
+        run: |
+          TIER="${{ matrix.tier }}"
+          VERDICT="${{ steps.check.outputs.verdict }}"
+          CODE="${{ steps.check.outputs.exit_code }}"
+          {
+            echo "## Water Gate - $TIER"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Verdict | **${VERDICT:-not produced}** |"
+            echo "| Exit code | \`${CODE:-?}\` |"
+            echo "| Editor | \`${{ steps.editor.outputs.version }}\` |"
+            echo "| Rungs already applied | \`${{ github.event_name == 'workflow_dispatch' && inputs.attempt || '0' }}\` |"
+            echo "| Solver | \`${{ github.event_name == 'workflow_dispatch' && inputs.solver || 'heightfield' }}\` |"
+            echo "| LFS art fetched | \`${NEEDS_ART}\` |"
+            echo "| Commit | \`${{ github.sha }}\` |"
+            echo ""
+            echo "### Verdict detail"
+            echo ""
+            echo '```'
+            if [ -f "BenchmarkResults/verdict_$TIER.txt" ]; then
+              cat "BenchmarkResults/verdict_$TIER.txt"
+            else
+              echo "No verdict file. The checker did not run, or did not"
+              echo "reach the point of writing one. Treat this as an INPUT ERROR."
+            fi
+            echo '```'
+            echo ""
+            case "$CODE" in
+              0) echo "All scenarios within threshold." ;;
+              1) echo "> **Budget failure.** Walk the rung named above. This does not fail the build: a budget miss is a project event, not a broken commit." ;;
+              2) echo "> **Hard fail.** This is NOT a budget failure. The ladder buys performance and cannot buy correctness. Fix the solver." ;;
+              3) echo "> **Input error.** The harness did not produce what it promised. The run is invalid and the numbers, if any, mean nothing." ;;
+              *) echo "> No verdict was produced. Treat this as an input error." ;;
+            esac
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Annotate the failure
+        if: always() && (steps.check.outputs.exit_code == '2' || steps.check.outputs.exit_code == '3')
+        run: |
+          if [ "${{ steps.check.outputs.exit_code }}" = "2" ]; then
+            echo "::error title=Water Gate HARD FAIL (${{ matrix.tier }})::Correctness failure. See the job summary. Do NOT walk the ladder."
+          else
+            echo "::error title=Water Gate INPUT ERROR (${{ matrix.tier }})::The checker could not read its inputs. The run is invalid."
+          fi
+
+      - name: Annotate the budget failure
+        if: always() && steps.check.outputs.exit_code == '1'
+        run: |
+          RUNG="$(grep -m1 'NEXT RUNG:' BenchmarkResults/verdict_${{ matrix.tier }}.txt 2>/dev/null || echo 'NEXT RUNG: see summary')"
+          echo "::warning title=Water Gate BUDGET FAIL (${{ matrix.tier }})::${RUNG}"
+
+      - name: Upload raw samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: water-gate-samples-${{ matrix.tier }}-${{ github.sha }}
+          path: |
+            BenchResults/*.json
+            BenchResults/*.xml
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload the verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: water-gate-verdict-${{ matrix.tier }}-${{ github.sha }}
+          path: BenchmarkResults/verdict_${{ matrix.tier }}.txt
+          retention-days: 90
+          if-no-files-found: warn
+
+      # -------------------------------------------------------------------
+      # THE ENFORCEMENT STEP.
+      #
+      # Everything above is designed to always produce output. This is the
+      # only step whose exit code decides the build, and it encodes exactly
+      # the contract: 2 and 3 fail the build, 1 does not.
+      # --------------------------------------------------------------------
+      - name: Enforce the verdict
+        if: always()
+        run: |
+          CODE="${{ steps.check.outputs.exit_code }}"
+          case "$CODE" in
+            0)
+              echo "PASS - all scenarios within threshold."
+              exit 0
+              ;;
+            1)
+              echo "BUDGET FAIL - rung surfaced in the job summary. Build not failed."
+              exit 0
+              ;;
+            2)
+              echo "HARD FAIL - correctness failure. Failing the build."
+              exit 1
+              ;;
+            3)
+              echo "INPUT ERROR - the run is invalid. Failing the build."
+              exit 1
+              ;;
+            *)
+              echo "No verdict was produced. Treating as an input error."
+              exit 1
+              ;;
+          esac

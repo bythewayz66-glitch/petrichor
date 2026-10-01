@@ -1,0 +1,27 @@
+{
+    "name": "PET.Boot",
+    "rootNamespace": "PET.Boot",
+    "references": [
+        "PET.Core",
+        "PET.Data",
+        "PET.Edit",
+        "PET.Save",
+        "PET.Water",
+        "PET.Life",
+        "PET.World",
+        "PET.Player",
+        "PET.Render",
+        "PET.UI",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

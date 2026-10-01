@@ -1,0 +1,111 @@
+# =============================================================================
+# PETRICHOR — .gitignore
+# =============================================================================
+# A Unity repository ignores generated state, not source. The rule of thumb:
+# if Unity can regenerate it from the assets and the manifest, it does not
+# belong in git. Everything under Assets/ and Packages/ does.
+#
+# See CONTRIBUTING.md section 6 for the LFS policy that pairs with this file.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. Unity generated state
+# -----------------------------------------------------------------------------
+# Library/ is the imported asset cache. It is large, machine-specific, and
+# fully regenerable. Committing it is the single most common Unity mistake.
+/Library/
+/Temp/
+/Obj/
+/Logs/
+/UserSettings/
+/MemoryCaptures/
+/Recordings/
+
+# Build output. Never committed — CI produces it, and it is large.
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+
+# Unity's crash and diagnostic dumps.
+sysinfo.txt
+*.stackdump
+crashlytics-build.properties
+
+# -----------------------------------------------------------------------------
+# 2. Addressables generated data
+# -----------------------------------------------------------------------------
+# ServerData is the built bundle output that gets uploaded to a CDN. The group
+# assets that DESCRIBE it are committed; the built output is not.
+/[Aa]ssets/AddressableAssetsData/ServerData/
+/[Aa]ssets/AddressableAssetsData/*/*.bin
+/[Aa]ssets/AddressableAssetsData/AssetGroups/*.asset.meta.tmp
+
+# -----------------------------------------------------------------------------
+# 3. Benchmark output
+# -----------------------------------------------------------------------------
+# The verdict file IS committed (it is a project decision record). The raw
+# per-run samples are not: they are large, machine-specific, and regenerated
+# by every run.
+/BenchmarkResults/*
+!/BenchmarkResults/verdict_*.txt
+!/BenchmarkResults/.gitkeep
+
+# Python bytecode. Tools/check_thresholds.py is run from the shell rather than
+# imported, so a __pycache__ here only ever appears from a syntax check
+# (python -m py_compile) - it is not a build product, and committing it would
+# add a file that changes on every interpreter patch release.
+__pycache__/
+*.pyc
+
+# -----------------------------------------------------------------------------
+# 4. IDE and editor state
+# -----------------------------------------------------------------------------
+.vs/
+.idea/
+.vscode/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# -----------------------------------------------------------------------------
+# 5. OS noise
+# -----------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# -----------------------------------------------------------------------------
+# 6. Project-specific
+# -----------------------------------------------------------------------------
+# Local tier overrides. The committed tier data lives in Assets/Data/Tiers/;
+# this is for a developer's machine-specific override.
+/TierOverride.local.json
+
+# Local Unity licence and machine config.
+*.ulf
+*.ulm
+
+# Purchased art staging. Art is purchased rather than authored, and the raw
+# vendor downloads are large and re-downloadable. The imported assets under
+# Assets/Art/ ARE committed (via LFS).
+/_ArtStaging/
+
+# Local scratch for the water solver's tuning runs.
+/_SolverScratch/

@@ -1,0 +1,21 @@
+{
+    "name": "PET.Water",
+    "rootNamespace": "PET.Water",
+    "references": [
+        "PET.Core",
+        "PET.Data",
+        "PET.Edit",
+        "Unity.Burst",
+        "Unity.Collections",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

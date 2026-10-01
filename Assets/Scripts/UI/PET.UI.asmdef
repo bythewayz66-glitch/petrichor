@@ -1,0 +1,18 @@
+{
+    "name": "PET.UI",
+    "rootNamespace": "PET.UI",
+    "references": [
+        "PET.Core",
+        "PET.Data",
+        "PET.Player"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

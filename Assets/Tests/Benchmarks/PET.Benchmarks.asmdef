@@ -1,0 +1,37 @@
+{
+    "name": "PET.Benchmarks",
+    "rootNamespace": "PET.Benchmarks",
+    "references": [
+        "PET.Core",
+        "PET.Data",
+        "PET.Water",
+        "PET.Edit",
+        "Unity.PerformanceTesting",
+        "Unity.Collections",
+        "Unity.Burst",
+        "Unity.Mathematics",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.test-framework",
+            "expression": "",
+            "define": "UNITY_INCLUDE_TESTS"
+        }
+    ],
+    "noEngineReferences": false
+}

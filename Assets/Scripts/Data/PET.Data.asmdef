@@ -1,0 +1,16 @@
+{
+    "name": "PET.Data",
+    "rootNamespace": "PET.Data",
+    "references": [
+        "PET.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

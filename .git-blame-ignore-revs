@@ -1,0 +1,78 @@
+# .git-blame-ignore-revs
+#
+# PURPOSE
+# -------
+# A revision listed here is a change that touched many lines without changing
+# what any of them MEAN. `git blame` normally attributes every line to whoever
+# last touched it, so one whitespace sweep or one formatting pass makes the
+# whole file look like it was written by whoever ran the tool -- and the person
+# who actually wrote the logic disappears from the history.
+#
+# Listing such a revision here tells git to look THROUGH it and attribute each
+# line to the last change that was not purely mechanical.
+#
+# This file changes nothing about the repository. It is a hint, and it only
+# takes effect on a machine configured to read it (see README, "Configure git
+# before your first commit") or in CI, where the flag is passed explicitly.
+#
+# ---------------------------------------------------------------------------
+# FORMAT
+# ---------------------------------------------------------------------------
+# One full 40-character commit SHA per line. Blank lines and lines starting
+# with '#' are ignored. No commas, no quotes, no trailing explanation -- the
+# parser takes the whole line as a revision, so a comment on the same line
+# would be parsed as part of it.
+#
+#   e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4
+#
+# Get the SHA of a commit you want to skip:
+#
+#   git log --format='%H %s' -- <path>     # find it
+#   git log -1 --format=%H                 # or copy the tip
+#
+# ---------------------------------------------------------------------------
+# HOW TO ADD A REVISION
+# ---------------------------------------------------------------------------
+# 1. Make the mechanical change as its OWN commit, on its own.
+#    A formatting commit must contain nothing but formatting. If it also
+#    fixes a bug, the bug fix is now invisible and cannot be skipped.
+#
+# 2. Verify the commit changed no behaviour. For a large sweep that is not
+#    obvious by inspection, compare the compiled output or the test results
+#    before and after. A revision that is wrongly listed here does not bury a
+#    fix -- it only makes blame point at the wrong commit, which is a smaller
+#    problem than it sounds but still a real one.
+#
+# 3. Append its full SHA below, under the appropriate heading.
+#
+# 4. Commit this file IN THE SAME COMMIT as nothing else. The list is a
+#    convenience for readers; an update buried inside another change will not
+#    be noticed when it is wrong.
+#
+# 5. Anyone who has already cloned gets the update on pull. Nobody needs to
+#    re-run any command -- `blame.ignoreRevsFile` is read per invocation.
+#
+# ---------------------------------------------------------------------------
+# WHEN NOT TO USE THIS
+# ---------------------------------------------------------------------------
+# Only for changes that are provably non-semantic. Never list:
+#
+#   - a commit that renamed a type or a file (that IS information)
+#   - a commit that reordered members for readability but also changed one
+#   - a commit that "mostly" formatted
+#
+# If you are unsure whether a commit is purely mechanical, do not list it. The
+# history being slightly noisy is a much smaller cost than a fix that has been
+# hidden from the person reading the file six months later.
+#
+# ---------------------------------------------------------------------------
+# REVISIONS
+# ---------------------------------------------------------------------------
+# Nothing yet. The repository is at its first commit, which has no ancestors
+# to look through. Add entries below as they occur, newest last.
+#
+# --- Formatting and whitespace passes --------------------------------------
+#
+# --- Mechanical renames and moves ------------------------------------------
+#
+# --- Generated or vendored content -----------------------------------------

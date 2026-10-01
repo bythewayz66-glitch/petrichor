@@ -1,0 +1,19 @@
+{
+    "name": "PET.Edit",
+    "rootNamespace": "PET.Edit",
+    "references": [
+        "PET.Core",
+        "PET.Data",
+        "Unity.Collections",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

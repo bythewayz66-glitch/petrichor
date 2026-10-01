@@ -1,0 +1,20 @@
+{
+    "name": "PET.Player",
+    "rootNamespace": "PET.Player",
+    "references": [
+        "PET.Core",
+        "PET.Data",
+        "PET.World",
+        "Unity.InputSystem",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
