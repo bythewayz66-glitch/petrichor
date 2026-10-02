@@ -26,6 +26,7 @@
   "reference_device": {
     "model": "Samsung Galaxy A54 5G",
     "model_code": "SM-A546B",
+    "model_code_note": "SM-A546B is one of eight regional variants: SM-A5460, SM-A546B, SM-A546B/DS, SM-A546E, SM-A546E/DS, SM-A546U, SM-A546U1, SM-A546V. It is the European model, not a universal identifier. Record the variant actually owned in section 1.4 of the gate report.",
     "soc": "Samsung Exynos 1380 (5 nm)",
     "cpu": "4x Cortex-A78 @ 2.4 GHz + 4x Cortex-A55 @ 2.0 GHz",
     "gpu": "ARM Mali-G68 MP5",
@@ -38,7 +39,8 @@
   },
   "counts": {
     "issues": 144,
-    "labels": 36,
+    "labels": 37,
+    "labels_note": "36 at handoff. status:blocked was added on 2026-10-02 when the issue set was reconciled against the repository; 13 tickets now carry it instead of status:ready or status:backlog.",
     "milestones": 13,
     "board_items": 144,
     "assemblies": 12,
