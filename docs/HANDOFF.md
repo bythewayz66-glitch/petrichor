@@ -12,7 +12,7 @@
 | **HEAD at handoff** | `fbef2d9c382edddd69a12f84c58c047abbdda9c5` |
 | **Handoff written** | 2026-09-30 |
 | **Engine** | Unity **6000.3.0f1** (changeset `d1870ce95baf`), URP |
-| **Reference device** | Samsung Galaxy A54 5G (`SM-A546B`) |
+| **Reference device** | Samsung Galaxy A54 5G (`SM-A546B` — one of eight regional variants) |
 | **Blocking item** | **No `UNITY_LICENSE` secret — the gate has never run.** See §3 |
 
 ---
@@ -24,7 +24,7 @@
 | Thing | Count | Verified by |
 |---|---|---|
 | Issues | **144** | GraphQL `issues.totalCount` |
-| Labels | **36** | GraphQL `labels.totalCount` |
+| Labels | **37** | GraphQL `labels.totalCount` — 36 at handoff; `status:blocked` added 2026-10-02 |
 | Milestones | **13** | GraphQL `milestones.totalCount` |
 | Projects v2 board items | **144** | GraphQL `projectV2.items.totalCount` |
 | Assemblies (`.asmdef`) | 12 | `find Assets -name '*.asmdef'` |
