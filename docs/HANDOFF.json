@@ -42,6 +42,7 @@
     "labels": 37,
     "labels_note": "36 at handoff. status:blocked was added on 2026-10-02 when the issue set was reconciled against the repository; 13 tickets now carry it instead of status:ready or status:backlog.",
     "milestones": 13,
+    "issue_numbering_note": "Issue numbers are in week order EXCEPT for one transposition: #9 is week 2 (W2.1) and #10 is week 1 (W1.9). Weeks 3-16 are contiguous. The week-NN label is authoritative, not the issue number.",
     "board_items": 144,
     "assemblies": 12,
     "csharp_files": 14,
@@ -50,8 +51,8 @@
     "verified_by": "GraphQL totalCount queries"
   },
   "issue_ranges": [
-    { "milestone": "M1 - Water Gate", "weeks": "1", "issues": "1-9", "count": 9, "days": 5.0 },
-    { "milestone": "M2 - Grey-box Terrain and Streaming", "weeks": "2", "issues": "10-18", "count": 9, "days": 5.0 },
+    { "milestone": "M1 - Water Gate", "weeks": "1", "issues": "1-8, 10", "count": 9, "days": 5.0 },
+    { "milestone": "M2 - Grey-box Terrain and Streaming", "weeks": "2", "issues": "9, 11-18", "count": 9, "days": 5.0 },
     { "milestone": "M3-4 - Edit Pipeline and Journal", "weeks": "3-4", "issues": "19-36", "count": 18, "days": 10.0 },
     { "milestone": "M5 - Water in the World", "weeks": "5", "issues": "37-45", "count": 9, "days": 5.0 },
     { "milestone": "M6 - Slice Geometry Locked", "weeks": "6", "issues": "46-54", "count": 9, "days": 5.0 },
@@ -92,7 +93,7 @@
     { "order": 1, "action": "Add the UNITY_LICENSE secret", "ref": "blocking_item" },
     { "order": 2, "action": "Run the gate on both tiers", "command": "Tools/run_bench.sh --tier linux --attempt 0 && Tools/run_bench.sh --tier android --attempt 0" },
     { "order": 3, "action": "Write the M1 report from docs/GATE_REPORT_TEMPLATE.md into docs/gate-reports/", "gate": "Week 2 must not begin until this report is committed" },
-    { "order": 4, "action": "Work issues #1-#9 (M1), then #10-#18 (M2), in order" },
+    { "order": 4, "action": "Work issues #1-#8 and #10 (M1), then #9 and #11-#18 (M2), in order", "note": "#9 is week 2 and #10 is week 1; the week-NN label is authoritative, not the issue number" },
     { "order": 5, "action": "Expect the first compile to fail; budget an hour for the first open" }
   ],
   "unverified_claims": [
