@@ -56,10 +56,14 @@ milestones carry eighteen.
 | M16 — Freeze and Playtest | 16 | 9 | 5.0 |
 | | | **144** | **80.0** |
 
-Issue numbers run **#1–#144** in week order: #1–#18 are weeks 1–2, #19–#36
-weeks 3–4, #37–#45 week 5, #46–#54 week 6, #55–#63 week 7, #64–#72 week 8,
-#73–#81 week 9, #82–#90 week 10, #91–#99 week 11, #100–#108 week 12,
-#109–#117 week 13, #118–#126 week 14, #127–#135 week 15, #136–#144 week 16.
+Issue numbers run **#1–#144** in week order, with one transposition: **issue #9
+is week 2 (W2.1) and issue #10 is week 1 (W1.9)**, swapped relative to the rest.
+So week 1 is **#1–#8 and #10**, and week 2 is **#9 and #11–#18**. Every other
+week is contiguous: #19–#36 weeks 3–4, #37–#45 week 5, #46–#54 week 6,
+#55–#63 week 7, #64–#72 week 8, #73–#81 week 9, #82–#90 week 10, #91–#99
+week 11, #100–#108 week 12, #109–#117 week 13, #118–#126 week 14, #127–#135
+week 15, #136–#144 week 16. The `week-NN` label is authoritative; the issue
+number is not.
 
 ### 1.3 What does **not** exist
 
@@ -210,8 +214,8 @@ naming convention is defined in `docs/gate-reports/README.md`.
 
 | Order | Issues | Milestone |
 |---|---|---|
-| 1 | **#1–#9** | M1 — Water Gate |
-| 2 | **#10–#18** | M2 — Grey-box Terrain and Streaming |
+| 1 | **#1–#8, #10** | M1 — Water Gate |
+| 2 | **#9, #11–#18** | M2 — Grey-box Terrain and Streaming |
 | 3 | **#19–#36** | M3-4 — Edit Pipeline and Journal |
 | 4 | **#37–#45** | M5 — Water in the World |
 | 5 | **#46–#54** | M6 — Slice Geometry Locked |
@@ -224,9 +228,9 @@ naming convention is defined in `docs/gate-reports/README.md`.
 | 12 | **#127–#135** | M15 — Performance |
 | 13 | **#136–#144** | M16 — Freeze and Playtest |
 
-**Do not start week 2 until the M1 report is committed.** Every ticket from #10
-onward is labelled `status:backlog` with the description *"Conditional on the
-week-one gate. Do not start before it returns a verdict."*
+**Do not start week 2 until the M1 report is committed.** Every ticket from #9
+and #11 onward is labelled `status:backlog` with the description *"Conditional on
+the week-one gate. Do not start before it returns a verdict."*
 
 ### Step 4 — Expect the first compile to fail
 
