@@ -18,14 +18,31 @@ namespace PET.Benchmarks
     {
         // ---- Geometry ------------------------------------------------------
 
-        /// <summary>
-        /// 257 = 2^8 + 1. Unity terrain heightmap resolution must be a power of
-        /// two plus one; this is a constraint of the heightmap format, not a
-        /// preference. The gate runs at the shipping resolution deliberately -
-        /// measuring at a convenient resolution and extrapolating is how a gate
-        /// passes and the game does not.
+/// <summary>
+        /// The environment variable that overrides the simulation resolution.
+        ///
+        /// Ladder rung 1 halves the simulation grid to 129. The rung is a
+        /// change to the BUILD UNDER TEST, so it has to be selectable without a
+        /// code edit - otherwise measuring it and reverting it are two different
+        /// states of the working tree, and the gate report cannot say which tree
+        /// produced which number.
+        ///
+        /// Read the same way as <c>PET_BENCH_SOLVER</c>: a bad value is a hard
+        /// error, never a silent fallback, so a run is never reported at a
+        /// resolution it was not asked to measure at.
         /// </summary>
-        public const int TileRes = 257;
+        public const string TileResEnvVar = "PET_BENCH_TILE_RES";
+
+        /// <summary>
+        /// Shipping simulation resolution. 257 = 2^8 + 1. Unity terrain heightmap
+        /// resolution must be a power of two plus one; this is a constraint of
+        /// the heightmap format, not a preference.
+        ///
+        /// The gate runs at the shipping resolution by default - measuring at a
+        /// convenient resolution and extrapolating is how a gate passes and the
+        /// game does not. Only ladder rung 1 lowers it, and only when asked.
+        /// </summary>
+        public const int ShippingTileRes = 257;
 
         /// <summary>250 m tile across 256 cells between 257 samples.</summary>
         public const float TileSizeM = 250f;
@@ -36,9 +53,58 @@ namespace PET.Benchmarks
         /// <summary>Fixed simulation timestep, 30 Hz.</summary>
         public const float Dt = 1f / 30f;
 
-        /// <summary>Cell size in metres: 250 / 256 = 0.9766 m. Getting this
-        /// wrong by one cell changes the mass-balance arithmetic by 0.8%.</summary>
-        public const float CellSize = TileSizeM / (TileRes - 1);
+        /// <summary>
+        /// The simulation resolution this run measures at: the shipping value
+        /// unless <see cref="TileResEnvVar"/> asks for a rung.
+        ///
+        /// VALIDATION IS STRICT. A heightmap resolution must be a power of two
+        /// plus one, and an arbitrary number here would produce a field whose
+        /// mass arithmetic does not correspond to a real terrain grid - which is
+        /// exactly the class of bug a gate exists to catch, so the harness does
+        /// not accept one as input.
+        /// </summary>
+        public static int TileRes
+        {
+            get
+            {
+                string requested = Environment.GetEnvironmentVariable(TileResEnvVar);
+                if (string.IsNullOrEmpty(requested))
+                {
+                    return ShippingTileRes;
+                }
+
+                int value;
+                if (!int.TryParse(requested, out value))
+                {
+                    throw new ArgumentException(
+                        $"{TileResEnvVar}='{requested}' is not an integer. " +
+                        "Refusing to fall back, because a run reported at a " +
+                        "resolution it was not asked to measure at describes " +
+                        "nothing.");
+                }
+
+                int cells = value - 1;
+                if (value < 3 || (cells & (cells - 1)) != 0)
+                {
+                    throw new ArgumentException(
+                        $"{TileResEnvVar}={value} is not a valid terrain " +
+                        "heightmap resolution. It must be a power of two plus " +
+                        "one (3, 5, 9, 17, 33, 65, 129, 257, ...).");
+                }
+
+                return value;
+            }
+        }
+
+        /// <summary>
+        /// Cell size in metres: tile width / (res - 1). At the shipping
+        /// resolution that is 250 / 256 = 0.9766 m. Getting this wrong by one
+        /// cell changes the mass-balance arithmetic by 0.8%.
+        ///
+        /// DERIVED, NOT CONSTANT, because the resolution is now a rung. A const
+        /// cell size would silently pair a 129 grid with 256-cell arithmetic.
+        /// </summary>
+        public static float CellSize => TileSizeM / (TileRes - 1);
 
         // ---- Source --------------------------------------------------------
 

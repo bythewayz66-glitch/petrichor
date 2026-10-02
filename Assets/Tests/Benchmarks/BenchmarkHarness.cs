@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using UnityEngine;
+using PET.Water;
 
 namespace PET.Benchmarks
 {

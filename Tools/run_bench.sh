@@ -14,18 +14,20 @@ set -euo pipefail
 TIER=""
 ATTEMPT=0
 SOLVER=""
+TILE_RES=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --tier)    TIER="$2"; shift 2 ;;
-    --attempt) ATTEMPT="$2"; shift 2 ;;
-    --solver)  SOLVER="$2"; shift 2 ;;
+    --tier)     TIER="$2"; shift 2 ;;
+    --attempt)  ATTEMPT="$2"; shift 2 ;;
+    --solver)   SOLVER="$2"; shift 2 ;;
+    --tile-res) TILE_RES="$2"; shift 2 ;;
     *) echo "unknown argument: $1" >&2; exit 3 ;;
   esac
 done
 
 if [[ -z "$TIER" ]]; then
-  echo "usage: $0 --tier {linux|android} [--attempt N] [--solver {heightfield|channel-graph}]" >&2
+  echo "usage: $0 --tier {linux|android} [--attempt N] [--solver {heightfield|channel-graph}] [--tile-res N]" >&2
   exit 3
 fi
 
@@ -36,6 +38,19 @@ RESULTS_XML="$RESULTS_DIR/results_${TIER}.xml"
 VERDICT="$RESULTS_DIR/verdict_${TIER}.txt"
 
 mkdir -p "$RESULTS_DIR"
+
+# Clear the previous run's summaries before measuring anything.
+#
+# This is a correctness fix, not housekeeping. If Unity aborts before the
+# harness writes anything - a compile error, a licence failure, a crashed import
+# - the last run's summaries are still on disk, and the checker below reads
+# them and prints a confident verdict for a run that measured nothing. The
+# resulting output is indistinguishable from a real measurement and would
+# advance the rung ladder on numbers the failing run never produced.
+#
+# Removing them up front means "no summaries" means what it says, which is the
+# condition the checker already treats as an INPUT ERROR.
+rm -f "$RESULTS_DIR"/summary_*.json
 
 echo "== PETRICHOR water gate =="
 echo "tier:    $TIER"
@@ -62,7 +77,17 @@ export PET_BENCH_TIER="$TIER"
 # that actually knows which solvers exist.
 export PET_BENCH_SOLVER="${SOLVER:-heightfield}"
 
+# Ladder rung 1 lowers the simulation resolution. It is passed the same way as
+# the solver, and for the same reason: the summary records the resolution it
+# actually measured at, so a rung-1 number can never be reported as a rung-0 one.
+#
+# Empty means "shipping resolution" - the harness's own default - so a run that
+# does not pass --tile-res measures exactly what it measured before the option
+# existed.
+export PET_BENCH_TILE_RES="${TILE_RES:-}"
+
 echo "solver:  $PET_BENCH_SOLVER"
+echo "tile res: ${PET_BENCH_TILE_RES:-257 (shipping)}"
 echo
 
 "$UNITY" \
@@ -71,7 +96,7 @@ echo
   -projectPath "$ROOT" \
   -runTests \
   -testPlatform EditMode \
-  -testFilter PET.Benchmarks \
+  -assemblyNames PET.Benchmarks \
   -testResults "$RESULTS_XML" \
   -logFile "$RESULTS_DIR/unity_${TIER}.log" \
   || true   # a test failure is a verdict, not a script error

@@ -51,6 +51,13 @@ crashlytics-build.properties
 !/BenchmarkResults/verdict_*.txt
 !/BenchmarkResults/.gitkeep
 
+# Python bytecode. Tools/check_thresholds.py is run from the shell rather than
+# imported, so a __pycache__ here only ever appears from a syntax check
+# (python -m py_compile) - it is not a build product, and committing it would
+# add a file that changes on every interpreter patch release.
+__pycache__/
+*.pyc
+
 # -----------------------------------------------------------------------------
 # 4. IDE and editor state
 # -----------------------------------------------------------------------------
