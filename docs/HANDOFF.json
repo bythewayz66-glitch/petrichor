@@ -4,7 +4,8 @@
   "repository": {
     "owner": "bythewayz66-glitch",
     "name": "petrichor",
-    "private": true,
+    "private": false,
+    "visibility_note": "Made public on 2026-10-01 so a local agent can clone it with no credentials. It was private when this handoff was first written; nothing else in this file changed.",
     "default_branch": "main",
     "head_commit": "5fe197bb0ef1c0a5ba55401266510b1b31504518",
     "head_commit_note": "HEAD at the moment this file was written; the commit that adds this file is its child."
