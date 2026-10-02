@@ -150,6 +150,7 @@ All asset names are `PREFIX_Name_Variant`. Prefixes are mandatory and are checke
 | `TEX_` | Texture | `TEX_Rock_Stilled_Albedo` |
 | `SH_` | Shader / Shader Graph | `SH_Water_Surface` |
 | `TL_` | Terrain Layer | `TL_Scree_01` |
+| `TD_` | Terrain Data | `TD_x03_y05.asset` |
 | `MUS_` | Music | `MUS_Bed_Waking` |
 | `AMB_` | Ambience loop | `AMB_Fen_Dawn` |
 | `SFX_` | Sound effect | `SFX_Stone_Fracture` |
@@ -157,6 +158,15 @@ All asset names are `PREFIX_Name_Variant`. Prefixes are mandatory and are checke
 | `GRP_` | Addressables group | `GRP_Tile_x03_y05` |
 
 **Tile scenes are `SC_T_x##_y##`** with zero-padded two-digit coordinates, `x` first. This is not cosmetic: the streamer parses the name to resolve a tile coordinate, and a naming test enforces the pattern.
+
+**Terrain data is `TD_x##_y##.asset`.** The coordinates match the owning tile's scene, so `TD_x03_y05.asset` is the terrain `SC_T_x03_y05` carries.
+
+The `.asset` extension is **not** cosmetic and has two independent reasons, both of which were measured rather than assumed:
+
+1. **Unity recognises a `TerrainData` only by the `.asset` extension.** A terrain asset written as `.terrain` or `.asset.terrain` is imported with `DefaultImporter` instead — it is not a TerrainData, nothing can reference it, and it sits in the repository as a dead 34 MB blob. `HeightmapAcceptanceVerifier` is what caught this, reporting `found 0 TerrainData`.
+2. **The binary must be LFS-tracked.** `.gitattributes` carries a **path-scoped** rule, `/Assets/World/Tiles/Terrain/*.asset`, rather than a bare `*.asset`, because a bare `*.asset` would push every ScriptableObject in the project into LFS.
+
+> The old rule was `*.asset.terrain`, which matched **nothing** — no such file exists in a Unity project. It looked correct and had never routed a byte through LFS. The generator asserts the rule it depends on exists before it writes anything (`VerifyLfsPatternIsMatched` in `Assets/Editor/Terrain/PlaceholderHeightmapGenerator.cs`), because a heightmap set that is not LFS-tracked breaks the repository silently.
 
 **No spaces, no uppercase in file names, no non-ASCII characters.** Lowercase with underscores for the name part, as above.
 

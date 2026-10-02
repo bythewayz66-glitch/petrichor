@@ -1,0 +1,29 @@
+PETRICHOR week-one water gate
+tier: linux (Linux desktop flagship)
+solver: heightfield
+attempt: 0
+
+correctness: OK (no NaN, mass balanced, hash non-zero, all tests green)
+
+scenario            p50      p95      max     (ms per step)
+A_StaticSoak         5.062    6.286   10.261
+B_StepFlood          3.633    4.494   23.706
+C_FastForward        5.072    7.940    7.940
+
+VERDICT: BUDGET FAIL
+
+  - A_StaticSoak p50_ms = 5.062 ms (limit 1.500 ms)
+  - A_StaticSoak p95_ms = 6.286 ms (limit 3.000 ms)
+  - A_StaticSoak max_ms = 10.261 ms (limit 6.000 ms)
+  - B_StepFlood p50_ms = 3.633 ms (limit 1.500 ms)
+  - B_StepFlood p95_ms = 4.494 ms (limit 3.000 ms)
+  - B_StepFlood max_ms = 23.706 ms (limit 6.000 ms)
+  - C_FastForward p50_ms = 5.072 ms (limit 1.500 ms)
+  - C_FastForward p95_ms = 7.940 ms (limit 3.000 ms)
+  - C_FastForward max_ms = 7.940 ms (limit 6.000 ms)
+
+NEXT RUNG: 1
+  action: Halve the simulation resolution to 129. No visible loss - the render grid is unchanged.
+  cost:   none visible
+
+Re-run with --attempt 1 once applied.
