@@ -7,7 +7,7 @@
 
 | | |
 |---|---|
-| **Repository** | `bythewayz66-glitch/petrichor` (private) |
+| **Repository** | `bythewayz66-glitch/petrichor` (public since 2026-10-01) |
 | **Branch** | `main` |
 | **HEAD at handoff** | `fbef2d9c382edddd69a12f84c58c047abbdda9c5` |
 | **Handoff written** | 2026-09-30 |
