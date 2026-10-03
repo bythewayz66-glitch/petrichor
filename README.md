@@ -8,7 +8,7 @@ The rule that makes the game work is the **Mineral Law**: *stone cannot be force
 
 No combat. No antagonist. Quiet, enormous, hopeful. The world can kill you with a fall or a flood, but it will never hunt you.
 
-**Status:** pre-production. The design package is complete and the repository scaffold is committed — the twelve assemblies, the water solver interface, and the week-one benchmark harness. **No benchmark has been run**: the gate needs a Unity licence secret that does not yet exist, so the CI job is skipped rather than reported as broken. Week 1 of the implementation roadmap is a **gate** — a headless benchmark that decides whether the water solver can run on a mid-range phone. Nothing downstream of it starts until it returns a verdict.
+**Status:** pre-production. The design package is complete and the repository scaffold is committed — the twelve assemblies, the water solver interface, and the week-one benchmark harness. **The gate has now run, locally and in CI.** Locally it produced verdicts (`BUDGET FAIL` at rung 0, `PASS` at rung 1 on a quiet box); in CI it executed for the first time on 2026-10-03 (run 37107565152) and **failed on licence activation** — the `UNITY_LICENSE` secret holds an entitlement XML rather than a `.ulf`. The run is red for a real, fixable reason, not skipped. Week 1 of the implementation roadmap is a **gate** — a headless benchmark that decides whether the water solver can run on a mid-range phone. Nothing downstream of it starts until it returns a reproducible verdict.
 
 ---
 
@@ -383,19 +383,26 @@ the Actions tab (`workflow_dispatch`), with a `tier` input (`linux` or `android`
 `attempt` input naming how many rungs of the ladder are already applied, and a `solver`
 input selecting the implementation under test (`heightfield` or `channel-graph`).
 
-### It needs a Unity licence, and it does not have one yet
+### It needs a Unity licence — it has one, but it is the wrong format
 
-**The gate job is skipped until a licence secret exists.** The `preflight` job checks for
-one and, if it is absent, writes a skip notice to the job summary and exits green. That is
-deliberate: a repository that is red on every push because a secret is missing is a
-repository whose CI everyone learns to ignore.
+**The `UNITY_LICENSE` secret now exists** (added 2026-10-03), and the `gate` job ran in CI
+for the first time as a result — run 37107565152. It **failed on activation**, because the
+secret holds an entitlement XML rather than a ULF. The run is red for a real, fixable
+reason, not skipped.
+
+The `preflight` job now classifies the licence value before the gate may start. If a
+secret is absent it writes a skip notice and exits green (deliberate: a repository that is
+red on every push because a secret is missing is a repository whose CI everyone learns to
+ignore). If a secret is present but **not a ULF**, the run fails in about five seconds with
+the format named and the fix given — a hard failure, not a skip, because a licence *is*
+configured and a green tick would be a lie.
 
 Add **one** of the following at *Settings → Secrets and variables → Actions → New
 repository secret*:
 
 | Secret | For | Where the value comes from |
 |---|---|---|
-| `UNITY_LICENSE` | Personal licence | The contents of the `.ulf` file — see below |
+| `UNITY_LICENSE` | Personal licence | The contents of the `.ulf` file — see below. **Not** an entitlement XML |
 | `UNITY_SERIAL` + `UNITY_EMAIL` + `UNITY_PASSWORD` | Plus / Pro | The serial from your Unity licence page |
 
 **Obtaining a `UNITY_LICENSE` value (personal licence route):**
@@ -414,6 +421,13 @@ repository secret*:
 > activated it, and GameCI's activation step re-issues it for the runner. If activation
 > fails with a licence error, the usual cause is that the personal licence is already
 > active on too many machines — deactivate one from the Unity account page and retry.
+>
+> **Do not use an entitlement XML.** Unity Hub can export a licence as a `.txml` or as
+> `UnityEntitlementLicense.xml`. That document's root element is `<License>`, whereas a
+> `.ulf` uses `<root>`. Unity's manual-activation loader reads only the `.ulf` form; handing
+> it an entitlement XML fails with `Cannot load ULF license: Signature element not found in
+> XML document`. If Unity Hub will only export the entitlement form, use the Plus/Pro route
+> (`UNITY_SERIAL` + `UNITY_EMAIL` + `UNITY_PASSWORD`) instead.
 
 ### What the workflow does, and what fails the build
 
@@ -455,7 +469,10 @@ is `docs/GATE_REPORT_TEMPLATE.md`; the naming, provenance and retention rules ar
 
 **A report is never committed for a run whose `gate` job was skipped.** A skipped gate
 produced no verdict, and a report written from one would record a pass that never
-happened. As of this writing that is every run the workflow has ever had.
+happened. The first eighteen runs were skipped for want of a licence secret. Run
+37107565152 was the first to execute the `gate` job — and it failed on activation before
+the checker ran, so it produced no verdict either and **no CI report has been written**.
+The only committed report, `gate-20261001-M01-linux-0001.md`, comes from a local run.
 
 ### Decision records
 
