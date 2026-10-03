@@ -9,11 +9,11 @@
 |---|---|
 | **Repository** | `bythewayz66-glitch/petrichor` (public since 2026-10-01) |
 | **Branch** | `main` |
-| **HEAD at handoff** | `fbef2d9c382edddd69a12f84c58c047abbdda9c5` |
-| **Handoff written** | 2026-09-30 |
+| **HEAD at handoff** | `7ccff93333af79452d70e2d267f2f7e56d3d0c24` |
+| **Handoff written** | 2026-09-30, **revised 2026-10-03** |
 | **Engine** | Unity **6000.3.0f1** (changeset `d1870ce95baf`), URP |
 | **Reference device** | Samsung Galaxy A54 5G (`SM-A546B` — one of eight regional variants) |
-| **Blocking item** | **No `UNITY_LICENSE` secret — the gate has never run.** See §3 |
+| **Blocking item** | **No `UNITY_LICENSE` secret — the CI gate has never run.** A gate *has* run locally; see §1.4 and §3 |
 
 ---
 
@@ -28,8 +28,9 @@
 | Milestones | **13** | GraphQL `milestones.totalCount` |
 | Projects v2 board items | **144** | GraphQL `projectV2.items.totalCount` |
 | Assemblies (`.asmdef`) | 12 | `find Assets -name '*.asmdef'` |
-| C# source files | 14 | `find Assets -name '*.cs'` — 6 under `Assets/Scripts/Water`, 8 under `Assets/Tests/Benchmarks` |
-| Committed gate reports | **0** | `ls docs/gate-reports/` — the directory exists and holds its convention README only |
+| C# source files | **16** | `find Assets -name '*.cs'` — 6 under `Assets/Scripts/Water`, 8 under `Assets/Tests/Benchmarks`, 2 under `Assets/Editor/Terrain`. Was 14 before the terrain editor tools landed |
+| Committed gate reports | **1** | `ls docs/gate-reports/` — `gate-20261001-M01-linux-0001.md` |
+| Committed benchmark verdicts | **2** | `ls BenchmarkResults/` — `verdict_linux.txt` (attempt 0) and `verdict_linux_attempt1_res129.txt` (attempt 1) |
 
 The board, the issue set and the milestone set are **mutually consistent**: 144
 board items for 144 issues, and every issue carries exactly one milestone.
@@ -67,16 +68,37 @@ number is not.
 
 ### 1.3 What does **not** exist
 
-- **No gate report.** `docs/gate-reports/` exists and holds its convention
-  README, but no report has been written from `docs/GATE_REPORT_TEMPLATE.md`.
-- **No benchmark result of any kind.** No `BenchmarkResults/`, no `verdict_*.txt`,
-  no `summary_*.json`. The harness has never executed.
+- **No CI gate run.** Every GitHub Actions run has skipped the `gate` job for
+  want of a licence secret. See §1.4.
 - **No art.** `Assets/Art/` contains only its `.gitignore` and `.gitattributes`.
   No purchased packs have been imported.
-- **No scenes, prefabs, ScriptableObjects or shaders.** The `Assets/` tree is
-  code and assembly definitions only.
-- **No `Packages/packages-lock.json`.** The manifest exists; the lock file is
-  written by the editor on first open.
+- **No scenes or prefabs.** There are no `.unity` or `.prefab` files. The
+  `Assets/` tree is code, assembly definitions, terrain tile data assets and
+  URP settings — but no scene to open.
+- **No `summary_*.json` or `results_*.xml` in the repository.** `.gitignore`
+  excludes everything under `BenchmarkResults/` except `verdict_*.txt`, so the
+  per-scenario summaries and the NUnit XML behind the committed verdicts exist
+  only on the machine that produced them.
+
+### 1.4 The gate has run — locally, not in CI
+
+This is the single most important distinction in this document, and the one most
+likely to be misread.
+
+| | CI gate (GitHub Actions) | Local gate (headless editor) |
+|---|---|---|
+| Has it run? | **No — never** | **Yes**, on 2026-10-01 and again 2026-10-03 |
+| Evidence | every run's `gate` job is `skipped` with `steps: []` | `docs/gate-reports/gate-20261001-M01-linux-0001.md`, and two committed verdict files |
+| Verdict produced | none | `BUDGET FAIL` at rung 0; `PASS` at rung 1 on a quiet box; `BUDGET FAIL` at rung 1 on a loaded box |
+| Report written | n/a | one, for the 2026-10-01 run |
+
+**The C# has been compiled.** The 2026-10-01 run compiled the project, fixed two
+compile errors, and executed all four scenarios. Risk 1 in §5 is therefore
+resolved; risk 2 is partly resolved and partly *worse* than "unverified" — see
+§5.
+
+**The CI gate is still skipped.** A green tick on the Actions page still means
+nothing. Do not read one as a pass.
 
 ---
 
@@ -162,6 +184,10 @@ shows a green tick while doing nothing. Do not read a green run as a pass.
 Verified: `GITHUB_LIST_REPOSITORY_SECRETS` returns `total_count: 0`. No
 `UNITY_LICENSE`, `UNITY_SERIAL`, `UNITY_EMAIL` or `UNITY_PASSWORD` exists.
 
+> **This blocks CI, not measurement.** A gate has already run locally and
+> produced a real verdict (§1.4). What the missing secret costs is automatic
+> checking on push — not the existence of a result.
+
 ### To unblock it
 
 1. Activate a personal licence on a machine with the editor installed, so Unity
@@ -193,9 +219,11 @@ The personal route is preferred: one secret, and no account password in CI.
 
 ## 4. What to do next, in order
 
-### Step 1 — Unblock the gate (§3)
+### Step 1 — Unblock the CI gate (§3)
 
-Nothing downstream is meaningful until the gate returns a verdict. Week 1 is a
+The gate has already returned a verdict **locally** (§1.4), so week 1 is not
+unmeasured. What is still missing is the **CI** gate: until the secret exists,
+no push is checked automatically and a green tick means nothing. Week 1 is a
 **gate**, not a week of work: it decides whether the water solver can run on a
 mid-range phone, and it can re-baseline the entire plan.
 
@@ -206,9 +234,15 @@ Tools/run_bench.sh --tier linux   --attempt 0
 Tools/run_bench.sh --tier android --attempt 0
 ```
 
-Then write the report from `docs/GATE_REPORT_TEMPLATE.md` into
+The Linux report already exists: `docs/gate-reports/gate-20261001-M01-linux-0001.md`.
+What is still missing is the **Android** tier, which has never been measured on
+any device. Write that report from `docs/GATE_REPORT_TEMPLATE.md` into
 `docs/gate-reports/gate-<yyyymmdd>-<Mnn>-<tier>-<run>.md` and commit it. The
 naming convention is defined in `docs/gate-reports/README.md`.
+
+> **Before re-running, record machine quietness.** The rung-1 verdict flips
+> between `PASS` and `BUDGET FAIL` on CPU contention alone (§5, risk 2). A
+> verdict without an idle fraction attached is not reproducible.
 
 ### Step 3 — Work the tickets in order
 
@@ -232,9 +266,12 @@ naming convention is defined in `docs/gate-reports/README.md`.
 and #11 onward is labelled `status:backlog` with the description *"Conditional on
 the week-one gate. Do not start before it returns a verdict."*
 
-### Step 4 — Expect the first compile to fail
+### Step 4 — The first compile has already happened
 
-The C# has never been compiled (§5). Budget an hour for the first open.
+The C# **has** been compiled, by the 2026-10-01 headless run, which found and
+fixed two errors (§5, risk 1). A fresh clone still needs its first open, but
+the "expect it to fail" budget is spent. What remains unverified is the **CI**
+compile, which has never run.
 
 ---
 
@@ -244,8 +281,8 @@ The C# has never been compiled (§5). Budget an hour for the first open.
 
 | # | Claim | Status | What it means |
 |---|---|---|---|
-| 1 | The C# harness compiles | **UNVERIFIED** | No Unity licence exists in the environment where it was written, so no compiler ever saw it. Verified by inspection and API cross-check only. Expect minor fixes on first open — the most likely candidates are `using var` disposal order in the scenarios and the `[Performance]` attribute's namespace |
-| 2 | The gate passes | **UNVERIFIED** | It has never run. No benchmark has executed, on any tier |
+| 1 | The C# harness compiles | **VERIFIED (locally)** | The 2026-10-01 headless run compiled it. Two errors were found and fixed: `BenchmarkHarness.cs` and `ScenarioResult.cs` were missing `using PET.Water;`, and `PET.Benchmarks.asmdef` lacked the test-runner references so the assembly was not registered as a test assembly. **Not verified in CI** — the CI gate has never run |
+| 2 | The gate passes | **PARTLY VERIFIED — AND UNSTABLE** | It has run locally. Rung 0 is a clean `BUDGET FAIL` (9 metrics over). Rung 1 returned `PASS` twice on a quiet pinned box and `BUDGET FAIL` on a loaded box. **The verdict flips on CPU contention alone**, so a rung-1 `PASS` is not reproducible without recording machine quietness. The Android tier has never been measured on any device |
 | 3 | The four scenarios are correctly parameterised | **UNVERIFIED** | 3000 settle steps, 500 samples, 3600× multiplier are reasoned, not tuned. If scenario A's settle loop is too short, A reports a transient cost and becomes a second B |
 | 4 | The changeset `d1870ce95baf` | **PUBLISHED VALUE** | Unity's published changeset for 6000.3.0f1, not read off a machine. Confirm against your install |
 | 5 | The thresholds are mirrored in two places | **KNOWN DRIFT RISK** | `Tools/bench_thresholds.json` and `BenchmarkScenarios.cs` both hold them. The harness writes the values it used into every summary, so drift is visible in results rather than inferred — but it is still two places to change |
@@ -424,10 +461,13 @@ cat BenchmarkResults/summary_A_StaticSoak.json
 }
 ```
 
-> The numbers above are **illustrative, not measurements.** No gate has run.
-> The `solver` key is what makes a run attributable: the checker refuses a
-> results directory whose summaries disagree about it, and refuses one whose
-> summaries have no `solver` key at all.
+> The numbers above are **illustrative, not measurements** — they are a shape
+> reference, not a result. Real numbers exist for the Linux tier only, and only
+> as committed verdict files; the per-scenario summaries behind them are
+> `.gitignore`d and are not in the repository (§1.3). The `solver` key is what
+> makes a run attributable: the checker refuses a results directory whose
+> summaries disagree about it, and refuses one whose summaries have no `solver`
+> key at all.
 
 ### Thresholds
 
@@ -475,7 +515,10 @@ of them is a bug and it is worth finding out which.
 
 ## 9. The one-line version
 
-**The plan is fully ticketed and the repository is consistent; the gate has never
-run because there is no Unity licence secret, and the C# has never been
-compiled. Add `UNITY_LICENSE`, run `Tools/run_bench.sh --tier linux --attempt 0`,
-and write the report before starting week 2.**
+**The plan is fully ticketed and the repository is consistent. The C# compiles
+and the gate has run locally: rung 0 is a clean `BUDGET FAIL`, rung 1 is a `PASS`
+on a quiet box and a `BUDGET FAIL` on a loaded one, and the Android tier has
+never been measured. The CI gate has still never run, because there is still no
+`UNITY_LICENSE` secret. Add the secret, make the verdict reproducible by
+recording machine quietness, and measure the Android tier before week 2 is
+called done.**
