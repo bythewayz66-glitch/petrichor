@@ -154,16 +154,21 @@ The same rule covers `UNKNOWN` and `not produced`: if the checker did not return
 
 The `preflight` job exits **green** when no Unity licence secret is present, and
 the `gate` job is then **skipped**. The workflow therefore shows a green tick
-while doing nothing. As of this writing that is the state of every run the
-workflow has ever had: **no `UNITY_LICENSE` secret exists, so the gate has never
-executed and no report has ever been written.**
+while doing nothing. That was the state of the first 18 runs.
+
+**It is no longer the state.** A `UNITY_LICENSE` secret was added on 2026-10-03,
+and the `gate` job executed in CI for the first time (run 37107565152). It
+**failed on activation** — the secret holds an entitlement XML, not a ULF — so
+the checker never ran and **no CI report has been written**. The run is red for a
+real reason, not skipped.
 
 A green run is not a pass. Do not read one as a pass, and do not write a report
-from one.
+from one. Equally, a red run whose failure is an input error is not a solver
+result — do not write a report from that either.
 
 ### What to do instead
 
-1. Add the `UNITY_LICENSE` secret — see `docs/HANDOFF.md` §3.
+1. Replace the `UNITY_LICENSE` secret with a real `.ulf` — see `docs/HANDOFF.md` §3.
 2. Re-run the workflow, or run the gate locally:
    ```bash
    Tools/run_bench.sh --tier linux   --attempt 0
