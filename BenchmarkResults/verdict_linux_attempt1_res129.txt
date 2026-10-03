@@ -1,0 +1,22 @@
+PETRICHOR week-one water gate
+tier: linux (Linux desktop flagship)
+solver: heightfield
+attempt: 1
+
+correctness: OK (no NaN, mass balanced, hash non-zero, all tests green)
+
+scenario            p50      p95      max     (ms per step)
+A_StaticSoak         1.544    1.789    3.528
+B_StepFlood          1.159    1.534    5.863
+C_FastForward        2.105    2.570    2.570
+
+VERDICT: BUDGET FAIL
+
+  - A_StaticSoak p50_ms = 1.544 ms (limit 1.500 ms)
+  - C_FastForward p50_ms = 2.105 ms (limit 1.500 ms)
+
+NEXT RUNG: 2
+  action: Shrink the active water window to the tiles within 1 of the camera.
+  cost:   distant water stops updating
+
+Re-run with --attempt 2 once applied.
