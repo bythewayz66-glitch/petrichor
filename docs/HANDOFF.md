@@ -13,7 +13,7 @@
 | **Handoff written** | 2026-09-30, **revised 2026-10-03** |
 | **Engine** | Unity **6000.5.9f1** (changeset `b57deb96f08d`), URP |
 | **Reference device** | Samsung Galaxy A54 5G (`SM-A546B` — one of eight regional variants) |
-| **Blocking item** | **The `UNITY_LICENSE` secret holds XML, not a ULF — the CI gate ran and failed on activation.** See §3 |
+| **Blocking item** | **The entitlement-XML licence path is wired but has never run — the CI gate still has no verdict.** See §3 |
 
 ---
 
@@ -88,20 +88,24 @@ likely to be misread.
 | | CI gate (GitHub Actions) | Local gate (headless editor) |
 |---|---|---|
 | Has it run? | **Yes — once**, on 2026-10-03 (run 37107565152) | **Yes**, on 2026-10-01 and again 2026-10-03 |
+| Did it compile? | **No** — activation failed before the editor loaded the project | **Yes** — the 2026-10-01 run compiled the project and ran all four scenarios |
 | Evidence | run 37107565152's `gate` job executed its steps; the log shows the licence rejected | `docs/gate-reports/gate-20261001-M01-linux-0001.md`, and two committed verdict files |
 | Verdict produced | none — activation failed before the checker ran | `BUDGET FAIL` at rung 0; `PASS` at rung 1 on a quiet box; `BUDGET FAIL` at rung 1 on a loaded box |
 | Report written | n/a | one, for the 2026-10-01 run |
 
-**The C# has been compiled.** The 2026-10-01 run compiled the project, fixed two
-compile errors, and executed all four scenarios. Risk 1 in §5 is therefore
-resolved; risk 2 is partly resolved and partly *worse* than "unverified" — see
-§5.
+**The C# has been compiled — locally, and only locally.** The 2026-10-01 run
+compiled the project, fixed two compile errors, and executed all four scenarios.
+**Nothing has ever been compiled in CI**: the one CI run that reached the gate
+failed on activation before the editor loaded the project. Risk 1 in §5 is
+therefore resolved for the local path; risk 2 is partly resolved and partly
+*worse* than "unverified" — see §5.
 
 **The CI gate has now run, and it failed on the licence format.** Run
 37107565152 executed the `gate` job for the first time; activation rejected the
 secret with `Cannot load ULF license: Signature element not found in XML
 document`. The gate is no longer skipped — it is red for a real, fixable reason.
-See §3.
+The workflow now supports the entitlement XML the secret holds; that path is
+wired and syntax-checked but has not yet run. See §3.
 
 ---
 
@@ -180,20 +184,23 @@ halves of one mechanism; without both, neither does anything.
 
 ---
 
-## 3. The blocking item: the licence is the wrong format
+## 3. The blocking item: the licence path is wired but unverified
 
-**The `UNITY_LICENSE` secret now exists** (added 2026-10-03T07:36:04Z), so the
-`gate` job executed in CI for the first time. It **failed**, and the failure is
-an input problem, not a solver problem.
+**The `UNITY_LICENSE` secret exists** (added 2026-10-03T07:36:04Z) and holds an
+**entitlement licence** — the XML document Unity Personal issues, root element
+`<License>`, carrying `<EntitlementGroups>`. Verified:
+`GITHUB_LIST_REPOSITORY_SECRETS` returns `total_count: 1`, secret named
+`UNITY_LICENSE`.
 
-Verified: `GITHUB_LIST_REPOSITORY_SECRETS` returns `total_count: 1`, and the
-secret is named `UNITY_LICENSE`.
+**The workflow now accepts that format.** It no longer asks you to go and find a
+`.ulf`. The `preflight` job reads the secret's root element and routes the gate
+to the mechanism that can actually read the document.
 
-### What happened
+### What happened, and what changed
 
-Run **37107565152** (run #20, push, 133 s) ran the gate for real. The
-`Run the benchmark` step took 117 s and the job ended at
-`Enforce the verdict`. The log shows the licence was loaded and rejected:
+Run **37107565152** (run #20, push, 133 s) ran the gate for real for the first
+time. The `Run the benchmark` step took 117 s and the job ended at
+`Enforce the verdict`. The log shows the licence loaded and rejected:
 
 ```
 [Licensing::Module] Loading manual activation license file UnityLicenseFile.ulf.
@@ -201,87 +208,105 @@ Run **37107565152** (run #20, push, 133 s) ran the gate for real. The
   (status: Cannot load ULF license: Signature element not found in XML document)
 ```
 
-**The secret holds XML, but not a ULF.** Unity's manual-activation loader
-(`-manualLicenseFile`, which is what game-ci's activation step uses) reads a
-`.ulf` document whose root element is `<root>` and which carries a
-`<Signature>` element. The value in the secret is an **entitlement licence**
-(`UnityEntitlementLicense.xml`), whose root element is `<License>` and which
-carries `<EntitlementGroups>`. The two are different documents for different
-loaders, and handing the second to the first produces exactly the Code 400
-above.
+The cause was that the workflow had exactly one licence mechanism —
+`-manualLicenseFile`, via game-ci's activation step — and that mechanism reads
+only a `.ulf`. An entitlement licence is a different document, read by a
+different part of Unity, from a different directory.
 
-> **This is not a skip and not a pass.** The gate ran, the container started,
-> and activation failed. The run is red for a real reason.
+> **This was never a skip and never a pass.** The gate ran, the container
+> started, and activation failed. The run was red for a real reason.
 
-### The two formats
+### The two formats, and why they need different mechanisms
 
-| Format | Root element | Distinctive child | How Unity reads it |
-|---|---|---|---|
-| `.ulf` | `<root>` | `<Signature>` | `-manualLicenseFile`; game-ci's activation step |
-| entitlement `.xml` | `<License>` | `<EntitlementGroups>` | the Licensing Client, from its own licences directory |
+| Format | Root element | Distinctive child | Read by | Directory |
+|---|---|---|---|---|
+| `.ulf` | `<root>` | `<Signature>` | `-manualLicenseFile`; game-ci's activation step | `~/.local/share/unity3d/Unity/Unity_lic.ulf` |
+| entitlement `.xml` / `.txml` | `<License>` | `<EntitlementGroups>` | the **Licensing Client** | `~/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml` |
 
 Both carry a `<Signature>` element, so **a Signature test alone cannot tell them
-apart** — the root element is the discriminator. The preflight now checks the
-root element first for exactly this reason.
+apart** — the root element is the discriminator, and the preflight checks it
+first. The two live in **different directories**, which is why pointing
+`-manualLicenseFile` at an entitlement licence cannot work however the file is
+named.
 
-### To unblock it
+*Source: Unity, "License troubleshooting" (`ActivationFAQ`), which gives both
+paths.*
 
-1. Activate a personal licence on a machine with the editor installed, so Unity
-   writes `Unity_lic.ulf`:
+### How the entitlement path runs
 
-   | Platform | Path |
-   |---|---|
-   | Linux | `~/.local/share/unity3d/Unity/Unity_lic.ulf` |
-   | Windows | `C:\ProgramData\Unity\Unity_lic.ulf` |
-   | macOS | `/Library/Application Support/Unity/Unity_lic.ulf` |
+The gate writes the secret to the Licensing Client's directory and mounts it
+into the same editor image game-ci would have used, then runs the editor
+directly:
 
-2. Copy **the whole file**, including the `<?xml ... ?>` declaration and the
-   closing `</root>` tag. A partial copy is the most common cause of a failed
-   activation.
-3. Go to **`https://github.com/bythewayz66-glitch/petrichor/settings/secrets/actions`**
-   → **New repository secret**.
-4. Name it **exactly `UNITY_LICENSE`**. A typo leaves the gate skipped and the
-   run green — the failure mode that wastes an afternoon.
-5. Re-run the workflow. The `gate` job will execute.
+```bash
+LIC_DIR="$HOME/.config/unity3d/Unity/licenses"
+mkdir -p "$LIC_DIR"
+printf '%s' "$UNITY_LICENSE" > "$LIC_DIR/UnityEntitlementLicense.xml"
 
-**Alternative (Plus/Pro):** `UNITY_SERIAL` + `UNITY_EMAIL` + `UNITY_PASSWORD`.
-The personal route is preferred: one secret, and no account password in CI.
+docker run --rm \
+  -v "$PWD:/github/workspace" \
+  -v "$LIC_DIR:/root/.config/unity3d/Unity/licenses" \
+  -w /github/workspace \
+  "unityci/editor:ubuntu-<version>-linux-il2cpp-3" \
+  xvfb-run -ae /dev/stdout /opt/unity/Editor/Unity \
+    -batchmode -nographics -projectPath /github/workspace \
+    -runTests -testPlatform EditMode -assemblyNames PET.Benchmarks \
+    -testResults /github/workspace/BenchResults/results_<tier>.xml \
+    -logFile /dev/stdout
+```
 
-> A personal licence is machine-bound. GameCI's activation step re-issues it for
-> the runner. If activation fails, the usual cause is that the licence is active
-> on too many machines — deactivate one from the Unity account page and retry.
+The licence value is never printed — it goes from the environment straight to
+the file, and the file is never `cat`'d. Only its byte count and root element are
+reported.
 
-### The preflight now fails loudly on a wrong format
+### What is verified, and what is not
 
-The old preflight asked one question — *is a licence secret present?* — and
-answered `licensed=true` for any non-empty value. That is why a wrong-format
-licence reached the container and failed 90 seconds later.
+| Claim | Status |
+|---|---|
+| The workflow YAML parses | **VERIFIED** — `yaml.safe_load`, 2 jobs, 16 gate steps |
+| Every `run:` block is valid shell | **VERIFIED** — `bash -n` on all 11 blocks, 0 failures |
+| The classifier routes each format correctly | **VERIFIED** — tested against synthetic `<License>`, `<root>`, plain-text, empty and base64 inputs |
+| The entitlement path activates Unity in CI | **UNVERIFIED — no run has used it** |
 
-It now classifies the value before the gate is allowed to start:
+> **The remaining verification step is a real run.** Two things could still be
+> wrong, and both are visible in the log:
+>
+> 1. **The entitlement licence may be bound to the machine that activated it.**
+>    If the Licensing Client rejects it in the container, the log will say so.
+> 2. **The editor may need the Licensing Client started explicitly.** The log
+>    shows whether it launched on its own.
+>
+> **Fallback if it fails:** `UNITY_SERIAL` + `UNITY_EMAIL` + `UNITY_PASSWORD`.
+> That is a supported game-ci route, it re-issues the licence for the runner, and
+> it needs no licence file at all. It is the answer if the entitlement document
+> turns out to be machine-bound.
+
+### The preflight now fails loudly on an unrecognised format
 
 | Detected | `licensed` | Outcome |
 |---|---|---|
-| absent | `false` | gate skipped, run green (unchanged) |
-| `ulf` | `true` | gate runs |
-| `entitlement-xml` | `false` | **run fails in ~5 s** with the format named and the fix given |
-| `xml-unknown` | `false` | **run fails** |
-| `other` (not XML) | `false` | **run fails** |
+| absent | `false` | gate skipped, run green (unchanged — deliberate) |
+| `ulf` | `true` | gate runs via game-ci |
+| `entitlement-xml` | `true` | **gate runs via the Licensing Client** |
+| anything else | `false` | **run fails in ~5 s**, naming the format |
 
-The value is never printed — only its shape. A wrong-format licence now costs
-five seconds and a clear message instead of a full CI cycle.
+The value is never printed — only its shape. A wrong-format licence costs five
+seconds and a clear message instead of a full CI cycle.
 
 ---
 
 ## 4. What to do next, in order
 
-### Step 1 — Fix the licence format (§3)
+### Step 1 — Get a CI verdict (§3)
 
-The gate has returned a verdict **locally** (§1.4), and the **CI** gate has now
-executed for the first time — but it failed on activation, because the
-`UNITY_LICENSE` secret holds an entitlement XML rather than a ULF. Replace the
-secret with a real `.ulf` and the gate will run end to end. Week 1 is a
-**gate**, not a week of work: it decides whether the water solver can run on a
-mid-range phone, and it can re-baseline the entire plan.
+The gate has returned a verdict **locally** (§1.4). The **CI** gate has executed
+once and failed on activation; the workflow now supports the entitlement XML the
+secret holds, but **that path has not yet run**. Re-run the workflow and read the
+log. If the Licensing Client accepts the licence, the gate produces its first CI
+verdict. If it does not, the log will say why, and the fallback is the Plus/Pro
+route (`UNITY_SERIAL` + `UNITY_EMAIL` + `UNITY_PASSWORD`). Week 1 is a **gate**,
+not a week of work: it decides whether the water solver can run on a mid-range
+phone, and it can re-baseline the entire plan.
 
 ### Step 2 — Run the gate
 
@@ -573,10 +598,12 @@ of them is a bug and it is worth finding out which.
 ## 9. The one-line version
 
 **The plan is fully ticketed and the repository is consistent. The C# compiles
-locally and in CI, and the gate has run both ways: rung 0 is a clean `BUDGET
-FAIL`, rung 1 is a `PASS` on a quiet box and a `BUDGET FAIL` on a loaded one,
-and the Android tier has never been measured. The CI gate has now executed for
-the first time and failed on activation, because the `UNITY_LICENSE` secret
-holds an entitlement XML rather than a ULF. Replace the secret with a real
-`.ulf`, make the verdict reproducible by recording machine quietness, and
-measure the Android tier before week 2 is called done.**
+locally — and only locally: the CI gate has executed once and failed on
+activation, so nothing has ever been compiled in CI. The gate has run both ways
+locally: rung 0 is a clean `BUDGET FAIL`, rung 1 is a `PASS` on a quiet box and a
+`BUDGET FAIL` on a loaded one, and the Android tier has never been measured. The
+workflow now accepts the entitlement XML the `UNITY_LICENSE` secret holds, by
+mounting it into the Licensing Client's directory instead of handing it to the
+manual-activation loader — but that path has not yet run. Re-run the workflow to
+get the first CI verdict, make the verdict reproducible by recording machine
+quietness, and measure the Android tier before week 2 is called done.**

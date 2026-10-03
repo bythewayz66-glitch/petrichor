@@ -95,6 +95,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       licensed: ${{ steps.check.outputs.licensed }}
+      format: ${{ steps.check.outputs.format }}
     steps:
       - name: Check for a Unity licence secret
         id: check
@@ -195,63 +196,40 @@ jobs:
           case "$FORMAT" in
             ulf)
               echo "licensed=true" >> "$GITHUB_OUTPUT"
-              echo "A ULF licence is present; the gate will run."
+              echo "format=ulf" >> "$GITHUB_OUTPUT"
+              echo "A ULF licence is present; the gate will run via game-ci."
               ;;
-            entitlement-xml|xml-unknown)
-              echo "licensed=false" >> "$GITHUB_OUTPUT"
-              {
-                echo "## Water Gate: FAILED - the licence secret is not a ULF"
-                echo ""
-                echo "A \`UNITY_LICENSE\` secret exists, but its contents are"
-                echo "**XML, not ULF** (detected: \`$FORMAT\`). Unity's manual"
-                echo "activation loader cannot read it, so the gate would fail"
-                echo "inside the container with:"
-                echo ""
-                echo '```'
-                echo "Cannot load ULF license: Signature element not found in XML document"
-                echo '```'
-                echo ""
-                echo "This is a **hard failure, not a skip**: a licence IS"
-                echo "configured, so a green tick here would be a lie."
-                echo ""
-                echo "### The two formats"
-                echo ""
-                echo "| Format | Root element | How Unity reads it |"
-                echo "|---|---|---|"
-                echo "| \`.ulf\` | \`<root>\` with \`<Signature>\` | \`-manualLicenseFile\`, and game-ci's activation step |"
-                echo "| entitlement \`.xml\` | \`<License>\` with \`<EntitlementGroups>\` | the Licensing Client, from its own licences directory |"
-                echo ""
-                echo "### Fix"
-                echo ""
-                echo "Replace the secret with the contents of a \`.ulf\` file."
-                echo "Unity writes one at:"
-                echo ""
-                echo "| Platform | Path |"
-                echo "|---|---|"
-                echo "| Linux | \`~/.local/share/unity3d/Unity/Unity_lic.ulf\` |"
-                echo "| Windows | \`C:\\\\ProgramData\\\\Unity\\\\Unity_lic.ulf\` |"
-                echo "| macOS | \`/Library/Application Support/Unity/Unity_lic.ulf\` |"
-                echo ""
-                echo "If Unity Hub only offers an entitlement XML, use the"
-                echo "Plus/Pro route instead: \`UNITY_SERIAL\` + \`UNITY_EMAIL\` +"
-                echo "\`UNITY_PASSWORD\`."
-              } >> "$GITHUB_STEP_SUMMARY"
-              echo "::error title=Water Gate: licence is not a ULF::The UNITY_LICENSE secret holds XML, not a ULF. Unity cannot load it. See the job summary."
-              exit 1
+            entitlement-xml)
+              # SUPPORTED, not rejected. An entitlement licence is what Unity
+              # Personal issues, and it is read by the Licensing Client from
+              # its own directory rather than by -manualLicenseFile. The gate
+              # job mounts it there. See the "Run the benchmark (entitlement
+              # XML)" step for the mechanism and its one unverified risk.
+              echo "licensed=true" >> "$GITHUB_OUTPUT"
+              echo "format=entitlement-xml" >> "$GITHUB_OUTPUT"
+              echo "An entitlement licence is present; the gate will run via the Licensing Client."
               ;;
             *)
               echo "licensed=false" >> "$GITHUB_OUTPUT"
+              echo "format=$FORMAT" >> "$GITHUB_OUTPUT"
               {
                 echo "## Water Gate: FAILED - unrecognised licence format"
                 echo ""
-                echo "A \`UNITY_LICENSE\` secret exists but does not look like a"
-                echo "ULF or an entitlement XML. It may be base64-encoded, or"
-                echo "truncated, or the wrong file entirely."
+                echo "A \`UNITY_LICENSE\` secret exists but is neither a ULF nor"
+                echo "an entitlement licence (detected: \`$FORMAT\`). It may be"
+                echo "base64-encoded, truncated, or the wrong file entirely."
                 echo ""
-                echo "Expected: a ULF document whose root element is \`<root>\`"
-                echo "and which contains a \`<Signature>\` element."
+                echo "### The two supported formats"
+                echo ""
+                echo "| Format | Root element | How Unity reads it |"
+                echo "|---|---|---|"
+                echo "| \`.ulf\` | \`<root>\` with \`<Signature>\` | \`-manualLicenseFile\`, via game-ci's activation step |"
+                echo "| entitlement \`.xml\` / \`.txml\` | \`<License>\` with \`<EntitlementGroups>\` | the Licensing Client, from its own licences directory |"
+                echo ""
+                echo "This is a **hard failure, not a skip**: a licence IS"
+                echo "configured, so a green tick here would be a lie."
               } >> "$GITHUB_STEP_SUMMARY"
-              echo "::error title=Water Gate: unrecognised licence format::The UNITY_LICENSE secret is neither a ULF nor an entitlement XML. See the job summary."
+              echo "::error title=Water Gate: unrecognised licence format::The UNITY_LICENSE secret is neither a ULF nor an entitlement licence. See the job summary."
               exit 1
               ;;
           esac
@@ -352,8 +330,9 @@ jobs:
       # run afterwards and produce a verdict -- the checker reads the results
       # XML and treats a failed test case as a hard fail. The verdict, not the
       # test runner's exit code, is the authoritative output.
-      - name: Run the benchmark
+      - name: Run the benchmark (ULF)
         id: bench
+        if: needs.preflight.outputs.format != 'entitlement-xml'
         uses: game-ci/unity-test-runner@v4
         continue-on-error: true
         env:
@@ -375,6 +354,96 @@ jobs:
           customParameters: -testFilter PET.Benchmarks
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           checkName: Water Gate (${{ matrix.tier }})
+
+      # ------------------------------------------------------------------
+      # THE ENTITLEMENT-XML PATH.
+      #
+      # Unity Personal does not issue a .ulf. It issues an entitlement
+      # licence - UnityEntitlementLicense.xml, or the same document with a
+      # .txml extension - whose root element is <License> and which carries
+      # <EntitlementGroups>. Unity's manual-activation loader cannot read
+      # that document: it wants <root> with <Signature>. That mismatch is
+      # exactly the Code 400 this repository hit on 2026-10-03.
+      #
+      # The Licensing Client CAN read it, but only from its own directory:
+      #
+      #   Linux  ~/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml
+      #
+      # Source: Unity, "License troubleshooting" (ActivationFAQ), which gives
+      # the named-user licence path above and the .ulf path as
+      # ~/.local/share/unity3d/Unity/Unity_lic.ulf. They are DIFFERENT
+      # directories, which is why pointing -manualLicenseFile at an
+      # entitlement licence cannot work no matter how the file is named.
+      #
+      # So this step does not use game-ci's activation step at all. It runs
+      # the same editor image game-ci would have used, mounts the licence
+      # into the Licensing Client's directory, and lets the editor find it.
+      #
+      # UNVERIFIED. This wiring was written on 2026-10-03 and no run has
+      # used it. Two things could still be wrong, and both are cheap to
+      # find out from the log:
+      #
+      #   1. The entitlement licence may be bound to the machine that
+      #      activated it. If the Licensing Client rejects it in the
+      #      container, the log will say so, and the fix is the Plus/Pro
+      #      route (UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD), which
+      #      re-issues the licence for the runner.
+      #   2. The editor may need the Licensing Client started explicitly.
+      #      The log shows whether it launched on its own.
+      #
+      # The licence value is never printed. It goes straight from the
+      # environment to the file, and the file is never cat'd.
+      # ------------------------------------------------------------------
+      - name: Run the benchmark (entitlement XML)
+        id: bench_xml
+        if: needs.preflight.outputs.format == 'entitlement-xml'
+        continue-on-error: true
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        run: |
+          set -euo pipefail
+
+          LIC_DIR="$HOME/.config/unity3d/Unity/licenses"
+          mkdir -p "$LIC_DIR"
+          # printf, not echo: a licence containing backslashes must survive
+          # byte-for-byte. The value is never echoed.
+          printf '%s' "$UNITY_LICENSE" > "$LIC_DIR/UnityEntitlementLicense.xml"
+          chmod 600 "$LIC_DIR/UnityEntitlementLicense.xml"
+
+          # Report the SHAPE, never the value.
+          echo "Licence written to $LIC_DIR/UnityEntitlementLicense.xml"
+          echo "Bytes: $(wc -c < "$LIC_DIR/UnityEntitlementLicense.xml")"
+          # [A-Za-z][A-Za-z0-9]* and not [A-Za-z]*: the latter matches the
+          # bare "<" of the <?xml declaration and reports "<" as the root.
+          echo "Root element: $(grep -o -m1 '<[A-Za-z][A-Za-z0-9]*' "$LIC_DIR/UnityEntitlementLicense.xml" | head -1 || true)"
+
+          IMAGE="unityci/editor:ubuntu-${{ steps.editor.outputs.version }}-linux-il2cpp-3"
+          mkdir -p BenchResults
+
+          set +e
+          docker run --rm \
+            -v "$PWD:/github/workspace" \
+            -v "$LIC_DIR:/root/.config/unity3d/Unity/licenses" \
+            -e PET_BENCH_TIER="${{ matrix.tier }}" \
+            -e PET_BENCH_SOLVER="${{ github.event_name == 'workflow_dispatch' && inputs.solver || 'heightfield' }}" \
+            -w /github/workspace \
+            "$IMAGE" \
+            xvfb-run -ae /dev/stdout /opt/unity/Editor/Unity \
+              -batchmode \
+              -nographics \
+              -projectPath /github/workspace \
+              -runTests \
+              -testPlatform EditMode \
+              -assemblyNames PET.Benchmarks \
+              -testResults "/github/workspace/BenchResults/results_${{ matrix.tier }}.xml" \
+              -logFile /dev/stdout
+          CODE=$?
+          set -e
+          echo "Editor exit code: $CODE"
+          # A non-zero editor exit is a VERDICT, not a script error: the
+          # checker below reads the results XML and decides. This mirrors the
+          # ULF path, where game-ci's step is also continue-on-error.
+          exit 0
 
       - name: Locate the results XML
         id: results

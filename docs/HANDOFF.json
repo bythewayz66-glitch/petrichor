@@ -1,14 +1,14 @@
 {
   "$schema": "petrichor-handoff/1",
-  "generated": "2026-09-30, revised 2026-10-03",
+  "generated": "2026-09-30, revised 2026-10-03 (entitlement-XML licence support)",
   "repository": {
     "owner": "bythewayz66-glitch",
     "name": "petrichor",
     "private": false,
     "visibility_note": "Made public on 2026-10-01 so a local agent can clone it with no credentials. It was private when this handoff was first written; nothing else in this file changed.",
     "default_branch": "main",
-    "head_commit": "7ccff93333af79452d70e2d267f2f7e56d3d0c24",
-    "head_commit_note": "HEAD at the moment this file was last revised (2026-10-03). The commit that adds this revision is its child."
+    "head_commit": "71334b1f802b096fac777755e1572d93d1a838c4",
+    "head_commit_note": "HEAD at the moment this file was last revised (2026-10-03). The commit that adds this revision is a child of it."
   },
   "engine": {
     "unity": "6000.5.9f1",
@@ -46,12 +46,14 @@
     "board_items": 144,
     "assemblies": 12,
     "csharp_files": 16,
-    "csharp_files_note": "Recounted from the committed tree on 2026-10-03. Was 14, then 15 (wrong), now 16: 6 under Assets/Scripts/Water, 8 under Assets/Tests/Benchmarks, 2 under Assets/Editor/Terrain. The terrain editor tools landed after the previous revision.",
+    "csharp_files_note": "Recounted from the committed tree on 2026-10-03. Was 14, then 15 (wrong), now 16: 6 under Assets/Scripts/Water, plus the harness and support files.",
     "committed_gate_reports": 1,
     "verified_by": "GraphQL totalCount queries",
     "committed_gate_reports_note": "docs/gate-reports/gate-20261001-M01-linux-0001.md. Was 0.",
     "committed_verdicts": 2,
-    "committed_verdicts_note": "BenchmarkResults/verdict_linux.txt (attempt 0) and verdict_linux_attempt1_res129.txt (attempt 1). .gitignore excludes everything else under BenchmarkResults/, so the per-scenario summaries and NUnit XML are NOT in the repository."
+    "committed_verdicts_note": "BenchmarkResults/verdict_linux.txt (attempt 0) and verdict_linux_attempt1_res129.txt (attempt 1). .gitignore excludes everything else under BenchmarkResults/, so the per-scenario summaries and NUnit XML are NOT in the repository.",
+    "ci_compiles": 0,
+    "ci_compiles_note": "Nothing has ever been compiled in CI. The one CI run that reached the gate failed on activation before the editor loaded the project. The local 2026-10-01 run did compile."
   },
   "issue_ranges": [
     {
@@ -147,30 +149,37 @@
     }
   ],
   "blocking_item": {
-    "id": "UNITY_LICENSE_FORMAT",
-    "summary": "The UNITY_LICENSE secret exists but holds an entitlement XML, not a ULF. The CI gate executed for the first time on 2026-10-03 and failed on activation.",
-    "verified": "GITHUB_LIST_REPOSITORY_SECRETS returned total_count: 1, secret named UNITY_LICENSE, created 2026-10-03T07:36:04Z",
-    "effect": "The preflight saw a non-empty secret and set licensed=true, so the gate ran. Unity's manual-activation loader then rejected the value: 'Cannot load ULF license: Signature element not found in XML document'. The run is red for a real reason, not skipped.",
-    "warning": "Do not read this as a skip. The gate ran, the container started, and activation failed. Equally, do not read it as a solver failure - the checker never ran.",
+    "id": "UNITY_LICENSE_ENTITLEMENT_PATH_UNVERIFIED",
+    "summary": "The UNITY_LICENSE secret holds an entitlement XML (root <License>), not a ULF. The CI gate ran once and failed on activation. The workflow now supports the entitlement format by mounting the licence into the Licensing Client's directory, but that path has never run, so the CI gate still has no verdict.",
+    "verified": "GITHUB_LIST_REPOSITORY_SECRETS returned total_count: 1, secret named UNITY_LICENSE, created 2026-10-03T07:36:04Z. Run 37107565152's log shows the licence rejected.",
+    "effect": "The preflight now classifies the secret's root element and sets licensed=true for BOTH ulf and entitlement-xml. For entitlement-xml the gate skips game-ci's activation step and instead writes the licence to ~/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml and mounts it into the editor image.",
+    "warning": "Do not read the entitlement path as working. It is wired and syntax-checked only. No run has used it. If the Licensing Client rejects the licence in the container, the fallback is UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD, which re-issues the licence for the runner.",
     "formats": {
       "ulf": {
         "root_element": "root",
         "distinctive_child": "Signature",
-        "read_by": "-manualLicenseFile, and game-ci's activation step"
+        "read_by": "-manualLicenseFile, and game-ci's activation step",
+        "path_linux": "~/.local/share/unity3d/Unity/Unity_lic.ulf"
       },
       "entitlement_xml": {
         "root_element": "License",
         "distinctive_child": "EntitlementGroups",
-        "read_by": "the Licensing Client, from its own licences directory"
+        "read_by": "the Licensing Client, from its own licences directory",
+        "licensing_client_path_linux": "~/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml",
+        "extensions": [
+          "UnityEntitlementLicense.xml",
+          ".txml"
+        ]
       },
-      "discriminator_note": "Both documents carry a Signature element, so a Signature test alone cannot tell them apart. The root element is the discriminator, and the preflight checks it first for that reason."
+      "discriminator_note": "Both documents carry a Signature element, so a Signature test alone cannot tell them apart. The root element is the discriminator, and the preflight checks it first for that reason.",
+      "source": "Unity, \"License troubleshooting\" (ActivationFAQ): gives the named-user licence path ~/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml and the .ulf path ~/.local/share/unity3d/Unity/Unity_lic.ulf. They are different directories."
     },
     "resolution_steps": [
-      "Activate a personal licence so Unity writes Unity_lic.ulf",
-      "Copy the WHOLE file including the <?xml ?> declaration and the closing </root> tag",
-      "Open https://github.com/bythewayz66-glitch/petrichor/settings/secrets/actions",
-      "Replace the UNITY_LICENSE secret with the ULF contents",
-      "Re-run the workflow; the gate job will execute end to end"
+      "Re-run the Water Gate workflow (workflow_dispatch or any push to a gated path).",
+      "Read the 'Run the benchmark (entitlement XML)' step's log.",
+      "If the Licensing Client accepts the licence, the gate produces its first CI verdict.",
+      "If it rejects it, the log names the reason; switch to UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD.",
+      "Do not paste the licence into chat or into any file in the repository."
     ],
     "ulf_paths": {
       "linux": "~/.local/share/unity3d/Unity/Unity_lic.ulf",
@@ -184,7 +193,7 @@
         "UNITY_PASSWORD"
       ],
       "for": "Plus / Pro",
-      "note": "Personal route preferred: one secret, no account password in CI. Use this if Unity Hub will only export an entitlement XML."
+      "note": "Supported game-ci route. Re-issues the licence for the runner, so it is immune to the machine-binding risk. Use it if the entitlement path fails."
     },
     "preflight_hardening": {
       "what_changed": "The preflight used to ask only whether a licence secret was present, and answered licensed=true for any non-empty value. It now classifies the value before the gate may start.",
@@ -196,6 +205,12 @@
         "other": "licensed=false, run FAILS"
       },
       "secret_handling": "The value is never printed. Only its shape is reported."
+    },
+    "verification_status": {
+      "workflow_yaml_parses": "VERIFIED - yaml.safe_load, 2 jobs, 16 gate steps",
+      "run_blocks_valid_shell": "VERIFIED - bash -n on all 11 run blocks, 0 failures",
+      "classifier_routes_correctly": "VERIFIED - tested against synthetic <License>, <root>, plain-text, empty and base64 inputs",
+      "entitlement_path_activates_unity_in_ci": "UNVERIFIED - no run has used it"
     }
   },
   "next_steps": [
@@ -396,6 +411,19 @@
       }
     ],
     "android_tier": "NEVER MEASURED on any device",
-    "stability_risk": "The verdict flips on CPU contention alone. A rung-1 PASS is not reproducible unless machine quietness is recorded."
+    "stability_risk": "The verdict flips on CPU contention alone. A rung-1 PASS is not reproducible unless machine quietness is recorded.",
+    "ci_gate_has_produced_a_verdict": false,
+    "ci_gate_has_compiled": false,
+    "ci_runs_total": 23,
+    "ci_runs_that_skipped_the_gate": 22,
+    "ci_runs_that_executed_the_gate": 1,
+    "ci_gate_failure": "run 37107565152: [Licensing::Client] Error: Code 400 while processing request (status: Cannot load ULF license: Signature element not found in XML document)",
+    "local_gate_has_compiled": true,
+    "local_verdicts": [
+      "BUDGET FAIL at rung 0",
+      "PASS at rung 1 on a quiet box",
+      "BUDGET FAIL at rung 1 on a loaded box"
+    ],
+    "android_tier_measured": false
   }
 }

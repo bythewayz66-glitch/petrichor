@@ -8,7 +8,7 @@ The rule that makes the game work is the **Mineral Law**: *stone cannot be force
 
 No combat. No antagonist. Quiet, enormous, hopeful. The world can kill you with a fall or a flood, but it will never hunt you.
 
-**Status:** pre-production. The design package is complete and the repository scaffold is committed — the twelve assemblies, the water solver interface, and the week-one benchmark harness. **The gate has now run, locally and in CI.** Locally it produced verdicts (`BUDGET FAIL` at rung 0, `PASS` at rung 1 on a quiet box); in CI it executed for the first time on 2026-10-03 (run 37107565152) and **failed on licence activation** — the `UNITY_LICENSE` secret holds an entitlement XML rather than a `.ulf`. The run is red for a real, fixable reason, not skipped. Week 1 of the implementation roadmap is a **gate** — a headless benchmark that decides whether the water solver can run on a mid-range phone. Nothing downstream of it starts until it returns a reproducible verdict.
+**Status:** pre-production. The design package is complete and the repository scaffold is committed — the twelve assemblies, the water solver interface, and the week-one benchmark harness. **The gate has now run, locally and in CI.** Locally it produced verdicts (`BUDGET FAIL` at rung 0, `PASS` at rung 1 on a quiet box); in CI it executed for the first time on 2026-10-03 (run 37107565152) and **failed on licence activation**, because the `UNITY_LICENSE` secret holds an entitlement XML and the workflow only knew how to feed Unity a `.ulf`. **The workflow now supports the entitlement XML directly** — it mounts the licence into the Licensing Client's own directory instead of handing it to the manual-activation loader. That path is wired and syntax-checked but **has not yet run**, so the CI gate is still without a verdict. Week 1 of the implementation roadmap is a **gate** — a headless benchmark that decides whether the water solver can run on a mid-range phone. Nothing downstream of it starts until it returns a reproducible verdict.
 
 ---
 
@@ -383,51 +383,101 @@ the Actions tab (`workflow_dispatch`), with a `tier` input (`linux` or `android`
 `attempt` input naming how many rungs of the ladder are already applied, and a `solver`
 input selecting the implementation under test (`heightfield` or `channel-graph`).
 
-### It needs a Unity licence — it has one, but it is the wrong format
+### It needs a Unity licence — and it now accepts the one you have
 
-**The `UNITY_LICENSE` secret now exists** (added 2026-10-03), and the `gate` job ran in CI
-for the first time as a result — run 37107565152. It **failed on activation**, because the
-secret holds an entitlement XML rather than a ULF. The run is red for a real, fixable
-reason, not skipped.
+**The `UNITY_LICENSE` secret exists** (added 2026-10-03) and holds an **entitlement
+licence** — the XML document Unity Personal issues, whose root element is `<License>` and
+which carries `<EntitlementGroups>`. It may be named `UnityEntitlementLicense.xml` or
+carry a `.txml` extension; the extension is irrelevant, the root element is what matters.
 
-The `preflight` job now classifies the licence value before the gate may start. If a
-secret is absent it writes a skip notice and exits green (deliberate: a repository that is
-red on every push because a secret is missing is a repository whose CI everyone learns to
-ignore). If a secret is present but **not a ULF**, the run fails in about five seconds with
-the format named and the fix given — a hard failure, not a skip, because a licence *is*
-configured and a green tick would be a lie.
+**Both licence formats are supported.** The `preflight` job reads the secret's root
+element and routes the gate accordingly:
 
-Add **one** of the following at *Settings → Secrets and variables → Actions → New
-repository secret*:
+| Detected | `licensed` | What the gate does |
+|---|---|---|
+| *(no secret)* | `false` | skips, exits green — deliberate: a repository that is red on every push because a secret is missing is one whose CI everyone learns to ignore |
+| `ulf` — root `<root>` | `true` | runs via `game-ci/unity-test-runner`, which activates with `-manualLicenseFile` |
+| `entitlement-xml` — root `<License>` | `true` | runs via the **Licensing Client** path — see below |
+| anything else | `false` | **fails in ~5 s**, naming the format. A hard failure, not a skip: a licence *is* configured, so a green tick would be a lie |
+
+#### Why the two formats need different mechanisms
+
+They are different documents, read by different parts of Unity:
+
+| Format | Root element | Distinctive child | Read by |
+|---|---|---|---|
+| `.ulf` | `<root>` | `<Signature>` | `-manualLicenseFile`, and game-ci's activation step |
+| entitlement `.xml` / `.txml` | `<License>` | `<EntitlementGroups>` | the **Licensing Client**, from its own licences directory |
+
+An entitlement licence also contains a `<Signature>` element, so a test for `<Signature>`
+alone misclassifies it as a `.ulf`. **The root element is the discriminator**, and the
+preflight checks it first.
+
+The two live in **different directories**, which is why pointing `-manualLicenseFile` at an
+entitlement licence cannot work however the file is named:
+
+| | Path |
+|---|---|
+| `.ulf` (manual activation) | `~/.local/share/unity3d/Unity/Unity_lic.ulf` |
+| entitlement (Licensing Client) | `~/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml` |
+
+*Source: Unity, "License troubleshooting" (`ActivationFAQ`), which gives both paths.*
+
+#### How the entitlement path runs
+
+The gate writes the secret to the Licensing Client's directory and mounts it into the same
+editor image game-ci would have used, then runs the editor directly:
+
+```bash
+LIC_DIR="$HOME/.config/unity3d/Unity/licenses"
+mkdir -p "$LIC_DIR"
+printf '%s' "$UNITY_LICENSE" > "$LIC_DIR/UnityEntitlementLicense.xml"
+
+docker run --rm \
+  -v "$PWD:/github/workspace" \
+  -v "$LIC_DIR:/root/.config/unity3d/Unity/licenses" \
+  -w /github/workspace \
+  "unityci/editor:ubuntu-<version>-linux-il2cpp-3" \
+  xvfb-run -ae /dev/stdout /opt/unity/Editor/Unity \
+    -batchmode -nographics -projectPath /github/workspace \
+    -runTests -testPlatform EditMode -assemblyNames PET.Benchmarks \
+    -testResults /github/workspace/BenchResults/results_<tier>.xml \
+    -logFile /dev/stdout
+```
+
+The licence value is never printed — it goes from the environment straight to the file,
+and the file is never `cat`'d. Only its byte count and root element are reported.
+
+> **This path is UNVERIFIED.** It was written on 2026-10-03 and no run has used it. Two
+> things could still be wrong, and both are visible in the log:
+>
+> 1. **The entitlement licence may be bound to the machine that activated it.** If the
+>    Licensing Client rejects it in the container, the log will say so. The fallback is the
+>    Plus/Pro route below, which re-issues the licence for the runner.
+> 2. **The editor may need the Licensing Client started explicitly.** The log shows whether
+>    it launched on its own.
+>
+> If the entitlement path fails, the fallback is `UNITY_SERIAL` + `UNITY_EMAIL` +
+> `UNITY_PASSWORD`, which is a supported game-ci route and needs no licence file at all.
+
+#### Adding the secret
+
+At *Settings → Secrets and variables → Actions → New repository secret*:
 
 | Secret | For | Where the value comes from |
 |---|---|---|
-| `UNITY_LICENSE` | Personal licence | The contents of the `.ulf` file — see below. **Not** an entitlement XML |
+| `UNITY_LICENSE` | Personal licence | The **whole** entitlement XML or `.ulf` file, including the `<?xml ... ?>` declaration and the closing tag |
 | `UNITY_SERIAL` + `UNITY_EMAIL` + `UNITY_PASSWORD` | Plus / Pro | The serial from your Unity licence page |
 
-**Obtaining a `UNITY_LICENSE` value (personal licence route):**
+For the entitlement route, copy the file Unity Hub wrote — on Linux
+`~/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml` — in full. A truncated
+copy is the most common cause of a licence that "looks right" and is rejected.
 
-1. Activate a personal licence on a machine with the editor installed, so Unity writes
-   `Unity_lic.ulf` to disk. On Linux that is
-   `~/.local/share/unity3d/Unity/Unity_lic.ulf`; on Windows
-   `C:\ProgramData\Unity\Unity_lic.ulf`; on macOS
-   `/Library/Application Support/Unity/Unity_lic.ulf`.
-2. Open the file in a text editor and copy **the whole file**, including the
-   `<?xml ... ?>` declaration and the closing `</root>` tag.
-3. Paste it as the value of a repository secret named exactly `UNITY_LICENSE`.
-4. Re-run the workflow. The `gate` job will now execute.
-
-> **A personal licence is machine-bound.** The `.ulf` is issued to the machine that
-> activated it, and GameCI's activation step re-issues it for the runner. If activation
-> fails with a licence error, the usual cause is that the personal licence is already
-> active on too many machines — deactivate one from the Unity account page and retry.
->
-> **Do not use an entitlement XML.** Unity Hub can export a licence as a `.txml` or as
-> `UnityEntitlementLicense.xml`. That document's root element is `<License>`, whereas a
-> `.ulf` uses `<root>`. Unity's manual-activation loader reads only the `.ulf` form; handing
-> it an entitlement XML fails with `Cannot load ULF license: Signature element not found in
-> XML document`. If Unity Hub will only export the entitlement form, use the Plus/Pro route
-> (`UNITY_SERIAL` + `UNITY_EMAIL` + `UNITY_PASSWORD`) instead.
+> **A personal licence is machine-bound.** GameCI's activation step re-issues a `.ulf` for
+> the runner; the entitlement path does not re-issue anything, which is exactly why it may
+> be rejected. If activation fails with a licence error, the usual cause is that the
+> personal licence is already active on too many machines — deactivate one from the Unity
+> account page and retry.
 
 ### What the workflow does, and what fails the build
 
