@@ -87,9 +87,9 @@ likely to be misread.
 
 | | CI gate (GitHub Actions) | Local gate (headless editor) |
 |---|---|---|
-| Has it run? | **Yes — once**, on 2026-10-03 (run 37107565152) | **Yes**, on 2026-10-01 and again 2026-10-03 |
+| Has it run? | **Yes — four times**, on 2026-10-03 (runs 37107565152, 37109026756, 37109526130, 37110829407) | **Yes**, on 2026-10-01 and again 2026-10-03 |
 | Did it compile? | **No** — activation failed before the editor loaded the project | **Yes** — the 2026-10-01 run compiled the project and ran all four scenarios |
-| Evidence | run 37107565152's `gate` job executed its steps; the log shows the licence rejected | `docs/gate-reports/gate-20261001-M01-linux-0001.md`, and two committed verdict files |
+| Evidence | each run's `gate` job executed its steps; every log shows the licence rejected | `docs/gate-reports/gate-20261001-M01-linux-0001.md`, and two committed verdict files |
 | Verdict produced | none — activation failed before the checker ran | `BUDGET FAIL` at rung 0; `PASS` at rung 1 on a quiet box; `BUDGET FAIL` at rung 1 on a loaded box |
 | Report written | n/a | one, for the 2026-10-01 run |
 
@@ -265,21 +265,53 @@ reported.
 |---|---|
 | The workflow YAML parses | **VERIFIED** — `yaml.safe_load`, 2 jobs, 16 gate steps |
 | Every `run:` block is valid shell | **VERIFIED** — `bash -n` on all 11 blocks, 0 failures |
-| The classifier routes each format correctly | **VERIFIED** — tested against synthetic `<License>`, `<root>`, plain-text, empty and base64 inputs |
-| The entitlement path activates Unity in CI | **UNVERIFIED — no run has used it** |
+| The classifier routes each format correctly | **VERIFIED** — tested against synthetic `<License>`, `<root>`, `<root>`-without-`<Signature>`, plain-text and empty inputs |
+| The Licensing Client launches in the container | **VERIFIED** — run 37110829407: `Successfully launched the LicensingClient (PId: 38)`, v`1.18.3+d7ffd15` |
+| The entitlement path activates Unity in CI | **UNVERIFIED — its first attempt was misrouted before it could run** |
 
-> **The remaining verification step is a real run.** Two things could still be
-> wrong, and both are visible in the log:
+### The first attempt, and the defect it exposed
+
+Run **37110829407** (run #24, push, commit `784bf674`, 111 s) was the first to
+carry the entitlement path. The gate ran — and the preflight classified the
+secret as **`ulf`**, so the entitlement branch was **skipped** and the identical
+Code 400 recurred:
+
+```
+[Licensing::Module] Loading manual activation license file UnityLicenseFile.ulf.
+[Licensing::Client] Error: Code 400 while processing request
+  (status: Cannot load ULF license: Signature element not found in XML document)
+```
+
+The old test matched `<root` **anywhere** in the document. The secret evidently
+contains a `<root` element, so it was routed to the ULF loader — the one loader
+that cannot read it. **The classifier was the bug, not the mechanism.**
+
+It is now structure-based, and the routing is tested against the exact shape that
+failed:
+
+| Input | Routes to |
+|---|---|
+| `<EntitlementGroups>` present | `entitlement-xml` |
+| `<root>` **and** `<Signature>` | `ulf` |
+| `<root>` without `<Signature>` — **the run-24 shape** | `entitlement-xml` |
+| XML, neither marker | `entitlement-xml`, with a warning |
+| not XML | `other` → hard fail |
+
+The preflight now also prints the document's **shape** — byte count, root element,
+and which marker elements are present — so a misroute is diagnosable from the log
+instead of inferred. The value itself is still never printed.
+
+> **What run 24 did prove:** the Licensing Client launches successfully inside the
+> container. That was one of the two open risks, and it is now closed.
 >
-> 1. **The entitlement licence may be bound to the machine that activated it.**
->    If the Licensing Client rejects it in the container, the log will say so.
-> 2. **The editor may need the Licensing Client started explicitly.** The log
->    shows whether it launched on its own.
+> **What is still open:** whether the client accepts this document. The secret
+> contains no `<Signature>` element — which is why the ULF loader rejected it — and
+> if it is also not a well-formed entitlement licence, no route will accept it.
 >
 > **Fallback if it fails:** `UNITY_SERIAL` + `UNITY_EMAIL` + `UNITY_PASSWORD`.
 > That is a supported game-ci route, it re-issues the licence for the runner, and
 > it needs no licence file at all. It is the answer if the entitlement document
-> turns out to be machine-bound.
+> turns out to be machine-bound or malformed.
 
 ### The preflight now fails loudly on an unrecognised format
 

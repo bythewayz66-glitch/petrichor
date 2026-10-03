@@ -181,12 +181,43 @@ jobs:
           # The root element is checked FIRST because an entitlement XML
           # also carries a <Signature> element, so a Signature test alone
           # would misclassify it as a ULF.
-          if printf '%s' "$UNITY_LICENSE" | grep -q '<root'; then
-            FORMAT="ulf"
-          elif printf '%s' "$UNITY_LICENSE" | grep -q 'EntitlementGroups\|<License'; then
+          # Structure probe. Reports the SHAPE of the document, never its
+          # value: byte count, root element, and which marker elements are
+          # present. Run 37110829407 showed the cost of not having this -
+          # the classifier said "ulf" and the log could not say why.
+          LIC_BYTES=$(printf '%s' "$UNITY_LICENSE" | wc -c)
+          LIC_ROOT=$(printf '%s' "$UNITY_LICENSE" | grep -o -m1 '<[A-Za-z][A-Za-z0-9]*' | head -1 || true)
+          HAS_SIG=false
+          HAS_ENT=false
+          printf '%s' "$UNITY_LICENSE" | grep -q '<Signature' && HAS_SIG=true
+          printf '%s' "$UNITY_LICENSE" | grep -q '<EntitlementGroups' && HAS_ENT=true
+          echo "Licence bytes: $LIC_BYTES"
+          echo "Licence root element: ${LIC_ROOT:-<none>}"
+          echo "Has <Signature>: $HAS_SIG"
+          echo "Has <EntitlementGroups>: $HAS_ENT"
+
+          # Route on STRUCTURE, not on a guess.
+          #
+          #   entitlement-xml  <EntitlementGroups> present. The Licensing
+          #                    Client reads it from its own directory.
+          #   ulf              <root> AND <Signature>. This is what
+          #                    -manualLicenseFile expects, and a document
+          #                    without <Signature> is NOT one - handing it
+          #                    to that loader is the Code 400 in run
+          #                    37107565152.
+          #   other            not XML at all.
+          #
+          # XML that is neither is routed to the Licensing Client anyway,
+          # because that is the only remaining route and the more permissive
+          # of the two - but it is flagged, because a document with no
+          # <Signature> may not be a valid licence at all.
+          if [ "$HAS_ENT" = "true" ]; then
             FORMAT="entitlement-xml"
+          elif [ "$HAS_SIG" = "true" ] && printf '%s' "$UNITY_LICENSE" | grep -q '<root'; then
+            FORMAT="ulf"
           elif printf '%s' "$UNITY_LICENSE" | head -c 200 | grep -q '<?xml'; then
-            FORMAT="xml-unknown"
+            FORMAT="entitlement-xml"
+            echo "::warning title=Licence structure::XML with no <Signature> and no <EntitlementGroups>. Routing to the Licensing Client; this may not be a valid licence."
           else
             FORMAT="other"
           fi
@@ -215,9 +246,9 @@ jobs:
               {
                 echo "## Water Gate: FAILED - unrecognised licence format"
                 echo ""
-                echo "A \`UNITY_LICENSE\` secret exists but is neither a ULF nor"
-                echo "an entitlement licence (detected: \`$FORMAT\`). It may be"
-                echo "base64-encoded, truncated, or the wrong file entirely."
+                echo "A \`UNITY_LICENSE\` secret exists but is not XML at all"
+                echo "(detected: \`$FORMAT\`). It may be base64-encoded,"
+                echo "truncated, or the wrong file entirely."
                 echo ""
                 echo "### The two supported formats"
                 echo ""

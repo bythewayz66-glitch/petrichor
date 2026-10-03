@@ -7,7 +7,7 @@
     "private": false,
     "visibility_note": "Made public on 2026-10-01 so a local agent can clone it with no credentials. It was private when this handoff was first written; nothing else in this file changed.",
     "default_branch": "main",
-    "head_commit": "71334b1f802b096fac777755e1572d93d1a838c4",
+    "head_commit": "784bf67485c4d4dd85e03c66abcd2d78cb61c484",
     "head_commit_note": "HEAD at the moment this file was last revised (2026-10-03). The commit that adds this revision is a child of it."
   },
   "engine": {
@@ -150,10 +150,10 @@
   ],
   "blocking_item": {
     "id": "UNITY_LICENSE_ENTITLEMENT_PATH_UNVERIFIED",
-    "summary": "The UNITY_LICENSE secret holds an entitlement XML (root <License>), not a ULF. The CI gate ran once and failed on activation. The workflow now supports the entitlement format by mounting the licence into the Licensing Client's directory, but that path has never run, so the CI gate still has no verdict.",
-    "verified": "GITHUB_LIST_REPOSITORY_SECRETS returned total_count: 1, secret named UNITY_LICENSE, created 2026-10-03T07:36:04Z. Run 37107565152's log shows the licence rejected.",
+    "summary": "The UNITY_LICENSE secret holds a document that is not a ULF. The CI gate has run four times and failed on activation every time. The workflow now routes entitlement XML to the Licensing Client, but the first attempt (run 37110829407) was misrouted to the ULF loader by a classifier bug, so the entitlement path itself has still never executed. The CI gate has no verdict.",
+    "verified": "GITHUB_LIST_REPOSITORY_SECRETS returned total_count: 1, secret named UNITY_LICENSE. Runs 37107565152, 37109026756, 37109526130 and 37110829407 all show the licence rejected.",
     "effect": "The preflight now classifies the secret's root element and sets licensed=true for BOTH ulf and entitlement-xml. For entitlement-xml the gate skips game-ci's activation step and instead writes the licence to ~/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml and mounts it into the editor image.",
-    "warning": "Do not read the entitlement path as working. It is wired and syntax-checked only. No run has used it. If the Licensing Client rejects the licence in the container, the fallback is UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD, which re-issues the licence for the runner.",
+    "warning": "Do not read the entitlement path as working. It is wired and syntax-checked only, and its one attempt was misrouted before it could run. The secret contains no <Signature> element, which is why the ULF loader rejected it; if it is also not a well-formed entitlement licence, no route will accept it. Fallback: UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD, which re-issues the licence for the runner.",
     "formats": {
       "ulf": {
         "root_element": "root",
@@ -209,9 +209,11 @@
     "verification_status": {
       "workflow_yaml_parses": "VERIFIED - yaml.safe_load, 2 jobs, 16 gate steps",
       "run_blocks_valid_shell": "VERIFIED - bash -n on all 11 run blocks, 0 failures",
-      "classifier_routes_correctly": "VERIFIED - tested against synthetic <License>, <root>, plain-text, empty and base64 inputs",
-      "entitlement_path_activates_unity_in_ci": "UNVERIFIED - no run has used it"
-    }
+      "classifier_routes_correctly": "VERIFIED - tested against <License>, <root>+<Signature>, <root> without <Signature>, plain-text and empty inputs",
+      "licensing_client_launches_in_container": "VERIFIED - run 37110829407: Successfully launched the LicensingClient (PId: 38), v1.18.3+d7ffd15",
+      "entitlement_path_activates_unity_in_ci": "UNVERIFIED - its first attempt was misrouted before it could run"
+    },
+    "classifier_defect": "Run 37110829407 exposed a bug in the classifier added the same day: it matched '<root' anywhere in the document, so a document containing a <root element was routed to the ULF loader - the one loader that cannot read it. The classifier is now structure-based: <EntitlementGroups> -> entitlement-xml; <root> AND <Signature> -> ulf; any other XML -> entitlement-xml with a warning; not XML -> hard fail. The preflight also prints the document's shape (byte count, root element, marker elements) so a misroute is diagnosable from the log."
   },
   "next_steps": [
     {
@@ -414,16 +416,42 @@
     "stability_risk": "The verdict flips on CPU contention alone. A rung-1 PASS is not reproducible unless machine quietness is recorded.",
     "ci_gate_has_produced_a_verdict": false,
     "ci_gate_has_compiled": false,
-    "ci_runs_total": 23,
-    "ci_runs_that_skipped_the_gate": 22,
-    "ci_runs_that_executed_the_gate": 1,
-    "ci_gate_failure": "run 37107565152: [Licensing::Client] Error: Code 400 while processing request (status: Cannot load ULF license: Signature element not found in XML document)",
+    "ci_runs_total": 25,
+    "ci_runs_that_skipped_the_gate": 21,
+    "ci_runs_that_executed_the_gate": 4,
+    "ci_gate_failure": "runs 37107565152, 37109026756, 37109526130, 37110829407: [Licensing::Client] Error: Code 400 while processing request (status: Cannot load ULF license: Signature element not found in XML document)",
     "local_gate_has_compiled": true,
     "local_verdicts": [
       "BUDGET FAIL at rung 0",
       "PASS at rung 1 on a quiet box",
       "BUDGET FAIL at rung 1 on a loaded box"
     ],
-    "android_tier_measured": false
+    "android_tier_measured": false,
+    "ci_gate_runs": [
+      {
+        "run": 37107565152,
+        "commit": "71334b1f",
+        "duration_s": 133,
+        "outcome": "INPUT ERROR - licence rejected"
+      },
+      {
+        "run": 37109026756,
+        "commit": "71334b1f",
+        "duration_s": null,
+        "outcome": "INPUT ERROR - licence rejected"
+      },
+      {
+        "run": 37109526130,
+        "commit": "71334b1f",
+        "duration_s": 129,
+        "outcome": "INPUT ERROR - licence rejected"
+      },
+      {
+        "run": 37110829407,
+        "commit": "784bf674",
+        "duration_s": 111,
+        "outcome": "INPUT ERROR - licence rejected; entitlement branch skipped by a classifier bug"
+      }
+    ]
   }
 }

@@ -8,7 +8,7 @@ The rule that makes the game work is the **Mineral Law**: *stone cannot be force
 
 No combat. No antagonist. Quiet, enormous, hopeful. The world can kill you with a fall or a flood, but it will never hunt you.
 
-**Status:** pre-production. The design package is complete and the repository scaffold is committed — the twelve assemblies, the water solver interface, and the week-one benchmark harness. **The gate has now run, locally and in CI.** Locally it produced verdicts (`BUDGET FAIL` at rung 0, `PASS` at rung 1 on a quiet box); in CI it executed for the first time on 2026-10-03 (run 37107565152) and **failed on licence activation**, because the `UNITY_LICENSE` secret holds an entitlement XML and the workflow only knew how to feed Unity a `.ulf`. **The workflow now supports the entitlement XML directly** — it mounts the licence into the Licensing Client's own directory instead of handing it to the manual-activation loader. That path is wired and syntax-checked but **has not yet run**, so the CI gate is still without a verdict. Week 1 of the implementation roadmap is a **gate** — a headless benchmark that decides whether the water solver can run on a mid-range phone. Nothing downstream of it starts until it returns a reproducible verdict.
+**Status:** pre-production. The design package is complete and the repository scaffold is committed — the twelve assemblies, the water solver interface, and the week-one benchmark harness. **The gate has now run, locally and in CI.** Locally it produced verdicts (`BUDGET FAIL` at rung 0, `PASS` at rung 1 on a quiet box); in CI it executed for the first time on 2026-10-03 (run 37107565152) and **failed on licence activation**, because the `UNITY_LICENSE` secret holds an entitlement XML and the workflow only knew how to feed Unity a `.ulf`. **The workflow now supports the entitlement XML directly** — it mounts the licence into the Licensing Client's own directory instead of handing it to the manual-activation loader. That path has been attempted once (run 37110829407) and **the classifier misrouted the secret to the ULF loader**, so the same Code 400 recurred; the classifier is now structure-based and the routing is fixed, but the entitlement path itself is still **unverified**. The CI gate is still without a verdict. Week 1 of the implementation roadmap is a **gate** — a headless benchmark that decides whether the water solver can run on a mid-range phone. Nothing downstream of it starts until it returns a reproducible verdict.
 
 ---
 
@@ -448,14 +448,26 @@ docker run --rm \
 The licence value is never printed — it goes from the environment straight to the file,
 and the file is never `cat`'d. Only its byte count and root element are reported.
 
-> **This path is UNVERIFIED.** It was written on 2026-10-03 and no run has used it. Two
-> things could still be wrong, and both are visible in the log:
+> **This path is UNVERIFIED, and its first attempt failed for a different reason.**
+>
+> Run **37110829407** (2026-10-03, commit `784bf674`) was the first to try it. The gate ran,
+> but the preflight classified the secret as `ulf` — the old test matched `<root` anywhere in
+> the document — so the entitlement branch was **skipped** and the identical Code 400
+> recurred. The classifier is now structure-based: `<EntitlementGroups>` → entitlement,
+> `<root>` **and** `<Signature>` → ULF, any other XML → entitlement with a warning.
+>
+> That run did prove one thing the mechanism depends on: **the Licensing Client launches
+> successfully in the container** — `Successfully launched the LicensingClient (PId: 38)`,
+> version `1.18.3+d7ffd15`, machine id `D7nTUnjNAmtsUMcnoyrqkgIbYdM=`. So the client is
+> available; what is unproven is whether it accepts this document.
+>
+> Two things could still be wrong, and both are visible in the log:
 >
 > 1. **The entitlement licence may be bound to the machine that activated it.** If the
->    Licensing Client rejects it in the container, the log will say so. The fallback is the
->    Plus/Pro route below, which re-issues the licence for the runner.
-> 2. **The editor may need the Licensing Client started explicitly.** The log shows whether
->    it launched on its own.
+>    Licensing Client rejects it in the container, the log will say so.
+> 2. **The document may not be a valid licence at all.** The secret contains no
+>    `<Signature>` element, which is why the ULF loader rejected it. If it is also not a
+>    well-formed entitlement licence, no route will accept it.
 >
 > If the entitlement path fails, the fallback is `UNITY_SERIAL` + `UNITY_EMAIL` +
 > `UNITY_PASSWORD`, which is a supported game-ci route and needs no licence file at all.
