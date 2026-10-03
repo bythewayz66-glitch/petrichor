@@ -13,7 +13,7 @@
 | **Handoff written** | 2026-09-30, **revised 2026-10-03** |
 | **Engine** | Unity **6000.5.9f1** (changeset `b57deb96f08d`), URP |
 | **Reference device** | Samsung Galaxy A54 5G (`SM-A546B` — one of eight regional variants) |
-| **Blocking item** | **No `UNITY_LICENSE` secret — the CI gate has never run.** A gate *has* run locally; see §1.4 and §3 |
+| **Blocking item** | **The `UNITY_LICENSE` secret holds XML, not a ULF — the CI gate ran and failed on activation.** See §3 |
 
 ---
 
@@ -68,8 +68,8 @@ number is not.
 
 ### 1.3 What does **not** exist
 
-- **No CI gate run.** Every GitHub Actions run has skipped the `gate` job for
-  want of a licence secret. See §1.4.
+- **No CI gate verdict.** The `gate` job first ran on 2026-10-03 and failed on
+  licence activation before the checker produced a verdict. See §1.4 and §3.
 - **No art.** `Assets/Art/` contains only its `.gitignore` and `.gitattributes`.
   No purchased packs have been imported.
 - **No scenes or prefabs.** There are no `.unity` or `.prefab` files. The
@@ -80,16 +80,16 @@ number is not.
   per-scenario summaries and the NUnit XML behind the committed verdicts exist
   only on the machine that produced them.
 
-### 1.4 The gate has run — locally, not in CI
+### 1.4 The gate has run — locally, and once in CI (which failed on the licence)
 
 This is the single most important distinction in this document, and the one most
 likely to be misread.
 
 | | CI gate (GitHub Actions) | Local gate (headless editor) |
 |---|---|---|
-| Has it run? | **No — never** | **Yes**, on 2026-10-01 and again 2026-10-03 |
-| Evidence | every run's `gate` job is `skipped` with `steps: []` | `docs/gate-reports/gate-20261001-M01-linux-0001.md`, and two committed verdict files |
-| Verdict produced | none | `BUDGET FAIL` at rung 0; `PASS` at rung 1 on a quiet box; `BUDGET FAIL` at rung 1 on a loaded box |
+| Has it run? | **Yes — once**, on 2026-10-03 (run 37107565152) | **Yes**, on 2026-10-01 and again 2026-10-03 |
+| Evidence | run 37107565152's `gate` job executed its steps; the log shows the licence rejected | `docs/gate-reports/gate-20261001-M01-linux-0001.md`, and two committed verdict files |
+| Verdict produced | none — activation failed before the checker ran | `BUDGET FAIL` at rung 0; `PASS` at rung 1 on a quiet box; `BUDGET FAIL` at rung 1 on a loaded box |
 | Report written | n/a | one, for the 2026-10-01 run |
 
 **The C# has been compiled.** The 2026-10-01 run compiled the project, fixed two
@@ -97,8 +97,11 @@ compile errors, and executed all four scenarios. Risk 1 in §5 is therefore
 resolved; risk 2 is partly resolved and partly *worse* than "unverified" — see
 §5.
 
-**The CI gate is still skipped.** A green tick on the Actions page still means
-nothing. Do not read one as a pass.
+**The CI gate has now run, and it failed on the licence format.** Run
+37107565152 executed the `gate` job for the first time; activation rejected the
+secret with `Cannot load ULF license: Signature element not found in XML
+document`. The gate is no longer skipped — it is red for a real, fixable reason.
+See §3.
 
 ---
 
@@ -177,19 +180,49 @@ halves of one mechanism; without both, neither does anything.
 
 ---
 
-## 3. The one blocking item
+## 3. The blocking item: the licence is the wrong format
 
-**There is no `UNITY_LICENSE` secret on the repository, so the `gate` job in
-`.github/workflows/water-gate.yml` has never executed.** The `preflight` job
-detects the absence, writes a skip notice, and exits green — so the workflow
-shows a green tick while doing nothing. Do not read a green run as a pass.
+**The `UNITY_LICENSE` secret now exists** (added 2026-10-03T07:36:04Z), so the
+`gate` job executed in CI for the first time. It **failed**, and the failure is
+an input problem, not a solver problem.
 
-Verified: `GITHUB_LIST_REPOSITORY_SECRETS` returns `total_count: 0`. No
-`UNITY_LICENSE`, `UNITY_SERIAL`, `UNITY_EMAIL` or `UNITY_PASSWORD` exists.
+Verified: `GITHUB_LIST_REPOSITORY_SECRETS` returns `total_count: 1`, and the
+secret is named `UNITY_LICENSE`.
 
-> **This blocks CI, not measurement.** A gate has already run locally and
-> produced a real verdict (§1.4). What the missing secret costs is automatic
-> checking on push — not the existence of a result.
+### What happened
+
+Run **37107565152** (run #20, push, 133 s) ran the gate for real. The
+`Run the benchmark` step took 117 s and the job ended at
+`Enforce the verdict`. The log shows the licence was loaded and rejected:
+
+```
+[Licensing::Module] Loading manual activation license file UnityLicenseFile.ulf.
+[Licensing::Client] Error: Code 400 while processing request
+  (status: Cannot load ULF license: Signature element not found in XML document)
+```
+
+**The secret holds XML, but not a ULF.** Unity's manual-activation loader
+(`-manualLicenseFile`, which is what game-ci's activation step uses) reads a
+`.ulf` document whose root element is `<root>` and which carries a
+`<Signature>` element. The value in the secret is an **entitlement licence**
+(`UnityEntitlementLicense.xml`), whose root element is `<License>` and which
+carries `<EntitlementGroups>`. The two are different documents for different
+loaders, and handing the second to the first produces exactly the Code 400
+above.
+
+> **This is not a skip and not a pass.** The gate ran, the container started,
+> and activation failed. The run is red for a real reason.
+
+### The two formats
+
+| Format | Root element | Distinctive child | How Unity reads it |
+|---|---|---|---|
+| `.ulf` | `<root>` | `<Signature>` | `-manualLicenseFile`; game-ci's activation step |
+| entitlement `.xml` | `<License>` | `<EntitlementGroups>` | the Licensing Client, from its own licences directory |
+
+Both carry a `<Signature>` element, so **a Signature test alone cannot tell them
+apart** — the root element is the discriminator. The preflight now checks the
+root element first for exactly this reason.
 
 ### To unblock it
 
@@ -218,15 +251,35 @@ The personal route is preferred: one secret, and no account password in CI.
 > the runner. If activation fails, the usual cause is that the licence is active
 > on too many machines — deactivate one from the Unity account page and retry.
 
+### The preflight now fails loudly on a wrong format
+
+The old preflight asked one question — *is a licence secret present?* — and
+answered `licensed=true` for any non-empty value. That is why a wrong-format
+licence reached the container and failed 90 seconds later.
+
+It now classifies the value before the gate is allowed to start:
+
+| Detected | `licensed` | Outcome |
+|---|---|---|
+| absent | `false` | gate skipped, run green (unchanged) |
+| `ulf` | `true` | gate runs |
+| `entitlement-xml` | `false` | **run fails in ~5 s** with the format named and the fix given |
+| `xml-unknown` | `false` | **run fails** |
+| `other` (not XML) | `false` | **run fails** |
+
+The value is never printed — only its shape. A wrong-format licence now costs
+five seconds and a clear message instead of a full CI cycle.
+
 ---
 
 ## 4. What to do next, in order
 
-### Step 1 — Unblock the CI gate (§3)
+### Step 1 — Fix the licence format (§3)
 
-The gate has already returned a verdict **locally** (§1.4), so week 1 is not
-unmeasured. What is still missing is the **CI** gate: until the secret exists,
-no push is checked automatically and a green tick means nothing. Week 1 is a
+The gate has returned a verdict **locally** (§1.4), and the **CI** gate has now
+executed for the first time — but it failed on activation, because the
+`UNITY_LICENSE` secret holds an entitlement XML rather than a ULF. Replace the
+secret with a real `.ulf` and the gate will run end to end. Week 1 is a
 **gate**, not a week of work: it decides whether the water solver can run on a
 mid-range phone, and it can re-baseline the entire plan.
 
@@ -273,8 +326,9 @@ the week-one gate. Do not start before it returns a verdict."*
 
 The C# **has** been compiled, by the 2026-10-01 headless run, which found and
 fixed two errors (§5, risk 1). A fresh clone still needs its first open, but
-the "expect it to fail" budget is spent. What remains unverified is the **CI**
-compile, which has never run.
+the "expect it to fail" budget is spent. The **CI** compile has also now run:
+run 37107565152 reached the benchmark step and spent 117 s in it, which means
+the project compiled in CI. What failed was licence activation, not the build.
 
 ---
 
@@ -284,7 +338,7 @@ compile, which has never run.
 
 | # | Claim | Status | What it means |
 |---|---|---|---|
-| 1 | The C# harness compiles | **VERIFIED (locally)** | The 2026-10-01 headless run compiled it. Two errors were found and fixed: `BenchmarkHarness.cs` and `ScenarioResult.cs` were missing `using PET.Water;`, and `PET.Benchmarks.asmdef` lacked the test-runner references so the assembly was not registered as a test assembly. **Not verified in CI** — the CI gate has never run |
+| 1 | The C# harness compiles | **VERIFIED (locally and in CI)** | The 2026-10-01 headless run compiled it and fixed two errors: `BenchmarkHarness.cs` and `ScenarioResult.cs` were missing `using PET.Water;`, and `PET.Benchmarks.asmdef` lacked the test-runner references so the assembly was not registered as a test assembly. CI run 37107565152 then spent 117 s in the benchmark step, which requires a successful compile. **The CI build is no longer unverified; the CI *verdict* is** — activation failed before the checker ran |
 | 2 | The gate passes | **PARTLY VERIFIED — AND UNSTABLE** | It has run locally. Rung 0 is a clean `BUDGET FAIL` (9 metrics over). Rung 1 returned `PASS` twice on a quiet pinned box and `BUDGET FAIL` on a loaded box. **The verdict flips on CPU contention alone**, so a rung-1 `PASS` is not reproducible without recording machine quietness. The Android tier has never been measured on any device |
 | 3 | The four scenarios are correctly parameterised | **UNVERIFIED** | 3000 settle steps, 500 samples, 3600× multiplier are reasoned, not tuned. If scenario A's settle loop is too short, A reports a transient cost and becomes a second B |
 | 4 | The changeset `b57deb96f08d` | **READ OFF A MACHINE** | Taken from the installed editor's `modules.json` on the box where the benchmarks were measured, so version and changeset provably agree. A different install of the same patch should still carry the same changeset; if it does not, you have a different build |
@@ -519,9 +573,10 @@ of them is a bug and it is worth finding out which.
 ## 9. The one-line version
 
 **The plan is fully ticketed and the repository is consistent. The C# compiles
-and the gate has run locally: rung 0 is a clean `BUDGET FAIL`, rung 1 is a `PASS`
-on a quiet box and a `BUDGET FAIL` on a loaded one, and the Android tier has
-never been measured. The CI gate has still never run, because there is still no
-`UNITY_LICENSE` secret. Add the secret, make the verdict reproducible by
-recording machine quietness, and measure the Android tier before week 2 is
-called done.**
+locally and in CI, and the gate has run both ways: rung 0 is a clean `BUDGET
+FAIL`, rung 1 is a `PASS` on a quiet box and a `BUDGET FAIL` on a loaded one,
+and the Android tier has never been measured. The CI gate has now executed for
+the first time and failed on activation, because the `UNITY_LICENSE` secret
+holds an entitlement XML rather than a ULF. Replace the secret with a real
+`.ulf`, make the verdict reproducible by recording machine quietness, and
+measure the Android tier before week 2 is called done.**
