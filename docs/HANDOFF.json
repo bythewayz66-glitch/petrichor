@@ -147,17 +147,30 @@
     }
   ],
   "blocking_item": {
-    "id": "UNITY_LICENSE",
-    "summary": "No Unity licence secret exists, so the CI gate job has never executed. A gate HAS run locally; see gate_history.",
-    "verified": "GITHUB_LIST_REPOSITORY_SECRETS returned total_count: 0",
-    "effect": "The preflight job detects the absence, writes a skip notice and exits green. The workflow shows a green tick while doing nothing. This does not mean the project is unmeasured - it means CI is unmeasured.",
-    "warning": "Do not read a green CI run as a pass. Equally, do not read 'the gate has never run' as 'nothing has been measured' - the local run produced a real verdict.",
+    "id": "UNITY_LICENSE_FORMAT",
+    "summary": "The UNITY_LICENSE secret exists but holds an entitlement XML, not a ULF. The CI gate executed for the first time on 2026-10-03 and failed on activation.",
+    "verified": "GITHUB_LIST_REPOSITORY_SECRETS returned total_count: 1, secret named UNITY_LICENSE, created 2026-10-03T07:36:04Z",
+    "effect": "The preflight saw a non-empty secret and set licensed=true, so the gate ran. Unity's manual-activation loader then rejected the value: 'Cannot load ULF license: Signature element not found in XML document'. The run is red for a real reason, not skipped.",
+    "warning": "Do not read this as a skip. The gate ran, the container started, and activation failed. Equally, do not read it as a solver failure - the checker never ran.",
+    "formats": {
+      "ulf": {
+        "root_element": "root",
+        "distinctive_child": "Signature",
+        "read_by": "-manualLicenseFile, and game-ci's activation step"
+      },
+      "entitlement_xml": {
+        "root_element": "License",
+        "distinctive_child": "EntitlementGroups",
+        "read_by": "the Licensing Client, from its own licences directory"
+      },
+      "discriminator_note": "Both documents carry a Signature element, so a Signature test alone cannot tell them apart. The root element is the discriminator, and the preflight checks it first for that reason."
+    },
     "resolution_steps": [
       "Activate a personal licence so Unity writes Unity_lic.ulf",
       "Copy the WHOLE file including the <?xml ?> declaration and the closing </root> tag",
       "Open https://github.com/bythewayz66-glitch/petrichor/settings/secrets/actions",
-      "New repository secret, named exactly UNITY_LICENSE",
-      "Re-run the workflow; the gate job will execute"
+      "Replace the UNITY_LICENSE secret with the ULF contents",
+      "Re-run the workflow; the gate job will execute end to end"
     ],
     "ulf_paths": {
       "linux": "~/.local/share/unity3d/Unity/Unity_lic.ulf",
@@ -171,14 +184,26 @@
         "UNITY_PASSWORD"
       ],
       "for": "Plus / Pro",
-      "note": "Personal route preferred: one secret, no account password in CI."
+      "note": "Personal route preferred: one secret, no account password in CI. Use this if Unity Hub will only export an entitlement XML."
+    },
+    "preflight_hardening": {
+      "what_changed": "The preflight used to ask only whether a licence secret was present, and answered licensed=true for any non-empty value. It now classifies the value before the gate may start.",
+      "outcomes": {
+        "absent": "licensed=false, gate skipped, run green (unchanged)",
+        "ulf": "licensed=true, gate runs",
+        "entitlement-xml": "licensed=false, run FAILS in about 5 s with the format named and the fix given",
+        "xml-unknown": "licensed=false, run FAILS",
+        "other": "licensed=false, run FAILS"
+      },
+      "secret_handling": "The value is never printed. Only its shape is reported."
     }
   },
   "next_steps": [
     {
       "order": 1,
-      "action": "Add the UNITY_LICENSE secret",
-      "ref": "blocking_item"
+      "action": "Replace the UNITY_LICENSE secret with a real .ulf",
+      "ref": "blocking_item",
+      "note": "The secret exists but holds an entitlement XML. The gate ran and failed on activation."
     },
     {
       "order": 2,
@@ -203,8 +228,8 @@
   "unverified_claims": [
     {
       "claim": "The C# harness compiles",
-      "status": "VERIFIED (locally)",
-      "reason": "The 2026-10-01 headless run compiled it and fixed two errors: missing 'using PET.Water;' in BenchmarkHarness.cs and ScenarioResult.cs, and PET.Benchmarks.asmdef lacking the test-runner references. NOT verified in CI - the CI gate has never run."
+      "status": "VERIFIED (locally and in CI)",
+      "reason": "The 2026-10-01 headless run compiled it and fixed two errors: missing 'using PET.Water;' in BenchmarkHarness.cs and ScenarioResult.cs, and PET.Benchmarks.asmdef lacking the test-runner references. CI run 37107565152 then spent 117 s in the benchmark step, which requires a successful compile. The CI build is no longer unverified; the CI verdict is - activation failed before the checker ran."
     },
     {
       "claim": "The gate passes",
@@ -345,10 +370,13 @@
     "harness": "Assets/Tests/Benchmarks/BenchmarkHarness.cs",
     "scenarios": "Assets/Tests/Benchmarks/BenchmarkScenarios.cs"
   },
-  "one_line": "The plan is fully ticketed and the repository is consistent. The C# compiles and the gate has run locally: rung 0 is a clean BUDGET FAIL, rung 1 is a PASS on a quiet box and a BUDGET FAIL on a loaded one, and the Android tier has never been measured. The CI gate has still never run because there is still no UNITY_LICENSE secret. Add the secret, make the verdict reproducible by recording machine quietness, and measure the Android tier before week 2 is called done.",
+  "one_line": "The plan is fully ticketed and the repository is consistent. The C# compiles locally and in CI, and the gate has run both ways: rung 0 is a clean BUDGET FAIL, rung 1 is a PASS on a quiet box and a BUDGET FAIL on a loaded one, and the Android tier has never been measured. The CI gate executed for the first time on 2026-10-03 and failed on activation, because the UNITY_LICENSE secret holds an entitlement XML rather than a ULF. Replace the secret with a real .ulf, make the verdict reproducible by recording machine quietness, and measure the Android tier before week 2 is called done.",
   "gate_history": {
-    "ci_gate_has_run": false,
-    "ci_gate_note": "Every GitHub Actions run has skipped the gate job for want of a licence secret. A green tick on the Actions page still means nothing.",
+    "ci_gate_has_run": true,
+    "ci_gate_note": "The gate job executed in CI for the first time on 2026-10-03 (run 37107565152, run #20, push, 133 s). It failed on licence activation, not on the solver: the UNITY_LICENSE secret holds an entitlement XML rather than a ULF. The benchmark step ran for 117 s, so the project compiled in CI.",
+    "ci_gate_verdict": "INPUT ERROR - activation failed before the checker ran",
+    "ci_gate_failure_line": "[Licensing::Client] Error: Code 400 while processing request (status: Cannot load ULF license: Signature element not found in XML document)",
+    "ci_runs_before_this": "18 runs, all skipped the gate in 5-14 s for want of a licence secret",
     "local_gate_has_run": true,
     "local_gate_note": "Run headless on 2026-10-01 and again 2026-10-03. The C# has been compiled. Two compile errors were found and fixed on the first run.",
     "report": "docs/gate-reports/gate-20261001-M01-linux-0001.md",
