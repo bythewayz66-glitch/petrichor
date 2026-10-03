@@ -1,14 +1,14 @@
 {
   "$schema": "petrichor-handoff/1",
-  "generated": "2026-09-30",
+  "generated": "2026-09-30, revised 2026-10-03",
   "repository": {
     "owner": "bythewayz66-glitch",
     "name": "petrichor",
     "private": false,
     "visibility_note": "Made public on 2026-10-01 so a local agent can clone it with no credentials. It was private when this handoff was first written; nothing else in this file changed.",
     "default_branch": "main",
-    "head_commit": "5fe197bb0ef1c0a5ba55401266510b1b31504518",
-    "head_commit_note": "HEAD at the moment this file was written; the commit that adds this file is its child."
+    "head_commit": "7ccff93333af79452d70e2d267f2f7e56d3d0c24",
+    "head_commit_note": "HEAD at the moment this file was last revised (2026-10-03). The commit that adds this revision is its child."
   },
   "engine": {
     "unity": "6000.3.0f1",
@@ -45,32 +45,113 @@
     "issue_numbering_note": "Issue numbers are in week order EXCEPT for one transposition: #9 is week 2 (W2.1) and #10 is week 1 (W1.9). Weeks 3-16 are contiguous. The week-NN label is authoritative, not the issue number.",
     "board_items": 144,
     "assemblies": 12,
-    "csharp_files": 14,
-    "csharp_files_note": "Recounted from the committed tree. Was 15, which was wrong: the tree holds 6 under Assets/Scripts/Water and 8 under Assets/Tests/Benchmarks.",
-    "committed_gate_reports": 0,
-    "verified_by": "GraphQL totalCount queries"
+    "csharp_files": 16,
+    "csharp_files_note": "Recounted from the committed tree on 2026-10-03. Was 14, then 15 (wrong), now 16: 6 under Assets/Scripts/Water, 8 under Assets/Tests/Benchmarks, 2 under Assets/Editor/Terrain. The terrain editor tools landed after the previous revision.",
+    "committed_gate_reports": 1,
+    "verified_by": "GraphQL totalCount queries",
+    "committed_gate_reports_note": "docs/gate-reports/gate-20261001-M01-linux-0001.md. Was 0.",
+    "committed_verdicts": 2,
+    "committed_verdicts_note": "BenchmarkResults/verdict_linux.txt (attempt 0) and verdict_linux_attempt1_res129.txt (attempt 1). .gitignore excludes everything else under BenchmarkResults/, so the per-scenario summaries and NUnit XML are NOT in the repository."
   },
   "issue_ranges": [
-    { "milestone": "M1 - Water Gate", "weeks": "1", "issues": "1-8, 10", "count": 9, "days": 5.0 },
-    { "milestone": "M2 - Grey-box Terrain and Streaming", "weeks": "2", "issues": "9, 11-18", "count": 9, "days": 5.0 },
-    { "milestone": "M3-4 - Edit Pipeline and Journal", "weeks": "3-4", "issues": "19-36", "count": 18, "days": 10.0 },
-    { "milestone": "M5 - Water in the World", "weeks": "5", "issues": "37-45", "count": 9, "days": 5.0 },
-    { "milestone": "M6 - Slice Geometry Locked", "weeks": "6", "issues": "46-54", "count": 9, "days": 5.0 },
-    { "milestone": "M7 - Instrument and Failure Messages", "weeks": "7", "issues": "55-63", "count": 9, "days": 5.0 },
-    { "milestone": "M8-9 - Life and Succession", "weeks": "8-9", "issues": "64-81", "count": 18, "days": 10.0 },
-    { "milestone": "M10 - Save Round-Trip", "weeks": "10", "issues": "82-90", "count": 9, "days": 5.0 },
-    { "milestone": "M11 - Android Tier", "weeks": "11", "issues": "91-99", "count": 9, "days": 5.0 },
-    { "milestone": "M12-13 - Content Pass", "weeks": "12-13", "issues": "100-117", "count": 18, "days": 10.0 },
-    { "milestone": "M14 - Art and Audio", "weeks": "14", "issues": "118-126", "count": 9, "days": 5.0 },
-    { "milestone": "M15 - Performance", "weeks": "15", "issues": "127-135", "count": 9, "days": 5.0 },
-    { "milestone": "M16 - Freeze and Playtest", "weeks": "16", "issues": "136-144", "count": 9, "days": 5.0 }
+    {
+      "milestone": "M1 - Water Gate",
+      "weeks": "1",
+      "issues": "1-8, 10",
+      "count": 9,
+      "days": 5.0
+    },
+    {
+      "milestone": "M2 - Grey-box Terrain and Streaming",
+      "weeks": "2",
+      "issues": "9, 11-18",
+      "count": 9,
+      "days": 5.0
+    },
+    {
+      "milestone": "M3-4 - Edit Pipeline and Journal",
+      "weeks": "3-4",
+      "issues": "19-36",
+      "count": 18,
+      "days": 10.0
+    },
+    {
+      "milestone": "M5 - Water in the World",
+      "weeks": "5",
+      "issues": "37-45",
+      "count": 9,
+      "days": 5.0
+    },
+    {
+      "milestone": "M6 - Slice Geometry Locked",
+      "weeks": "6",
+      "issues": "46-54",
+      "count": 9,
+      "days": 5.0
+    },
+    {
+      "milestone": "M7 - Instrument and Failure Messages",
+      "weeks": "7",
+      "issues": "55-63",
+      "count": 9,
+      "days": 5.0
+    },
+    {
+      "milestone": "M8-9 - Life and Succession",
+      "weeks": "8-9",
+      "issues": "64-81",
+      "count": 18,
+      "days": 10.0
+    },
+    {
+      "milestone": "M10 - Save Round-Trip",
+      "weeks": "10",
+      "issues": "82-90",
+      "count": 9,
+      "days": 5.0
+    },
+    {
+      "milestone": "M11 - Android Tier",
+      "weeks": "11",
+      "issues": "91-99",
+      "count": 9,
+      "days": 5.0
+    },
+    {
+      "milestone": "M12-13 - Content Pass",
+      "weeks": "12-13",
+      "issues": "100-117",
+      "count": 18,
+      "days": 10.0
+    },
+    {
+      "milestone": "M14 - Art and Audio",
+      "weeks": "14",
+      "issues": "118-126",
+      "count": 9,
+      "days": 5.0
+    },
+    {
+      "milestone": "M15 - Performance",
+      "weeks": "15",
+      "issues": "127-135",
+      "count": 9,
+      "days": 5.0
+    },
+    {
+      "milestone": "M16 - Freeze and Playtest",
+      "weeks": "16",
+      "issues": "136-144",
+      "count": 9,
+      "days": 5.0
+    }
   ],
   "blocking_item": {
     "id": "UNITY_LICENSE",
-    "summary": "No Unity licence secret exists, so the gate job has never executed.",
+    "summary": "No Unity licence secret exists, so the CI gate job has never executed. A gate HAS run locally; see gate_history.",
     "verified": "GITHUB_LIST_REPOSITORY_SECRETS returned total_count: 0",
-    "effect": "The preflight job detects the absence, writes a skip notice and exits green. The workflow shows a green tick while doing nothing.",
-    "warning": "Do not read a green run as a pass.",
+    "effect": "The preflight job detects the absence, writes a skip notice and exits green. The workflow shows a green tick while doing nothing. This does not mean the project is unmeasured - it means CI is unmeasured.",
+    "warning": "Do not read a green CI run as a pass. Equally, do not read 'the gate has never run' as 'nothing has been measured' - the local run produced a real verdict.",
     "resolution_steps": [
       "Activate a personal licence so Unity writes Unity_lic.ulf",
       "Copy the WHOLE file including the <?xml ?> declaration and the closing </root> tag",
@@ -84,45 +165,144 @@
       "macos": "/Library/Application Support/Unity/Unity_lic.ulf"
     },
     "alternative": {
-      "secrets": ["UNITY_SERIAL", "UNITY_EMAIL", "UNITY_PASSWORD"],
+      "secrets": [
+        "UNITY_SERIAL",
+        "UNITY_EMAIL",
+        "UNITY_PASSWORD"
+      ],
       "for": "Plus / Pro",
       "note": "Personal route preferred: one secret, no account password in CI."
     }
   },
   "next_steps": [
-    { "order": 1, "action": "Add the UNITY_LICENSE secret", "ref": "blocking_item" },
-    { "order": 2, "action": "Run the gate on both tiers", "command": "Tools/run_bench.sh --tier linux --attempt 0 && Tools/run_bench.sh --tier android --attempt 0" },
-    { "order": 3, "action": "Write the M1 report from docs/GATE_REPORT_TEMPLATE.md into docs/gate-reports/", "gate": "Week 2 must not begin until this report is committed" },
-    { "order": 4, "action": "Work issues #1-#8 and #10 (M1), then #9 and #11-#18 (M2), in order", "note": "#9 is week 2 and #10 is week 1; the week-NN label is authoritative, not the issue number" },
-    { "order": 5, "action": "Expect the first compile to fail; budget an hour for the first open" }
+    {
+      "order": 1,
+      "action": "Add the UNITY_LICENSE secret",
+      "ref": "blocking_item"
+    },
+    {
+      "order": 2,
+      "action": "Run the gate on both tiers",
+      "command": "Tools/run_bench.sh --tier linux --attempt 0 && Tools/run_bench.sh --tier android --attempt 0"
+    },
+    {
+      "order": 3,
+      "action": "Write the M1 report from docs/GATE_REPORT_TEMPLATE.md into docs/gate-reports/",
+      "gate": "Week 2 must not begin until this report is committed"
+    },
+    {
+      "order": 4,
+      "action": "Work issues #1-#8 and #10 (M1), then #9 and #11-#18 (M2), in order",
+      "note": "#9 is week 2 and #10 is week 1; the week-NN label is authoritative, not the issue number"
+    },
+    {
+      "order": 5,
+      "action": "Expect the first compile to fail; budget an hour for the first open"
+    }
   ],
   "unverified_claims": [
-    { "claim": "The C# harness compiles", "status": "UNVERIFIED", "reason": "No Unity licence in the authoring environment; no compiler ever saw it. Verified by inspection and API cross-check only." },
-    { "claim": "The gate passes", "status": "UNVERIFIED", "reason": "It has never run, on any tier." },
-    { "claim": "The four scenarios are correctly parameterised", "status": "UNVERIFIED", "reason": "3000 settle steps, 500 samples, 3600x multiplier are reasoned, not tuned." },
-    { "claim": "The changeset d1870ce95baf", "status": "PUBLISHED_VALUE", "reason": "Unity's published changeset, not read off a machine." },
-    { "claim": "The thresholds are mirrored in two places", "status": "KNOWN_DRIFT_RISK", "reason": "Tools/bench_thresholds.json and BenchmarkScenarios.cs both hold them." },
-    { "claim": "The reference device is owned", "status": "UNCONFIRMED", "reason": "The A54 is a recommendation." },
-    { "claim": "The LFS estimate of 1.4 GB", "status": "ESTIMATE", "reason": "Not measured; no art has been imported." }
+    {
+      "claim": "The C# harness compiles",
+      "status": "VERIFIED (locally)",
+      "reason": "The 2026-10-01 headless run compiled it and fixed two errors: missing 'using PET.Water;' in BenchmarkHarness.cs and ScenarioResult.cs, and PET.Benchmarks.asmdef lacking the test-runner references. NOT verified in CI - the CI gate has never run."
+    },
+    {
+      "claim": "The gate passes",
+      "status": "PARTLY VERIFIED - AND UNSTABLE",
+      "reason": "Rung 0 is a clean BUDGET FAIL. Rung 1 returned PASS twice on a quiet pinned box and BUDGET FAIL on a loaded box. The verdict flips on CPU contention alone. The Android tier has never been measured."
+    },
+    {
+      "claim": "The four scenarios are correctly parameterised",
+      "status": "UNVERIFIED",
+      "reason": "3000 settle steps, 500 samples, 3600x multiplier are reasoned, not tuned."
+    },
+    {
+      "claim": "The changeset d1870ce95baf",
+      "status": "PUBLISHED_VALUE",
+      "reason": "Unity's published changeset, not read off a machine."
+    },
+    {
+      "claim": "The thresholds are mirrored in two places",
+      "status": "KNOWN_DRIFT_RISK",
+      "reason": "Tools/bench_thresholds.json and BenchmarkScenarios.cs both hold them."
+    },
+    {
+      "claim": "The reference device is owned",
+      "status": "UNCONFIRMED",
+      "reason": "The A54 is a recommendation."
+    },
+    {
+      "claim": "The LFS estimate of 1.4 GB",
+      "status": "ESTIMATE",
+      "reason": "Not measured; no art has been imported."
+    }
   ],
   "thresholds": {
-    "linux": { "p50_ms": 1.5, "p95_ms": 3.0, "max_ms": 6.0, "frame_budget_ms": 16.67, "target_fps": 60 },
-    "android": { "p50_ms": 2.5, "p95_ms": 5.0, "max_ms": 10.0, "frame_budget_ms": 33.33, "target_fps": 30 },
+    "linux": {
+      "p50_ms": 1.5,
+      "p95_ms": 3.0,
+      "max_ms": 6.0,
+      "frame_budget_ms": 16.67,
+      "target_fps": 60
+    },
+    "android": {
+      "p50_ms": 2.5,
+      "p95_ms": 5.0,
+      "max_ms": 10.0,
+      "frame_budget_ms": 33.33,
+      "target_fps": 30
+    },
     "unit": "milliseconds per solver step, not per frame",
     "source": "Tools/bench_thresholds.json"
   },
   "exit_codes": {
-    "0": { "verdict": "PASS", "build": "green", "meaning": "Every scenario within threshold" },
-    "1": { "verdict": "BUDGET FAIL", "build": "green", "meaning": "Walk the named rung. A budget miss is a project event, not a broken commit" },
-    "2": { "verdict": "HARD FAIL", "build": "fails", "meaning": "NaN, mass imbalance or a red test. The ladder cannot fix these" },
-    "3": { "verdict": "INPUT ERROR", "build": "fails", "meaning": "The checker could not read its inputs; the run is invalid" }
+    "0": {
+      "verdict": "PASS",
+      "build": "green",
+      "meaning": "Every scenario within threshold"
+    },
+    "1": {
+      "verdict": "BUDGET FAIL",
+      "build": "green",
+      "meaning": "Walk the named rung. A budget miss is a project event, not a broken commit"
+    },
+    "2": {
+      "verdict": "HARD FAIL",
+      "build": "fails",
+      "meaning": "NaN, mass imbalance or a red test. The ladder cannot fix these"
+    },
+    "3": {
+      "verdict": "INPUT ERROR",
+      "build": "fails",
+      "meaning": "The checker could not read its inputs; the run is invalid"
+    }
   },
   "rung_ladder": [
-    { "rung": 1, "action": "Halve the simulation resolution to 129", "cost": "none visible - the render grid is unchanged" },
-    { "rung": 2, "action": "Shrink the active water window to tiles within 1 of the camera", "cost": "distant water stops updating" },
-    { "rung": 3, "action": "Channel graph on Android only", "cost": "Android water is not freely redirectable" },
-    { "rung": 4, "action": "Delay the Android tier", "cost": "Linux-only slice" },
-    { "rung": 5, "action": "Water stops being redirectable", "cost": "a pillar - revisit Deliverable 1" }
+    {
+      "rung": 1,
+      "action": "Halve the simulation resolution to 129",
+      "cost": "none visible - the render grid is unchanged"
+    },
+    {
+      "rung": 2,
+      "action": "Shrink the active water window to tiles within 1 of the camera",
+      "cost": "distant water stops updating"
+    },
+    {
+      "rung": 3,
+      "action": "Channel graph on Android only",
+      "cost": "Android water is not freely redirectable"
+    },
+    {
+      "rung": 4,
+      "action": "Delay the Android tier",
+      "cost": "Linux-only slice"
+    },
+    {
+      "rung": 5,
+      "action": "Water stops being redirectable",
+      "cost": "a pillar - revisit Deliverable 1"
+    }
   ],
   "conventions": {
     "assembly_rule": "An assembly may only reference assemblies below it. Enforced by .asmdef references, so a violation is a compile error.",
@@ -165,5 +345,29 @@
     "harness": "Assets/Tests/Benchmarks/BenchmarkHarness.cs",
     "scenarios": "Assets/Tests/Benchmarks/BenchmarkScenarios.cs"
   },
-  "one_line": "The plan is fully ticketed and the repository is consistent; the gate has never run because there is no Unity licence secret, and the C# has never been compiled. Add UNITY_LICENSE, run Tools/run_bench.sh --tier linux --attempt 0, and write the report before starting week 2."
+  "one_line": "The plan is fully ticketed and the repository is consistent. The C# compiles and the gate has run locally: rung 0 is a clean BUDGET FAIL, rung 1 is a PASS on a quiet box and a BUDGET FAIL on a loaded one, and the Android tier has never been measured. The CI gate has still never run because there is still no UNITY_LICENSE secret. Add the secret, make the verdict reproducible by recording machine quietness, and measure the Android tier before week 2 is called done.",
+  "gate_history": {
+    "ci_gate_has_run": false,
+    "ci_gate_note": "Every GitHub Actions run has skipped the gate job for want of a licence secret. A green tick on the Actions page still means nothing.",
+    "local_gate_has_run": true,
+    "local_gate_note": "Run headless on 2026-10-01 and again 2026-10-03. The C# has been compiled. Two compile errors were found and fixed on the first run.",
+    "report": "docs/gate-reports/gate-20261001-M01-linux-0001.md",
+    "verdicts": [
+      {
+        "attempt": 0,
+        "tile_res": 257,
+        "verdict": "BUDGET FAIL",
+        "rung_named": 1,
+        "note": "9 metrics over budget; correctness OK, so the ladder applies"
+      },
+      {
+        "attempt": 1,
+        "tile_res": 129,
+        "verdict": "PASS",
+        "note": "on a quiet pinned box, twice; BUDGET FAIL on a loaded box"
+      }
+    ],
+    "android_tier": "NEVER MEASURED on any device",
+    "stability_risk": "The verdict flips on CPU contention alone. A rung-1 PASS is not reproducible unless machine quietness is recorded."
+  }
 }
