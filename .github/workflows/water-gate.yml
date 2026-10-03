@@ -102,10 +102,40 @@ jobs:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
         run: |
-          if [ -n "$UNITY_LICENSE" ] || [ -n "$UNITY_SERIAL" ]; then
-            echo "licensed=true" >> "$GITHUB_OUTPUT"
-            echo "A Unity licence secret is present."
-          else
+          # ------------------------------------------------------------------
+          # THREE OUTCOMES, NOT TWO.
+          #
+          #   absent             -> skip the gate, exit green. A repository
+          #                         that is red on every push because a secret
+          #                         is missing is one whose CI everyone
+          #                         learns to ignore.
+          #   present, usable    -> run the gate.
+          #   present, UNUSABLE  -> FAIL LOUDLY.
+          #
+          # The third case is the one that cost a full CI cycle. A licence
+          # secret was added on 2026-10-03 and the gate ran for the first
+          # time (run 37107565152). It failed with:
+          #
+          #   [Licensing::Module] Loading manual activation license file
+          #     UnityLicenseFile.ulf.
+          #   [Licensing::Client] Error: Code 400 while processing request
+          #     (status: Cannot load ULF license: Signature element not
+          #     found in XML document)
+          #
+          # The secret was present, so the old check said "licensed=true"
+          # and the gate ran. The value was an entitlement XML, not a ULF,
+          # so activation failed and the run ended as INPUT ERROR. The old
+          # check could not tell "a licence is configured" from "a licence
+          # Unity can load is configured", and the difference only surfaced
+          # 90 seconds later inside a container.
+          #
+          # This step now classifies the value BEFORE the gate is allowed to
+          # start, so a wrong-format licence fails in about five seconds
+          # with a message that names the format and the fix.
+          #
+          # The value is NEVER printed. Only its shape is reported.
+          # ------------------------------------------------------------------
+          if [ -z "$UNITY_LICENSE" ] && [ -z "$UNITY_SERIAL" ]; then
             echo "licensed=false" >> "$GITHUB_OUTPUT"
             {
               echo "## Water Gate: SKIPPED - no Unity licence configured"
@@ -121,7 +151,110 @@ jobs:
               echo "This is not a failure. The gate needs a licence and there is"
               echo "none, so the run is skipped rather than reported as broken."
             } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
           fi
+
+          if [ -n "$UNITY_SERIAL" ]; then
+            echo "licensed=true" >> "$GITHUB_OUTPUT"
+            echo "A Unity serial is present; the gate will activate with it."
+            exit 0
+          fi
+
+          # A licence value is present. Classify it WITHOUT printing it.
+          #
+          #   ulf              the manual-activation format. Root element
+          #                    <root>, and a <Signature> element. This is
+          #                    what -manualLicenseFile and game-ci's
+          #                    activation step both expect.
+          #   entitlement-xml  an entitlement licence
+          #                    (UnityEntitlementLicense.xml). Root element
+          #                    <License>, with <EntitlementGroups>. Unity's
+          #                    Licensing Client reads it from its own
+          #                    licences directory, NOT from
+          #                    -manualLicenseFile. Handing it to the ULF
+          #                    loader is exactly the Code 400 above.
+          #   xml-unknown      some other XML document.
+          #   other            not XML at all - possibly base64, possibly
+          #                    truncated, possibly the wrong file.
+          #
+          # The root element is checked FIRST because an entitlement XML
+          # also carries a <Signature> element, so a Signature test alone
+          # would misclassify it as a ULF.
+          if printf '%s' "$UNITY_LICENSE" | grep -q '<root'; then
+            FORMAT="ulf"
+          elif printf '%s' "$UNITY_LICENSE" | grep -q 'EntitlementGroups\|<License'; then
+            FORMAT="entitlement-xml"
+          elif printf '%s' "$UNITY_LICENSE" | head -c 200 | grep -q '<?xml'; then
+            FORMAT="xml-unknown"
+          else
+            FORMAT="other"
+          fi
+
+          echo "Licence format detected: $FORMAT"
+
+          case "$FORMAT" in
+            ulf)
+              echo "licensed=true" >> "$GITHUB_OUTPUT"
+              echo "A ULF licence is present; the gate will run."
+              ;;
+            entitlement-xml|xml-unknown)
+              echo "licensed=false" >> "$GITHUB_OUTPUT"
+              {
+                echo "## Water Gate: FAILED - the licence secret is not a ULF"
+                echo ""
+                echo "A \`UNITY_LICENSE\` secret exists, but its contents are"
+                echo "**XML, not ULF** (detected: \`$FORMAT\`). Unity's manual"
+                echo "activation loader cannot read it, so the gate would fail"
+                echo "inside the container with:"
+                echo ""
+                echo '```'
+                echo "Cannot load ULF license: Signature element not found in XML document"
+                echo '```'
+                echo ""
+                echo "This is a **hard failure, not a skip**: a licence IS"
+                echo "configured, so a green tick here would be a lie."
+                echo ""
+                echo "### The two formats"
+                echo ""
+                echo "| Format | Root element | How Unity reads it |"
+                echo "|---|---|---|"
+                echo "| \`.ulf\` | \`<root>\` with \`<Signature>\` | \`-manualLicenseFile\`, and game-ci's activation step |"
+                echo "| entitlement \`.xml\` | \`<License>\` with \`<EntitlementGroups>\` | the Licensing Client, from its own licences directory |"
+                echo ""
+                echo "### Fix"
+                echo ""
+                echo "Replace the secret with the contents of a \`.ulf\` file."
+                echo "Unity writes one at:"
+                echo ""
+                echo "| Platform | Path |"
+                echo "|---|---|"
+                echo "| Linux | \`~/.local/share/unity3d/Unity/Unity_lic.ulf\` |"
+                echo "| Windows | \`C:\\\\ProgramData\\\\Unity\\\\Unity_lic.ulf\` |"
+                echo "| macOS | \`/Library/Application Support/Unity/Unity_lic.ulf\` |"
+                echo ""
+                echo "If Unity Hub only offers an entitlement XML, use the"
+                echo "Plus/Pro route instead: \`UNITY_SERIAL\` + \`UNITY_EMAIL\` +"
+                echo "\`UNITY_PASSWORD\`."
+              } >> "$GITHUB_STEP_SUMMARY"
+              echo "::error title=Water Gate: licence is not a ULF::The UNITY_LICENSE secret holds XML, not a ULF. Unity cannot load it. See the job summary."
+              exit 1
+              ;;
+            *)
+              echo "licensed=false" >> "$GITHUB_OUTPUT"
+              {
+                echo "## Water Gate: FAILED - unrecognised licence format"
+                echo ""
+                echo "A \`UNITY_LICENSE\` secret exists but does not look like a"
+                echo "ULF or an entitlement XML. It may be base64-encoded, or"
+                echo "truncated, or the wrong file entirely."
+                echo ""
+                echo "Expected: a ULF document whose root element is \`<root>\`"
+                echo "and which contains a \`<Signature>\` element."
+              } >> "$GITHUB_STEP_SUMMARY"
+              echo "::error title=Water Gate: unrecognised licence format::The UNITY_LICENSE secret is neither a ULF nor an entitlement XML. See the job summary."
+              exit 1
+              ;;
+          esac
 
   # ----------------------------------------------------------------------
   # The gate itself.

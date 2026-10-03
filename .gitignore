@@ -99,8 +99,26 @@ desktop.ini
 /TierOverride.local.json
 
 # Local Unity licence and machine config.
+#
+# *.ulf  the manual-activation licence. This is the format the CI gate
+#        needs, and it is a credential: it must never be committed.
+# *.ulm  the legacy machine licence.
+# *.alf  the activation REQUEST file. It is not a credential by itself, but
+#        it is machine-bound and useless in the repository.
+# *.txml the extension Unity Hub uses for a licence it exports. It is a
+#        licence file whatever its extension, so it is ignored for the same
+#        reason as *.ulf.
+#
+# The entitlement licence is named UnityEntitlementLicense.xml and lives in
+# the Licensing Client's own directory. It is matched by name rather than by
+# a blanket *.xml rule: a Unity project legitimately contains .xml files
+# (package documentation, Android manifests, Addressables config), and
+# ignoring all of them would silently drop real source.
 *.ulf
 *.ulm
+*.alf
+*.txml
+UnityEntitlementLicense.xml
 
 # Purchased art staging. Art is purchased rather than authored, and the raw
 # vendor downloads are large and re-downloadable. The imported assets under
