@@ -207,14 +207,40 @@ unless you set an expiry, and it cannot be scoped to a subset of operations
 
 ## 6. The `UNITY_LICENSE` secret
 
-The gate job has never executed because this secret does not exist
-(`total_count: 0`). **An agent can install it** — the secret-write path
-returns 201 — but an agent cannot *produce* it. A Unity licence is a
-credential only the account holder can generate.
+The secret **now exists** (`total_count: 1`, created 2026-10-03T07:36:04Z), and
+the gate job executed in CI for the first time as a result. It **failed**, and
+the failure is worth understanding before touching the secret again.
 
-**Do not paste a `.ulf` file into a chat.** It is a licence credential;
-anything pasted into a conversation is stored in history and would have to be
-revoked and reissued. Add it directly in the repository settings.
+**An agent can install this secret** — the secret-write path returns 201 — but
+an agent cannot *produce* it. A Unity licence is a credential only the account
+holder can generate.
+
+### The format trap
+
+The secret holds **XML, but not a ULF**. Unity's manual-activation loader
+rejected it with:
+
+```
+[Licensing::Module] Loading manual activation license file UnityLicenseFile.ulf.
+[Licensing::Client] Error: Code 400 while processing request
+  (status: Cannot load ULF license: Signature element not found in XML document)
+```
+
+There are two licence documents and they are not interchangeable:
+
+| Format | Root element | Distinctive child | How Unity reads it |
+|---|---|---|---|
+| `.ulf` | `<root>` | `<Signature>` | `-manualLicenseFile`; game-ci's activation step |
+| entitlement `.xml` | `<License>` | `<EntitlementGroups>` | the Licensing Client, from its own licences directory |
+
+**Both carry a `<Signature>` element**, so a Signature test alone cannot tell
+them apart — the root element is the discriminator. A file named `.txml` is a
+licence export from Unity Hub; it is a licence file whatever its extension, and
+it is ignored by `.gitignore` for that reason.
+
+**Do not paste a licence file into a chat.** It is a credential; anything
+pasted into a conversation is stored in history and would have to be revoked
+and reissued. Add it directly in the repository settings.
 
 1. Activate a personal licence on a machine with the editor installed, so
    Unity writes `Unity_lic.ulf`:
@@ -236,7 +262,24 @@ revoked and reissued. Add it directly in the repository settings.
 
 **Alternative (Plus/Pro):** three secrets — `UNITY_SERIAL`, `UNITY_EMAIL`,
 `UNITY_PASSWORD`. The single-secret route is preferred: no account password
-in CI.
+in CI. Use this route if Unity Hub will only export an entitlement XML.
+
+### The preflight now rejects a wrong format before the gate starts
+
+The preflight used to ask one question — *is a licence secret present?* — and
+answered `licensed=true` for any non-empty value. That is why a wrong-format
+licence reached the container and failed 90 seconds later. It now classifies
+the value first:
+
+| Detected | `licensed` | Outcome |
+|---|---|---|
+| absent | `false` | gate skipped, run green (unchanged) |
+| `ulf` | `true` | gate runs |
+| `entitlement-xml` | `false` | **run fails in ~5 s**, format named, fix given |
+| `xml-unknown` | `false` | **run fails** |
+| `other` (not XML) | `false` | **run fails** |
+
+The value is never printed — only its shape.
 
 **Once the repository is public, the workflow logs are world-readable.** The
 gate report must never contain a licence file or a raw device serial. Use the
@@ -305,7 +348,7 @@ agent writes here.
 | Rule | Effect |
 |---|---|
 | `/BenchmarkResults/*` | Everything in that directory is ignored **except** `verdict_*.txt` and `.gitkeep` |
-| `*.ulf`, `*.ulm` | Unity licence files are ignored — **correct**, keep it that way |
+| `*.ulf`, `*.ulm`, `*.alf`, `*.txml`, `UnityEntitlementLicense.xml` | Unity licence files are ignored — **correct**, keep it that way |
 | `/_SolverScratch/`, `/_ArtStaging/` | Local scratch, ignored by design |
 | `/TierOverride.local.json` | Machine-specific override, ignored by design |
 | `*.csproj`, `*.sln`, `*.user` | IDE state, ignored by design |
@@ -325,7 +368,7 @@ Verified on 2026-10-03:
 | Required signed commits | none (`web_commit_signoff_required: false`) |
 | Required reviews | none |
 | Deploy keys | none |
-| Actions secrets / variables | 0 / 0 |
+| Actions secrets / variables | 1 / 0 (one: `UNITY_LICENSE`) |
 | Default workflow permissions | `read` |
 | Can Actions approve PRs | `false` |
 | Allowed actions | all allowed (409 = policy is `all`) |
@@ -359,7 +402,7 @@ For an agent that needs to write files, in order of preference:
 |---|---|
 | PAT over HTTPS | No PAT exists in this environment, and an agent cannot mint one. Only the owner can. |
 | Deploy key over SSH | No keypair exists, and an agent cannot add one without the owner's public key. |
-| A real gate run | No `UNITY_LICENSE` secret exists, so the gate job is skipped. **Nothing in this repository has ever been compiled.** |
+| A real gate run | **Now tested.** The gate executed in CI on 2026-10-03 (run 37107565152) and failed on licence activation. The project compiled in CI — the benchmark step ran for 117 s — but the checker never ran, so there is still no CI verdict. |
 
 Everything in sections 2, 3, 6 and 8 was executed and its output recorded.
 Sections 4 and 5 describe paths that are **untested** — the commands are the
