@@ -16,7 +16,7 @@ No combat. No antagonist. Quiet, enormous, hopeful. The world can kill you with 
 
 | | |
 |---|---|
-| **Unity** | **6.3 LTS** — the `6000.3` line |
+| **Unity** | **6000.5.9f1** — the `6000.5` line |
 | **Support window** | Two-year LTS through **December 2027** |
 | **Template** | Universal 3D (URP) |
 | **Exact patch** | Recorded in `ProjectSettings/ProjectVersion.txt` and in the table below |
@@ -28,16 +28,16 @@ Everyone on the project uses the **exact same patch version**. The render-pipeli
 `ProjectVersion.txt` is committed by Unity automatically, but state the patch in this README too so a new machine can be matched without opening the project:
 
 ```
-m_EditorVersion: 6000.3.0f1
-m_EditorVersionWithRevision: 6000.3.0f1 (d1870ce95baf)
+m_EditorVersion: 6000.5.9f1
+m_EditorVersionWithRevision: 6000.5.9f1 (b57deb96f08d)
 ```
 
 The revision in parentheses is the **changeset**, and it is not decoration: it is what
-`unityhub://6000.3.0f1/d1870ce95baf` resolves to, and it is what CI uses to fetch the
+`unityhub://6000.5.9f1/b57deb96f08d` resolves to, and it is what CI uses to fetch the
 exact editor build. A `ProjectVersion.txt` whose revision reads `TBD` is a file Unity
 has not written yet, and the first CI run fails on it.
 
-> **If you install a different patch of the 6.3 line**, open the project once and let
+> **If you install a different patch of the 6000.5 line**, open the project once and let
 > Unity rewrite this file, then copy both lines here. Do not hand-edit the changeset to
 > match a version you have not installed — the two must agree or the editor will
 > re-import the whole project on every open.
@@ -159,7 +159,7 @@ An assembly may only reference assemblies **below** it. The rule is enforced by 
 
 ### First time
 
-1. Install **Unity 6.3 LTS** through Unity Hub with these modules:
+1. Install **Unity 6000.5.9f1** through Unity Hub with these modules:
    - **Linux Build Support (IL2CPP)** — required for the flagship tier. Unity ships a Linux IL2CPP cross-compiler, so this builds from any standalone host.
    - **Android Build Support** with the bundled OpenJDK, SDK and NDK.
    - **Linux Build Support (Mono)** — optional, useful as a fast iteration target.
@@ -206,7 +206,7 @@ Windows users: in Git Bash use forward slashes and quote the whole path, or the
 backslashes are eaten before git sees them.
 
 ```bash
-git config merge.unityyamlmerge.driver "/c/Program\ Files/Unity/Hub/Editor/6000.3.0f1/Editor/Data/Tools/UnityYAMLMerge.exe merge -p --force %O %B %A %A"
+git config merge.unityyamlmerge.driver "/c/Program\ Files/Unity/Hub/Editor/6000.5.9f1/Editor/Data/Tools/UnityYAMLMerge.exe merge -p --force %O %B %A %A"
 ```
 
 **Verify the path before you trust it.** The install location depends on where

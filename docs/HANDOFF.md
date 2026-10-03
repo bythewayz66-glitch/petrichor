@@ -11,7 +11,7 @@
 | **Branch** | `main` |
 | **HEAD at handoff** | `7ccff93333af79452d70e2d267f2f7e56d3d0c24` |
 | **Handoff written** | 2026-09-30, **revised 2026-10-03** |
-| **Engine** | Unity **6000.3.0f1** (changeset `d1870ce95baf`), URP |
+| **Engine** | Unity **6000.5.9f1** (changeset `b57deb96f08d`), URP |
 | **Reference device** | Samsung Galaxy A54 5G (`SM-A546B` — one of eight regional variants) |
 | **Blocking item** | **No `UNITY_LICENSE` secret — the CI gate has never run.** A gate *has* run locally; see §1.4 and §3 |
 
@@ -107,16 +107,19 @@ nothing. Do not read one as a pass.
 ### 2.1 Editor
 
 ```
-m_EditorVersion: 6000.3.0f1
-m_EditorVersionWithRevision: 6000.3.0f1 (d1870ce95baf)
+m_EditorVersion: 6000.5.9f1
+m_EditorVersionWithRevision: 6000.5.9f1 (b57deb96f08d)
 ```
 
-Install **Unity 6.3 LTS** via Unity Hub with **Linux Build Support (IL2CPP)**,
+Install **Unity 6000.5.9f1** via Unity Hub with **Linux Build Support (IL2CPP)**,
 **Android Build Support** (bundled OpenJDK/SDK/NDK) and optionally **Linux Build
 Support (Mono)**. Do not open the project before the modules are installed.
 
-> **The changeset is Unity's published value, not a value read off a machine.**
-> If you install a different 6.3 patch, open the project once and let Unity
+> **The changeset was read off a machine, not copied from a published table.**
+> It was taken from the installed editor at
+> `/home/jayson/Unity/Hub/Editor/6000.5.9f1/modules.json`, where every
+> `download_unity/<changeset>/` path carries `b57deb96f08d`.
+> If you install a different 6000.5 patch, open the project once and let Unity
 > rewrite `ProjectSettings/ProjectVersion.txt`, then copy both lines into
 > `README.md`. Do not hand-edit the changeset to match a version you have not
 > installed — the editor will re-import the whole project on every open.
@@ -284,7 +287,7 @@ compile, which has never run.
 | 1 | The C# harness compiles | **VERIFIED (locally)** | The 2026-10-01 headless run compiled it. Two errors were found and fixed: `BenchmarkHarness.cs` and `ScenarioResult.cs` were missing `using PET.Water;`, and `PET.Benchmarks.asmdef` lacked the test-runner references so the assembly was not registered as a test assembly. **Not verified in CI** — the CI gate has never run |
 | 2 | The gate passes | **PARTLY VERIFIED — AND UNSTABLE** | It has run locally. Rung 0 is a clean `BUDGET FAIL` (9 metrics over). Rung 1 returned `PASS` twice on a quiet pinned box and `BUDGET FAIL` on a loaded box. **The verdict flips on CPU contention alone**, so a rung-1 `PASS` is not reproducible without recording machine quietness. The Android tier has never been measured on any device |
 | 3 | The four scenarios are correctly parameterised | **UNVERIFIED** | 3000 settle steps, 500 samples, 3600× multiplier are reasoned, not tuned. If scenario A's settle loop is too short, A reports a transient cost and becomes a second B |
-| 4 | The changeset `d1870ce95baf` | **PUBLISHED VALUE** | Unity's published changeset for 6000.3.0f1, not read off a machine. Confirm against your install |
+| 4 | The changeset `b57deb96f08d` | **READ OFF A MACHINE** | Taken from the installed editor's `modules.json` on the box where the benchmarks were measured, so version and changeset provably agree. A different install of the same patch should still carry the same changeset; if it does not, you have a different build |
 | 5 | The thresholds are mirrored in two places | **KNOWN DRIFT RISK** | `Tools/bench_thresholds.json` and `BenchmarkScenarios.cs` both hold them. The harness writes the values it used into every summary, so drift is visible in results rather than inferred — but it is still two places to change |
 | 6 | The reference device is owned | **UNCONFIRMED** | The A54 is a recommendation. The gate cannot run on a device nobody has |
 | 7 | The LFS estimate (≈ 1.4 GB) | **ESTIMATE** | Not measured — no art has been imported. Bandwidth, not storage, is the binding constraint |

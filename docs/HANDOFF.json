@@ -11,10 +11,10 @@
     "head_commit_note": "HEAD at the moment this file was last revised (2026-10-03). The commit that adds this revision is its child."
   },
   "engine": {
-    "unity": "6000.3.0f1",
-    "changeset": "d1870ce95baf",
-    "changeset_source": "Unity published value, NOT read off a machine",
-    "line": "6.3 LTS",
+    "unity": "6000.5.9f1",
+    "changeset": "b57deb96f08d",
+    "changeset_source": "Read off a machine: /home/jayson/Unity/Hub/Editor/6000.5.9f1/modules.json download_unity paths all carry b57deb96f08d",
+    "line": "6000.5",
     "pipeline": "URP",
     "template": "Universal 3D (URP)",
     "modules_required": [

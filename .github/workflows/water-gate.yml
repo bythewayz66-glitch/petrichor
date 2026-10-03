@@ -78,7 +78,7 @@ permissions:
   contents: read
 
 env:
-  UNITY_VERSION_FALLBACK: 6000.3.0f1
+  UNITY_VERSION_FALLBACK: 6000.5.9f1
 
 jobs:
   # ----------------------------------------------------------------------
