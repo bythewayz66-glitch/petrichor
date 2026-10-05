@@ -301,6 +301,47 @@ this document work**, and the answer is the Plus/Pro route: `UNITY_SERIAL` +
 needs no file at all. The preflight already routes that combination to game-ci's
 activation step.
 
+### How to switch to the serial route, step by step
+
+The serial route needs **three** repository secrets, and it is what game-ci's
+activation step consumes directly. The email and password are the **same two**
+the entitlement route already uses — the only new value is the serial.
+
+| Secret | What it is | Where you find it |
+|---|---|---|
+| `UNITY_SERIAL` | The Plus/Pro serial key | **Unity Hub → gear icon → Preferences → Licenses** (the seat's serial), or the Unity account licence page at `id.unity.com`. It looks like `XX-XXXX-XXXX-XXXX-XXXX-XXXX`. |
+| `UNITY_EMAIL` | The Unity account email | The address you sign in to Unity Hub / id.unity.com with. |
+| `UNITY_PASSWORD` | The Unity **account password** | The account password — **not** a 2FA code. The CLI activation has no TOTP path, so an account with 2FA enabled can still fail here. |
+
+**Steps (GitHub web UI):**
+
+1. Open the repository: `github.com/bythewayz66-glitch/petrichor`.
+2. **Settings** (top tab bar) → left sidebar **Secrets and variables → Actions**.
+3. Click **New repository secret**.
+4. Name it exactly `UNITY_SERIAL` (case-sensitive, no quotes), paste the serial
+   into **Secret**, click **Add secret**.
+5. Repeat for `UNITY_EMAIL` (the account email) and `UNITY_PASSWORD` (the account
+   password), if they are not already set.
+6. Re-run the gate: **Actions → Water Gate → Run workflow** (branch `main`), or
+   push any commit under `Assets/Scripts/Water/`.
+
+**How you know it took the serial route.** The preflight prints
+`A Unity serial is present; the gate will activate with it via game-ci.` and the
+gate job then runs the step named **`Run the benchmark (ULF)`** — which is
+game-ci's `unity-test-runner`, the path that consumes `UNITY_SERIAL` — and
+**skips** `Run the benchmark (entitlement XML)`. If you instead see
+`Licence format detected: entitlement-xml`, the serial secret did not register.
+
+**Tradeoffs, stated plainly.** The serial route requires a **Plus/Pro seat** —
+Unity Personal has no serial to enter. Each activation is bound to a machine and
+a seat allows a limited number of simultaneous activations (Unity documents two
+per seat); a busy repository can exhaust the limit, and activations then have to
+be released manually from the Unity account's licence page before CI can run
+again. The XML route consumes **nothing** — it reuses the seat's existing
+entitlement. So: if the entitlement sign-in works, it is the cheaper route; the
+serial route is the fallback for when the XML cannot work (2FA, or a
+machine-bound entitlement).
+
 ---
 
 ## 4. What to do next, in order

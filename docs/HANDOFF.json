@@ -156,7 +156,17 @@
   "effect": "The entitlement step now signs in before the benchmark when UNITY_EMAIL and UNITY_PASSWORD are present (-username / -password), which is what obtains the access token, and dumps the Licensing Client's own log on a non-zero exit. The preflight reports 'Unity credentials present: yes|no' so the log says up front whether the XML route can work.",
   "required_secrets": "UNITY_LICENSE (the entitlement XML) + UNITY_EMAIL + UNITY_PASSWORD. The XML route needs all three; the file alone is provably insufficient.",
   "warning": "Do not read the entitlement path as working. The sign-in fix is reasoned from the log, not tested. Two things could still fail and both are visible in the run log: the account may have two-factor authentication enabled (the CLI sign-in has no TOTP path), or the entitlement may be bound to the machine that activated it.",
-  "fallback": "UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD. Re-issues the licence for the runner and needs no file. The preflight already routes that combination to game-ci's activation step."
+  "fallback": "UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD. Re-issues the licence for the runner and needs no file. The preflight already routes that combination to game-ci's activation step (the gate job runs 'Run the benchmark (ULF)' and skips the entitlement step). Setup: Settings -> Secrets and variables -> Actions -> New repository secret, add UNITY_SERIAL (the Plus/Pro serial from Unity Hub -> Preferences -> Licenses, format XX-XXXX-XXXX-XXXX-XXXX-XXXX), plus UNITY_EMAIL and UNITY_PASSWORD (the same account credentials the entitlement route uses). Requires a Plus/Pro seat - Unity Personal has no serial. Each activation is machine-bound and a seat allows two simultaneous activations, so a busy repo can exhaust the limit and activations then have to be released from the Unity account licence page.",
+  "serial_route_setup": {
+   "secrets": ["UNITY_SERIAL", "UNITY_EMAIL", "UNITY_PASSWORD"],
+   "serial_location": "Unity Hub -> gear icon -> Preferences -> Licenses (the seat's serial), or the Unity account licence page at id.unity.com. Format XX-XXXX-XXXX-XXXX-XXXX-XXXX.",
+   "github_path": "Repository -> Settings -> Secrets and variables -> Actions -> New repository secret. Names are case-sensitive: UNITY_SERIAL, UNITY_EMAIL, UNITY_PASSWORD.",
+   "password_note": "UNITY_PASSWORD is the account password, NOT a 2FA code. The CLI activation has no TOTP path, so an account with 2FA enabled can still fail.",
+   "rerun": "Actions -> Water Gate -> Run workflow (branch main), or push any commit under Assets/Scripts/Water/.",
+   "confirmation": "The preflight prints 'A Unity serial is present; the gate will activate with it via game-ci.' and the gate job runs 'Run the benchmark (ULF)' while skipping 'Run the benchmark (entitlement XML)'.",
+   "requires": "A Plus/Pro seat. Unity Personal has no serial to enter.",
+   "activation_limit": "Each activation is machine-bound; a seat allows two simultaneous activations. A busy repo can exhaust the limit; activations are then released from the Unity account licence page."
+  }
  },
  "next_steps": [
   {
