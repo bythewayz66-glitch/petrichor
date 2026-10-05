@@ -13,7 +13,7 @@
 | **Handoff written** | 2026-09-30, **revised 2026-10-04** |
 | **Engine** | Unity **6000.5.9f1** (changeset `b57deb96f08d`), URP |
 | **Reference device** | Samsung Galaxy A54 5G (`SM-A546B` — one of eight regional variants) |
-| **Blocking item** | **The entitlement-XML path runs and HANGS — the editor produced no output for six hours and was killed by the job timeout. The CI gate still has no verdict.** See §3 |
+| **Blocking item** | **The entitlement XML is a named-user licence: the file alone is rejected with `Access token is unavailable`. The XML route now needs `UNITY_EMAIL` + `UNITY_PASSWORD` so the step can sign in and obtain a token. The CI gate still has no verdict.** See §3 |
 
 ---
 
@@ -68,9 +68,12 @@ number is not.
 
 ### 1.3 What does **not** exist
 
-- **No CI gate verdict.** The `gate` job has run five times on 2026-10-03. The
-  first four failed on licence activation; the fifth ran the entitlement path and
-  hung for six hours. No run has reached the checker. See §1.4 and §3.
+- **No CI gate verdict.** The `gate` job has run seven times, on 2026-10-03 and
+  2026-10-05. The first four failed on licence activation; the fifth ran the
+  entitlement path and hung for six hours; the sixth ran it to completion in 91
+  seconds and was rejected with `Access token is unavailable`, because an
+  entitlement XML is a named-user licence and needs the account's access token.
+  No run has reached the checker. See §1.4 and §3.
 - **No art.** `Assets/Art/` contains only its `.gitignore` and `.gitattributes`.
   No purchased packs have been imported.
 - **No scenes or prefabs.** There are no `.unity` or `.prefab` files. The
@@ -88,7 +91,7 @@ likely to be misread.
 
 | | CI gate (GitHub Actions) | Local gate (headless editor) |
 |---|---|---|
-| Has it run? | **Yes — five times**, on 2026-10-03 (runs 37107565152, 37109026756, 37109526130, 37110829407, 37111124148) | **Yes**, on 2026-10-01 and again 2026-10-03 |
+| Has it run? | **Yes — seven times**, on 2026-10-03 and 2026-10-05 (runs 37107565152, 37109026756, 37109526130, 37110829407, 37111124148, 37252858463, 37253130555) | **Yes**, on 2026-10-01 and again 2026-10-03 |
 | Did it compile? | **No** — every run failed before the editor loaded the project | **Yes** — the 2026-10-01 run compiled the project and ran all four scenarios |
 | Evidence | each run's `gate` job executed its steps; four logs show the licence rejected, the fifth shows a six-hour silence | `docs/gate-reports/gate-20261001-M01-linux-0001.md`, and two committed verdict files |
 | Verdict produced | none | `BUDGET FAIL` at rung 0; `PASS` at rung 1 on a quiet box; `BUDGET FAIL` at rung 1 on a loaded box |
@@ -184,11 +187,11 @@ halves of one mechanism; without both, neither does anything.
 
 ---
 
-## 3. The blocking item: the entitlement path runs, and it hangs
+## 3. The blocking item: the entitlement XML is a named-user licence and needs an access token
 
 **The `UNITY_LICENSE` secret exists** (added 2026-10-03T07:36:04Z) and holds a
-**genuine entitlement licence**. The preflight log of run 37111124148 reports its
-shape without printing its value:
+**genuine entitlement licence**. The preflight reports its shape without printing
+its value:
 
 ```
 Licence bytes: 5434
@@ -198,46 +201,79 @@ Has <EntitlementGroups>: true
 Licence format detected: entitlement-xml
 ```
 
-That is the Unity Personal document: root `<root>`, a `<License>` child carrying
-`<EntitlementGroups>`, and a `<Signature>` block. It is correctly classified and
-correctly routed to the Licensing Client.
+### What run 26 proved — the path works, the licence does not
 
-> **Correction.** Earlier revisions of this document said the secret "contains no
-> `<Signature>` element". That was an inference from the ULF loader's error
-> message, and the preflight log now proves it false: `Has <Signature>: true`.
-> The ULF loader rejected the document because its root is `<root>` wrapping
-> `<License>`, not because a signature was missing.
-
-### What run 25 did
-
-Run **37111124148** (run #25, push, commit `beb5c8f2`) is the first run in which
-the entitlement branch executed. Step 9, `Run the benchmark (entitlement XML)`,
-started at `08:52:16Z` and was cancelled at `14:52:24Z` — **6h00m08s**, which is
-GitHub's default job timeout, not a decision by the workflow.
-
-The log shows the licence written, the image pulled, and then **nothing at all**:
+Run **37252858463** (run #26, push, commit `c510f6d8`) is the first run in which
+the entitlement branch executed **and completed**. Step 9, `Run the benchmark
+(entitlement XML)`, ran `01:48:22Z → 01:49:53Z` — **91 seconds** — and concluded
+`success`. The probe answered every question run 25 could not:
 
 ```
-Licence written to /home/runner/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml
-Bytes: 5434
-Root element: <root
-Status: Downloaded newer image for unityci/editor:ubuntu-6000.5.9f1-linux-il2cpp-3
-##[error]The operation was canceled.
+--- probe: licence visibility ---
+total 8
+-rw------- 1 1001 1001 5434 Oct  5 01:48 UnityEntitlementLicense.xml
+--- probe: Licensing Client binary ---
+--- probe: editor binary ---
+-rwxr-xr-x 1 1000 1000 110081080 Aug 19 06:29 /opt/unity/Editor/Unity
+Probe exit code: 0
 ```
 
-Between the image pull at `08:54:21Z` and the cancellation at `14:52:24Z` there
-are **no lines whatsoever** — no editor banner, no `[Licensing::Client]` line, no
-error. The container started and produced no output for six hours.
+The licence **is** visible inside the container, the editor binary **is** present,
+and the editor **did** start:
+
+```
+Unity Editor version:    6000.5.9f1 (b57deb96f08d)
+Batch mode:              YES
+[Licensing::Module] Successfully launched the LicensingClient (PId: 27)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-root"
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.3+d7ffd15
+```
+
+Then the licence was rejected — and the log names the reason exactly:
+
+```
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Error: Code 404 while processing request
+  (status: Found 0 entitlement groups and 0 free entitlements matching requested entitlement ids)
+[Licensing::Module] Error: 'com.unity.editor.headless' was not found.
+No valid Unity Editor license found. Please activate your license.
+Editor exit code: 198
+```
+
+**An entitlement licence is a named-user licence.** The file carries the
+entitlement, but the Licensing Client needs the account's **access token** to
+resolve it, and a token exists only after a sign-in. That is why the file alone
+yields `0 entitlement groups`. This is not a machine-binding failure and not a
+network failure — the client reached its own state and found no token.
 
 | | |
 |---|---|
-| Job conclusion | `cancelled` |
-| Step 9 conclusion | `cancelled` |
-| Step 17 `Enforce the verdict` | `failure` — no verdict file, so INPUT ERROR |
-| Artifacts | none — `No files were found with the provided path: BenchResults/*.json BenchResults/*.xml` |
+| Job conclusion | `failure` |
+| Step 9 conclusion | `success` (91 s) — the step is `continue-on-error` |
+| Verdict | `INPUT ERROR` (exit 3) — no results XML, so the checker had no inputs |
+| Artifacts | `water-gate-verdict-linux-…zip`, 631 bytes |
 
-**This is not a pass and not a skip.** The gate ran, the licence was routed
-correctly, and the editor never produced a single line. The run is invalid.
+**This is not a pass.** The editor started and refused the licence before loading
+the project. Nothing was compiled.
+
+### The fix this run forced
+
+The entitlement step now **signs in first**, when credentials are present:
+
+```
+-username "$UNITY_EMAIL" -password "$UNITY_PASSWORD"
+```
+
+The sign-in caches the access token in the Licensing Client's own state; the
+benchmark run then resolves the entitlement from the mounted XML. The step also
+dumps the Licensing Client's own log on a non-zero exit, because that file names
+the real reason and the editor's stdout does not.
+
+**The XML route therefore needs three secrets, not one:** `UNITY_LICENSE` (the
+XML), `UNITY_EMAIL` and `UNITY_PASSWORD`. Without the credentials the preflight
+now says so up front (`Unity credentials present: no`) and the step emits a
+warning naming the exact failure it will produce.
 
 ### What is verified, and what is not
 
@@ -245,32 +281,25 @@ correctly, and the editor never produced a single line. The run is invalid.
 |---|---|
 | The workflow YAML parses | **VERIFIED** — `yaml.safe_load`, 2 jobs, 16 gate steps |
 | Every `run:` block is valid shell | **VERIFIED** — `bash -n` on all 11 blocks, 0 failures |
-| The classifier routes this document correctly | **VERIFIED** — run 25's preflight log: `entitlement-xml` |
+| The classifier routes this document correctly | **VERIFIED** — run 26's preflight log: `entitlement-xml` |
 | The licence is a well-formed entitlement document | **VERIFIED** — 5434 bytes, `<root>` + `<EntitlementGroups>` + `<Signature>` |
-| The editor image is fetchable | **VERIFIED** — run 25 pulled `unityci/editor:ubuntu-6000.5.9f1-linux-il2cpp-3` |
-| The Licensing Client launches in the container | **VERIFIED for the ULF path only** — run 37110829407 printed `Successfully launched the LicensingClient (PId: 38)`. On the entitlement path it has never printed a line. |
-| The entitlement path activates Unity in CI | **UNVERIFIED — and it hangs** |
-
-### The two changes this run forced
-
-1. **`timeout-minutes: 30` on the gate job.** Six hours of runner time produced
-   one line of log. A hang must now fail in thirty minutes and name itself.
-2. **A probe before the editor, and a bounded container.** The entitlement step
-   now runs a short `docker run` that lists the licence directory, locates the
-   Licensing Client binary and confirms the editor binary, then runs the editor
-   under `timeout 1500`. The probe answers in seconds the question run 25 could
-   not answer at all: *is the licence visible inside the container?*
+| The licence is visible inside the container | **VERIFIED** — run 26 probe: `-rw------- 1 1001 1001 5434 … UnityEntitlementLicense.xml` |
+| The Licensing Client launches and connects | **VERIFIED** — run 26: `Successfully launched the LicensingClient (PId: 27)`, `Successfully connected to: "LicenseClient-root"` |
+| The editor starts in the container | **VERIFIED** — run 26: `Unity Editor version: 6000.5.9f1`, `Batch mode: YES` |
+| The entitlement XML alone activates Unity | **VERIFIED FALSE** — run 26: `Access token is unavailable`, `0 entitlement groups` |
+| The sign-in fix activates Unity | **UNVERIFIED** — the sign-in step has never run; it needs `UNITY_EMAIL` and `UNITY_PASSWORD` |
+| Anything compiled in CI | **NO** — no run has reached the point where the editor loads the project |
 
 ### The remaining risk, stated plainly
 
-The hang is consistent with the Licensing Client blocking on a network call to
-Unity's licensing servers from inside the container, or waiting on an IPC channel
-that never appears. Both are visible in the probe output. If the entitlement
-document turns out to be machine-bound, or the client cannot reach the licence
-server, **no amount of wiring will make this document work**, and the answer is
-the Plus/Pro route: `UNITY_SERIAL` + `UNITY_EMAIL` + `UNITY_PASSWORD`, which
-re-issues the licence for the runner and needs no file at all. The preflight
-already routes that combination to game-ci's activation step.
+The sign-in fix is reasoned from the log, not tested. Two things could still
+fail, and both are now visible in the run log: the account may have two-factor
+authentication enabled (the CLI sign-in has no TOTP path), or the entitlement may
+be bound to the machine that activated it. If either holds, **no wiring will make
+this document work**, and the answer is the Plus/Pro route: `UNITY_SERIAL` +
+`UNITY_EMAIL` + `UNITY_PASSWORD`, which re-issues the licence for the runner and
+needs no file at all. The preflight already routes that combination to game-ci's
+activation step.
 
 ---
 
@@ -279,17 +308,21 @@ already routes that combination to game-ci's activation step.
 ### Step 1 — Get a CI verdict (§3)
 
 The gate has returned a verdict **locally** (§1.4). The **CI** gate has executed
-five times and has never produced a verdict; the entitlement path ran for the
-first time in run 37111124148 and **hung for six hours**. The workflow now bounds
-that step to 25 minutes and probes the container before starting the editor, so
-the next run will either produce a verdict or fail in minutes with the reason.
+seven times and has never produced a verdict. Run 26 (`37252858463`) settled the
+question run 25 could not: the licence is visible in the container, the Licensing
+Client launches and connects, and the editor starts — but the entitlement XML
+alone is rejected with `Access token is unavailable`, because a named-user
+licence needs the account's access token.
 
-Re-run the workflow and read the probe output first. If the licence is not
-visible inside the container, or the Licensing Client cannot reach the licence
-server, the fallback is the Plus/Pro route (`UNITY_SERIAL` + `UNITY_EMAIL` +
-`UNITY_PASSWORD`). Week 1 is a **gate**, not a week of work: it decides whether
-the water solver can run on a mid-range phone, and it can re-baseline the entire
-plan.
+**Add `UNITY_EMAIL` and `UNITY_PASSWORD`** (Settings → Secrets and variables →
+Actions). The entitlement step now signs in before the benchmark, which is what
+obtains the token. Without them the XML route cannot work, and the run says so.
+
+If the sign-in fails — two-factor authentication, or a machine-bound entitlement
+— the fallback is the Plus/Pro route (`UNITY_SERIAL` + `UNITY_EMAIL` +
+`UNITY_PASSWORD`), which re-issues the licence for the runner and needs no file.
+Week 1 is a **gate**, not a week of work: it decides whether the water solver can
+run on a mid-range phone, and it can re-baseline the entire plan.
 
 ### Step 2 — Run the gate
 

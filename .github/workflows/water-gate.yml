@@ -102,6 +102,8 @@ jobs:
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         run: |
           # ------------------------------------------------------------------
           # THREE OUTCOMES, NOT TWO.
@@ -196,6 +198,17 @@ jobs:
           echo "Licence root element: ${LIC_ROOT:-<none>}"
           echo "Has <Signature>: $HAS_SIG"
           echo "Has <EntitlementGroups>: $HAS_ENT"
+          # An entitlement licence is a NAMED-USER licence: the file carries
+          # the entitlement but the Licensing Client needs the account's
+          # access token to resolve it. Run 37252858463 proved the file alone
+          # yields "Access token is unavailable" and 0 entitlement groups.
+          # Report whether credentials are present, so the log says up front
+          # whether the XML route can possibly work.
+          if [ -n "${UNITY_EMAIL:-}" ] && [ -n "${UNITY_PASSWORD:-}" ]; then
+            echo "Unity credentials present: yes"
+          else
+            echo "Unity credentials present: no"
+          fi
 
           # Route on STRUCTURE, not on a guess.
           #
@@ -438,6 +451,8 @@ jobs:
         continue-on-error: true
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         run: |
           set -euo pipefail
 
@@ -484,6 +499,53 @@ jobs:
           echo "Probe exit code: $PROBE"
 
           # ------------------------------------------------------------------
+          # SIGN-IN, BEFORE THE BENCHMARK.
+          #
+          # Run 37252858463 (2026-10-05) proved the entitlement XML ALONE is
+          # not enough. The Licensing Client read the file and then said:
+          #
+          #   [Licensing::Module] Error: Access token is unavailable; failed to update
+          #   [Licensing::Client] Error: Code 404 while processing request
+          #     (status: Found 0 entitlement groups and 0 free entitlements
+          #     matching requested entitlement ids)
+          #   [Licensing::Module] Error: 'com.unity.editor.headless' was not found.
+          #   No valid Unity Editor license found. Please activate your license.
+          #
+          # An entitlement licence is a NAMED-USER licence. The file carries
+          # the entitlement, but the Licensing Client needs the account's
+          # ACCESS TOKEN to resolve it, and a token exists only after a
+          # sign-in. That is why the file alone yields "0 entitlement groups".
+          #
+          # So when credentials are present, sign in first. The sign-in caches
+          # the access token in the Licensing Client's own state, and the
+          # benchmark run below then resolves the entitlement from the mounted
+          # XML. Without credentials the XML route cannot work at all, and the
+          # step says so rather than failing obscurely.
+          #
+          # The password is passed as an argument and never echoed; `set -x`
+          # is off, so the command line is not printed.
+          # ------------------------------------------------------------------
+          if [ -n "${UNITY_EMAIL:-}" ] && [ -n "${UNITY_PASSWORD:-}" ]; then
+            echo "Unity credentials present; signing in to obtain an access token."
+            set +e
+            timeout 600 docker run --rm --init \
+              -v "$LIC_DIR:/root/.config/unity3d/Unity/licenses" \
+              "$IMAGE" \
+              xvfb-run -ae /dev/stdout /opt/unity/Editor/Unity \
+                -batchmode \
+                -nographics \
+                -quit \
+                -username "$UNITY_EMAIL" \
+                -password "$UNITY_PASSWORD" \
+                -logFile /dev/stdout
+            SIGNIN=$?
+            set -e
+            echo "Sign-in exit code: $SIGNIN"
+          else
+            echo "::warning title=Water Gate: entitlement XML without credentials::The UNITY_LICENSE secret holds an entitlement licence, which is a named-user licence. The Licensing Client needs an account access token to resolve it, and no UNITY_EMAIL / UNITY_PASSWORD secrets are set, so no token can be obtained. This run will fail with 'Access token is unavailable'. Add UNITY_EMAIL and UNITY_PASSWORD, or switch to UNITY_SERIAL."
+          fi
+
+          # ------------------------------------------------------------------
           # BOUNDED RUN.
           #
           # Run 37111124148 ran this container for 6h00m08s and was killed by
@@ -511,6 +573,31 @@ jobs:
           CODE=$?
           set -e
           echo "Editor exit code: $CODE"
+
+          # ------------------------------------------------------------------
+          # THE LICENSING CLIENT'S OWN LOG.
+          #
+          # Run 37252858463 failed with "Access token is unavailable" and the
+          # editor's stdout said only that. The Licensing Client keeps a
+          # separate, more detailed log, and it is the file that names the
+          # real reason. Dump it on a non-zero exit so the next failure is
+          # diagnosable from the run log alone.
+          #
+          # It contains no licence value - only status codes and messages.
+          # ------------------------------------------------------------------
+          if [ "$CODE" != "0" ]; then
+            echo "--- Licensing Client log (tail) ---"
+            for L in \
+              "$HOME/.config/unity3d/Unity/Unity.Licensing.Client.log" \
+              "$HOME/.config/unity3d/Unity/licenses/Unity.Licensing.Client.log" \
+              "$HOME/.local/share/unity3d/Unity/Unity.Licensing.Client.log"; do
+              if [ -f "$L" ]; then
+                echo "== $L =="
+                tail -n 60 "$L" || true
+              fi
+            done
+            echo "--- end Licensing Client log ---"
+          fi
           if [ "$CODE" = "124" ]; then
             echo "::error title=Water Gate: entitlement path timed out::The editor produced no output for 25 minutes and was killed. This is the run-25 failure mode. See docs/HANDOFF.md section 3."
           fi

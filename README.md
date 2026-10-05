@@ -8,7 +8,7 @@ The rule that makes the game work is the **Mineral Law**: *stone cannot be force
 
 No combat. No antagonist. Quiet, enormous, hopeful. The world can kill you with a fall or a flood, but it will never hunt you.
 
-**Status:** pre-production. The design package is complete and the repository scaffold is committed — the twelve assemblies, the water solver interface, and the week-one benchmark harness. **The gate has now run, locally and in CI.** Locally it produced verdicts (`BUDGET FAIL` at rung 0, `PASS` at rung 1 on a quiet box); in CI it executed for the first time on 2026-10-03 (run 37107565152) and **failed on licence activation**, because the `UNITY_LICENSE` secret holds an entitlement XML and the workflow only knew how to feed Unity a `.ulf`. **The workflow now supports the entitlement XML directly** — it mounts the licence into the Licensing Client's own directory instead of handing it to the manual-activation loader. That path has been attempted once (run 37110829407) and **the classifier misrouted the secret to the ULF loader**, so the same Code 400 recurred; the classifier is now structure-based and the routing is fixed, but the entitlement path itself is still **unverified**. The CI gate is still without a verdict. Week 1 of the implementation roadmap is a **gate** — a headless benchmark that decides whether the water solver can run on a mid-range phone. Nothing downstream of it starts until it returns a reproducible verdict.
+**Status:** pre-production. The design package is complete and the repository scaffold is committed — the twelve assemblies, the water solver interface, and the week-one benchmark harness. **The gate has now run, locally and in CI.** Locally it produced verdicts (`BUDGET FAIL` at rung 0, `PASS` at rung 1 on a quiet box); in CI it executed for the first time on 2026-10-03 (run 37107565152) and **failed on licence activation**, because the `UNITY_LICENSE` secret holds an entitlement XML and the workflow only knew how to feed Unity a `.ulf`. **The workflow now supports the entitlement XML directly** — it mounts the licence into the Licensing Client's own directory instead of handing it to the manual-activation loader. That path has now run to completion (run 37252858463, 2026-10-05, 91 s): the licence **is** visible in the container, the Licensing Client **does** launch and connect, and the editor **does** start — and then rejects the licence with `Access token is unavailable`, because an entitlement XML is a **named-user** licence and the Licensing Client needs the account's access token to resolve it. The step now signs in first when `UNITY_EMAIL` and `UNITY_PASSWORD` are present; that fix has never run. The CI gate is still without a verdict. Week 1 of the implementation roadmap is a **gate** — a headless benchmark that decides whether the water solver can run on a mid-range phone. Nothing downstream of it starts until it returns a reproducible verdict.
 
 ---
 
@@ -445,32 +445,74 @@ docker run --rm \
     -logFile /dev/stdout
 ```
 
-The licence value is never printed — it goes from the environment straight to the file,
-and the file is never `cat`'d. Only its byte count and root element are reported.
+**The file alone is not enough.** An entitlement licence is a *named-user* licence: the
+document carries the entitlement, but the Licensing Client needs the account's **access
+token** to resolve it, and a token exists only after a sign-in. So when `UNITY_EMAIL` and
+`UNITY_PASSWORD` are present the step signs in first, which caches the token:
 
-> **This path is UNVERIFIED, and its first attempt failed for a different reason.**
+```bash
+docker run --rm --init \
+  -v "$LIC_DIR:/root/.config/unity3d/Unity/licenses" \
+  "$IMAGE" \
+  xvfb-run -ae /dev/stdout /opt/unity/Editor/Unity \
+    -batchmode -nographics -quit \
+    -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD" \
+    -logFile /dev/stdout
+```
+
+The licence value is never printed — it goes from the environment straight to the file,
+and the file is never `cat`'d. Only its byte count and root element are reported. The
+password is passed as an argument with `set -x` off, so the command line is not echoed.
+
+> **This path has now run, and the licence was rejected — for a reason the log names.**
 >
-> Run **37110829407** (2026-10-03, commit `784bf674`) was the first to try it. The gate ran,
-> but the preflight classified the secret as `ulf` — the old test matched `<root` anywhere in
-> the document — so the entitlement branch was **skipped** and the identical Code 400
-> recurred. The classifier is now structure-based: `<EntitlementGroups>` → entitlement,
-> `<root>` **and** `<Signature>` → ULF, any other XML → entitlement with a warning.
+> Run **37252858463** (2026-10-05, commit `c510f6d8`) is the first in which the entitlement
+> branch executed **and completed**. Step 9 ran `01:48:22Z → 01:49:53Z` — **91 seconds** —
+> and concluded `success`. The probe answered every question the earlier six-hour hang left
+> open:
 >
-> That run did prove one thing the mechanism depends on: **the Licensing Client launches
-> successfully in the container** — `Successfully launched the LicensingClient (PId: 38)`,
-> version `1.18.3+d7ffd15`, machine id `D7nTUnjNAmtsUMcnoyrqkgIbYdM=`. So the client is
-> available; what is unproven is whether it accepts this document.
+> ```
+> --- probe: licence visibility ---
+> -rw------- 1 1001 1001 5434 Oct  5 01:48 UnityEntitlementLicense.xml
+> --- probe: editor binary ---
+> -rwxr-xr-x 1 1000 1000 110081080 Aug 19 06:29 /opt/unity/Editor/Unity
+> Probe exit code: 0
+> ```
 >
-> Two things could still be wrong, and both are visible in the log:
+> The editor started, and the Licensing Client launched and connected:
 >
-> 1. **The entitlement licence may be bound to the machine that activated it.** If the
->    Licensing Client rejects it in the container, the log will say so.
-> 2. **The document may not be a valid licence at all.** The secret contains no
->    `<Signature>` element, which is why the ULF loader rejected it. If it is also not a
->    well-formed entitlement licence, no route will accept it.
+> ```
+> Unity Editor version:    6000.5.9f1 (b57deb96f08d)
+> Batch mode:              YES
+> [Licensing::Module] Successfully launched the LicensingClient (PId: 27)
+> [Licensing::IpcConnector] Successfully connected to: "LicenseClient-root"
+>   Version:                 1.18.3+d7ffd15
+> ```
 >
-> If the entitlement path fails, the fallback is `UNITY_SERIAL` + `UNITY_EMAIL` +
-> `UNITY_PASSWORD`, which is a supported game-ci route and needs no licence file at all.
+> Then the licence was refused, and the log says exactly why:
+>
+> ```
+> [Licensing::Module] Error: Access token is unavailable; failed to update
+> [Licensing::Client] Error: Code 404 while processing request
+>   (status: Found 0 entitlement groups and 0 free entitlements matching requested entitlement ids)
+> [Licensing::Module] Error: 'com.unity.editor.headless' was not found.
+> No valid Unity Editor license found. Please activate your license.
+> Editor exit code: 198
+> ```
+>
+> **This is not a machine-binding failure and not a network failure.** The client reached
+> its own state and found no access token. That is why the step now signs in first.
+>
+> Two things could still fail, and both are visible in the run log:
+>
+> 1. **Two-factor authentication.** The CLI sign-in has no TOTP path. If the account has 2FA
+>    enabled, the sign-in will fail and the log will say so.
+> 2. **A machine-bound entitlement.** If the document is bound to the machine that activated
+>    it, the client will reject it in the container.
+>
+> If either holds, **no wiring will make this document work**, and the fallback is
+> `UNITY_SERIAL` + `UNITY_EMAIL` + `UNITY_PASSWORD`, which re-issues the licence for the
+> runner and needs no file at all.
 
 #### Adding the secret
 
@@ -478,8 +520,14 @@ At *Settings → Secrets and variables → Actions → New repository secret*:
 
 | Secret | For | Where the value comes from |
 |---|---|---|
-| `UNITY_LICENSE` | Personal licence | The **whole** entitlement XML or `.ulf` file, including the `<?xml ... ?>` declaration and the closing tag |
+| `UNITY_LICENSE` **+** `UNITY_EMAIL` **+** `UNITY_PASSWORD` | Personal licence | The **whole** entitlement XML or `.ulf` file, including the `<?xml ... ?>` declaration and the closing tag, **plus** the Unity account credentials |
 | `UNITY_SERIAL` + `UNITY_EMAIL` + `UNITY_PASSWORD` | Plus / Pro | The serial from your Unity licence page |
+
+> **The entitlement route needs all three secrets.** `UNITY_LICENSE` alone is provably
+> insufficient — run 37252858463 showed the file is read and then refused for want of an
+> access token. `UNITY_EMAIL` and `UNITY_PASSWORD` are what let the step sign in and obtain
+> that token. The preflight reports `Unity credentials present: yes|no` so the log says up
+> front whether the XML route can work.
 
 For the entitlement route, copy the file Unity Hub wrote — on Linux
 `~/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml` — in full. A truncated
@@ -489,7 +537,8 @@ copy is the most common cause of a licence that "looks right" and is rejected.
 > the runner; the entitlement path does not re-issue anything, which is exactly why it may
 > be rejected. If activation fails with a licence error, the usual cause is that the
 > personal licence is already active on too many machines — deactivate one from the Unity
-> account page and retry.
+> account page and retry. Note that run 37252858463 did **not** fail this way: it failed
+> for want of an access token, which is a different problem with a different fix.
 
 ### What the workflow does, and what fails the build
 

@@ -1,366 +1,367 @@
 {
-  "$schema": "petrichor-handoff/1",
-  "generated": "2026-10-04",
-  "repository": {
-    "owner": "bythewayz66-glitch",
-    "name": "petrichor",
-    "private": false,
-    "visibility_note": "Made public on 2026-10-01 so a local agent can clone it with no credentials. It was private when this handoff was first written; nothing else in this file changed.",
-    "default_branch": "main",
-    "head_commit": "beb5c8f2de9b1e861829ba2e2e4a7e0cdde59853",
-    "head_commit_note": "HEAD at the moment this file was last revised (2026-10-04). The commit that adds this revision is a child of it."
+ "$schema": "petrichor-handoff/1",
+ "generated": "2026-10-05",
+ "repository": {
+  "owner": "bythewayz66-glitch",
+  "name": "petrichor",
+  "private": false,
+  "visibility_note": "Made public on 2026-10-01 so a local agent can clone it with no credentials. It was private when this handoff was first written; nothing else in this file changed.",
+  "default_branch": "main",
+  "head_commit": "c510f6d8a7e35a2ad7e11c785267aaa430c43dd1",
+  "head_commit_note": "HEAD at the moment this file was last revised (2026-10-05). The commit that adds this revision is a child of it."
+ },
+ "engine": {
+  "unity": "6000.5.9f1",
+  "changeset": "b57deb96f08d",
+  "changeset_source": "Read off a machine: /home/jayson/Unity/Hub/Editor/6000.5.9f1/modules.json download_unity paths all carry b57deb96f08d",
+  "line": "6000.5",
+  "pipeline": "URP",
+  "template": "Universal 3D (URP)",
+  "modules_required": [
+   "Linux Build Support (IL2CPP)",
+   "Android Build Support (OpenJDK, SDK, NDK)",
+   "Linux Build Support (Mono) - optional"
+  ]
+ },
+ "reference_device": {
+  "model": "Samsung Galaxy A54 5G",
+  "model_code": "SM-A546B",
+  "model_code_note": "SM-A546B is one of eight regional variants: SM-A5460, SM-A546B, SM-A546B/DS, SM-A546E, SM-A546E/DS, SM-A546U, SM-A546U1, SM-A546V. It is the European model, not a universal identifier. Record the variant actually owned in section 1.4 of the gate report.",
+  "soc": "Samsung Exynos 1380 (5 nm)",
+  "cpu": "4x Cortex-A78 @ 2.4 GHz + 4x Cortex-A55 @ 2.0 GHz",
+  "gpu": "ARM Mali-G68 MP5",
+  "ram_gb": 6,
+  "android_shipped": "13 (One UI 5.1)",
+  "android_upgradable": "15 (One UI 7), API 35",
+  "released": "2023-03",
+  "status": "RECOMMENDATION - user must confirm against hardware they own",
+  "emulator_acceptable": false
+ },
+ "counts": {
+  "issues": 144,
+  "labels": 37,
+  "labels_note": "36 at handoff. status:blocked was added on 2026-10-02 when the issue set was reconciled against the repository; 13 tickets now carry it instead of status:ready or status:backlog.",
+  "milestones": 13,
+  "issue_numbering_note": "Issue numbers are in week order EXCEPT for one transposition: #9 is week 2 (W2.1) and #10 is week 1 (W1.9). Weeks 3-16 are contiguous. The week-NN label is authoritative, not the issue number.",
+  "board_items": 144,
+  "assemblies": 12,
+  "csharp_files": 16,
+  "csharp_files_note": "Recounted from the committed tree on 2026-10-03. Was 14, then 15 (wrong), now 16: 6 under Assets/Scripts/Water, plus the harness and support files.",
+  "committed_gate_reports": 1,
+  "verified_by": "GraphQL totalCount queries",
+  "committed_gate_reports_note": "docs/gate-reports/gate-20261001-M01-linux-0001.md. Was 0.",
+  "committed_verdicts": 2,
+  "committed_verdicts_note": "BenchmarkResults/verdict_linux.txt (attempt 0) and verdict_linux_attempt1_res129.txt (attempt 1). .gitignore excludes everything else under BenchmarkResults/, so the per-scenario summaries and NUnit XML are NOT in the repository.",
+  "ci_compiles": 0,
+  "ci_compiles_note": "Nothing has ever been compiled in CI. The one CI run that reached the gate failed on activation before the editor loaded the project. The local 2026-10-01 run did compile."
+ },
+ "issue_ranges": [
+  {
+   "milestone": "M1 - Water Gate",
+   "weeks": "1",
+   "issues": "1-8, 10",
+   "count": 9,
+   "days": 5.0
   },
-  "engine": {
-    "unity": "6000.5.9f1",
-    "changeset": "b57deb96f08d",
-    "changeset_source": "Read off a machine: /home/jayson/Unity/Hub/Editor/6000.5.9f1/modules.json download_unity paths all carry b57deb96f08d",
-    "line": "6000.5",
-    "pipeline": "URP",
-    "template": "Universal 3D (URP)",
-    "modules_required": [
-      "Linux Build Support (IL2CPP)",
-      "Android Build Support (OpenJDK, SDK, NDK)",
-      "Linux Build Support (Mono) - optional"
-    ]
+  {
+   "milestone": "M2 - Grey-box Terrain and Streaming",
+   "weeks": "2",
+   "issues": "9, 11-18",
+   "count": 9,
+   "days": 5.0
   },
-  "reference_device": {
-    "model": "Samsung Galaxy A54 5G",
-    "model_code": "SM-A546B",
-    "model_code_note": "SM-A546B is one of eight regional variants: SM-A5460, SM-A546B, SM-A546B/DS, SM-A546E, SM-A546E/DS, SM-A546U, SM-A546U1, SM-A546V. It is the European model, not a universal identifier. Record the variant actually owned in section 1.4 of the gate report.",
-    "soc": "Samsung Exynos 1380 (5 nm)",
-    "cpu": "4x Cortex-A78 @ 2.4 GHz + 4x Cortex-A55 @ 2.0 GHz",
-    "gpu": "ARM Mali-G68 MP5",
-    "ram_gb": 6,
-    "android_shipped": "13 (One UI 5.1)",
-    "android_upgradable": "15 (One UI 7), API 35",
-    "released": "2023-03",
-    "status": "RECOMMENDATION - user must confirm against hardware they own",
-    "emulator_acceptable": false
+  {
+   "milestone": "M3-4 - Edit Pipeline and Journal",
+   "weeks": "3-4",
+   "issues": "19-36",
+   "count": 18,
+   "days": 10.0
   },
-  "counts": {
-    "issues": 144,
-    "labels": 37,
-    "labels_note": "36 at handoff. status:blocked was added on 2026-10-02 when the issue set was reconciled against the repository; 13 tickets now carry it instead of status:ready or status:backlog.",
-    "milestones": 13,
-    "issue_numbering_note": "Issue numbers are in week order EXCEPT for one transposition: #9 is week 2 (W2.1) and #10 is week 1 (W1.9). Weeks 3-16 are contiguous. The week-NN label is authoritative, not the issue number.",
-    "board_items": 144,
-    "assemblies": 12,
-    "csharp_files": 16,
-    "csharp_files_note": "Recounted from the committed tree on 2026-10-03. Was 14, then 15 (wrong), now 16: 6 under Assets/Scripts/Water, plus the harness and support files.",
-    "committed_gate_reports": 1,
-    "verified_by": "GraphQL totalCount queries",
-    "committed_gate_reports_note": "docs/gate-reports/gate-20261001-M01-linux-0001.md. Was 0.",
-    "committed_verdicts": 2,
-    "committed_verdicts_note": "BenchmarkResults/verdict_linux.txt (attempt 0) and verdict_linux_attempt1_res129.txt (attempt 1). .gitignore excludes everything else under BenchmarkResults/, so the per-scenario summaries and NUnit XML are NOT in the repository.",
-    "ci_compiles": 0,
-    "ci_compiles_note": "Nothing has ever been compiled in CI. The one CI run that reached the gate failed on activation before the editor loaded the project. The local 2026-10-01 run did compile."
+  {
+   "milestone": "M5 - Water in the World",
+   "weeks": "5",
+   "issues": "37-45",
+   "count": 9,
+   "days": 5.0
   },
-  "issue_ranges": [
-    {
-      "milestone": "M1 - Water Gate",
-      "weeks": "1",
-      "issues": "1-8, 10",
-      "count": 9,
-      "days": 5.0
-    },
-    {
-      "milestone": "M2 - Grey-box Terrain and Streaming",
-      "weeks": "2",
-      "issues": "9, 11-18",
-      "count": 9,
-      "days": 5.0
-    },
-    {
-      "milestone": "M3-4 - Edit Pipeline and Journal",
-      "weeks": "3-4",
-      "issues": "19-36",
-      "count": 18,
-      "days": 10.0
-    },
-    {
-      "milestone": "M5 - Water in the World",
-      "weeks": "5",
-      "issues": "37-45",
-      "count": 9,
-      "days": 5.0
-    },
-    {
-      "milestone": "M6 - Slice Geometry Locked",
-      "weeks": "6",
-      "issues": "46-54",
-      "count": 9,
-      "days": 5.0
-    },
-    {
-      "milestone": "M7 - Instrument and Failure Messages",
-      "weeks": "7",
-      "issues": "55-63",
-      "count": 9,
-      "days": 5.0
-    },
-    {
-      "milestone": "M8-9 - Life and Succession",
-      "weeks": "8-9",
-      "issues": "64-81",
-      "count": 18,
-      "days": 10.0
-    },
-    {
-      "milestone": "M10 - Save Round-Trip",
-      "weeks": "10",
-      "issues": "82-90",
-      "count": 9,
-      "days": 5.0
-    },
-    {
-      "milestone": "M11 - Android Tier",
-      "weeks": "11",
-      "issues": "91-99",
-      "count": 9,
-      "days": 5.0
-    },
-    {
-      "milestone": "M12-13 - Content Pass",
-      "weeks": "12-13",
-      "issues": "100-117",
-      "count": 18,
-      "days": 10.0
-    },
-    {
-      "milestone": "M14 - Art and Audio",
-      "weeks": "14",
-      "issues": "118-126",
-      "count": 9,
-      "days": 5.0
-    },
-    {
-      "milestone": "M15 - Performance",
-      "weeks": "15",
-      "issues": "127-135",
-      "count": 9,
-      "days": 5.0
-    },
-    {
-      "milestone": "M16 - Freeze and Playtest",
-      "weeks": "16",
-      "issues": "136-144",
-      "count": 9,
-      "days": 5.0
-    }
-  ],
-  "blocking_item": {
-    "id": "UNITY_LICENSE_ENTITLEMENT_PATH_HANGS",
-    "summary": "The UNITY_LICENSE secret holds a genuine entitlement licence (5434 bytes, root <root>, with <EntitlementGroups> and <Signature>). The CI gate has run five times on 2026-10-03 and has never produced a verdict. The first four failed on licence activation. The fifth (run 37111124148) is the first in which the entitlement branch executed, and it HUNG: the container produced no output for 6h00m08s and was killed by GitHub's default 6-hour job timeout.",
-    "verified": "Run 37111124148 preflight log: 'Licence bytes: 5434', 'Licence root element: <root', 'Has <Signature>: true', 'Has <EntitlementGroups>: true', 'Licence format detected: entitlement-xml'. The gate job's step 9 ran 08:52:16Z to 14:52:24Z and concluded 'cancelled'. The log contains no line between the image pull at 08:54:21Z and '##[error]The operation was canceled.'",
-    "correction": "Earlier revisions said the secret 'contains no <Signature> element'. The preflight log proves that false: Has <Signature>: true. The ULF loader rejected the document because its root is <root> wrapping <License>, not because a signature was missing.",
-    "effect": "The gate job now carries timeout-minutes: 30, and the entitlement step runs a short probe container (licence directory listing, Licensing Client binary, editor binary) before running the editor under 'timeout 1500'. A hang now fails in minutes and names itself.",
-    "warning": "Do not read the entitlement path as working. It is wired, correctly routed, and it hangs. If the document is machine-bound or the Licensing Client cannot reach the licence server from the container, no wiring will make it work.",
-    "fallback": "UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD. Re-issues the licence for the runner and needs no file. The preflight already routes that combination to game-ci's activation step."
+  {
+   "milestone": "M6 - Slice Geometry Locked",
+   "weeks": "6",
+   "issues": "46-54",
+   "count": 9,
+   "days": 5.0
   },
-  "next_steps": [
-    {
-      "order": 1,
-      "action": "Re-run the workflow and read the probe output",
-      "ref": "blocking_item",
-      "note": "The entitlement step now probes the container first: is the licence visible at /root/.config/unity3d/Unity/licenses/, and does the Licensing Client binary exist? That answers in seconds what run 37111124148 could not answer in six hours."
-    },
-    {
-      "order": 2,
-      "action": "If the entitlement path still hangs or is rejected, switch to UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD",
-      "note": "Re-issues the licence for the runner and needs no file. The preflight already routes that combination to game-ci's activation step. Requires a Plus/Pro seat and consumes an activation."
-    },
-    {
-      "order": 3,
-      "action": "Run the gate on both tiers",
-      "command": "Tools/run_bench.sh --tier linux --attempt 0 && Tools/run_bench.sh --tier android --attempt 0"
-    },
-    {
-      "order": 4,
-      "action": "Write the M1 report from docs/GATE_REPORT_TEMPLATE.md into docs/gate-reports/",
-      "gate": "Week 2 must not begin until this report is committed"
-    },
-    {
-      "order": 5,
-      "action": "Work issues #1-#8 and #10 (M1), then #9 and #11-#18 (M2), in order",
-      "note": "#9 is week 2 and #10 is week 1; the week-NN label is authoritative, not the issue number"
-    }
-  ],
-  "unverified_claims": [
-    {
-      "claim": "The C# harness compiles",
-      "status": "VERIFIED (locally only)",
-      "reason": "The 2026-10-01 headless run compiled it and fixed two errors: missing 'using PET.Water;' in BenchmarkHarness.cs and ScenarioResult.cs, and PET.Benchmarks.asmdef lacking the test-runner references. NOTHING has been compiled in CI: no CI run has reached the point where the editor loads the project. The earlier claim that CI run 37107565152 'spent 117 s in the benchmark step, which requires a successful compile' is withdrawn - that run failed on licence activation before the editor loaded the project."
-    },
-    {
-      "claim": "The gate passes",
-      "status": "PARTLY VERIFIED - AND UNSTABLE",
-      "reason": "Rung 0 is a clean BUDGET FAIL. Rung 1 returned PASS twice on a quiet pinned box and BUDGET FAIL on a loaded box. The verdict flips on CPU contention alone. The Android tier has never been measured."
-    },
-    {
-      "claim": "The entitlement-XML licence path activates Unity in CI",
-      "status": "UNVERIFIED - AND IT HANGS",
-      "reason": "Run 37111124148 is the first in which the entitlement branch executed. The licence was written (5434 bytes, root <root>) and the image pulled, then the container produced no output for 6h00m08s until GitHub's default job timeout cancelled it. The gate job now carries timeout-minutes: 30 and the step probes the container before starting the editor."
-    },
-    {
-      "claim": "The four scenarios are correctly parameterised",
-      "status": "UNVERIFIED",
-      "reason": "3000 settle steps, 500 samples, 3600x multiplier are reasoned, not tuned."
-    },
-    {
-      "claim": "The changeset b57deb96f08d",
-      "status": "READ_OFF_A_MACHINE",
-      "reason": "Read from the installed editor, which reports 'Unity Editor version: 6000.5.9f1 (b57deb96f08d)'."
-    },
-    {
-      "claim": "The thresholds are mirrored in two places",
-      "status": "KNOWN_DRIFT_RISK",
-      "reason": "Tools/bench_thresholds.json and BenchmarkScenarios.cs both hold them."
-    },
-    {
-      "claim": "The reference device is owned",
-      "status": "UNCONFIRMED",
-      "reason": "The A54 is a recommendation."
-    },
-    {
-      "claim": "The LFS estimate of 1.4 GB",
-      "status": "ESTIMATE",
-      "reason": "Not measured; no art has been imported."
-    }
-  ],
-  "thresholds": {
-    "linux": {
-      "p50_ms": 1.5,
-      "p95_ms": 3.0,
-      "max_ms": 6.0,
-      "frame_budget_ms": 16.67,
-      "target_fps": 60
-    },
-    "android": {
-      "p50_ms": 2.5,
-      "p95_ms": 5.0,
-      "max_ms": 10.0,
-      "frame_budget_ms": 33.33,
-      "target_fps": 30
-    },
-    "unit": "milliseconds per solver step, not per frame",
-    "source": "Tools/bench_thresholds.json"
+  {
+   "milestone": "M7 - Instrument and Failure Messages",
+   "weeks": "7",
+   "issues": "55-63",
+   "count": 9,
+   "days": 5.0
   },
-  "exit_codes": {
-    "0": {
-      "verdict": "PASS",
-      "build": "green",
-      "meaning": "Every scenario within threshold"
-    },
-    "1": {
-      "verdict": "BUDGET FAIL",
-      "build": "green",
-      "meaning": "Walk the named rung. A budget miss is a project event, not a broken commit"
-    },
-    "2": {
-      "verdict": "HARD FAIL",
-      "build": "fails",
-      "meaning": "NaN, mass imbalance or a red test. The ladder cannot fix these"
-    },
-    "3": {
-      "verdict": "INPUT ERROR",
-      "build": "fails",
-      "meaning": "The checker could not read its inputs; the run is invalid"
-    }
+  {
+   "milestone": "M8-9 - Life and Succession",
+   "weeks": "8-9",
+   "issues": "64-81",
+   "count": 18,
+   "days": 10.0
   },
-  "rung_ladder": [
-    {
-      "rung": 1,
-      "action": "Halve the simulation resolution to 129",
-      "cost": "none visible - the render grid is unchanged"
-    },
-    {
-      "rung": 2,
-      "action": "Shrink the active water window to tiles within 1 of the camera",
-      "cost": "distant water stops updating"
-    },
-    {
-      "rung": 3,
-      "action": "Channel graph on Android only",
-      "cost": "Android water is not freely redirectable"
-    },
-    {
-      "rung": 4,
-      "action": "Delay the Android tier",
-      "cost": "Linux-only slice"
-    },
-    {
-      "rung": 5,
-      "action": "Water stops being redirectable",
-      "cost": "a pillar - revisit Deliverable 1"
-    }
-  ],
-  "conventions": {
-    "assembly_rule": "An assembly may only reference assemblies below it. Enforced by .asmdef references, so a violation is a compile error.",
-    "hard_prohibition": "No #if UNITY_ANDROID anywhere under PET.Edit or PET.Save.",
-    "never_cut": [
-      "The three shaping tools (terraforming, water, planting)",
-      "The save system",
-      "The three failure messages"
-    ],
-    "cut_order": "Cuts come from the top of the written order in Deliverable 5 S08. Do not skip a row. Do not cut two things at once. A cut is recorded in the same commit that takes it.",
-    "commits": "Conventional Commits; scope is the assembly without the prefix or an area (art, ci, docs, board).",
-    "branches": "Trunk-based. main always compiles and passes the gate. wk/NN-slug, exp/slug, fix/slug. Never commit directly to main except docs and the board data file.",
-    "falling_behind_trigger": "Two consecutive milestones missing their exit criterion. Re-read Deliverable 5 S08 before taking any cut."
+  {
+   "milestone": "M10 - Save Round-Trip",
+   "weeks": "10",
+   "issues": "82-90",
+   "count": 9,
+   "days": 5.0
   },
-  "git_setup": [
-    "git lfs install",
-    "git config blame.ignoreRevsFile .git-blame-ignore-revs",
-    "git config merge.unityyamlmerge.name \"Unity SmartMerge\"",
-    "git config merge.unityyamlmerge.driver \"<UNITYYAMLMERGE> merge -p --force %O %B %A %A\"",
-    "git config merge.unityyamlmerge.recursive binary"
-  ],
-  "unityyamlmerge_paths": {
-    "windows": "C:\\Program Files\\Unity\\Hub\\Editor\\<version>\\Editor\\Data\\Tools\\UnityYAMLMerge.exe",
-    "macos": "/Applications/Unity/Hub/Editor/<version>/Unity.app/Contents/Tools/UnityYAMLMerge",
-    "linux": "~/Unity/Hub/Editor/<version>/Editor/Data/Tools/UnityYAMLMerge"
+  {
+   "milestone": "M11 - Android Tier",
+   "weeks": "11",
+   "issues": "91-99",
+   "count": 9,
+   "days": 5.0
   },
-  "key_files": {
-    "readme": "README.md",
-    "contributing": "CONTRIBUTING.md",
-    "handoff": "docs/HANDOFF.md",
-    "gate_template": "docs/GATE_REPORT_TEMPLATE.md",
-    "workflow": ".github/workflows/water-gate.yml",
-    "thresholds": "Tools/bench_thresholds.json",
-    "checker": "Tools/check_thresholds.py",
-    "runner": "Tools/run_bench.sh",
-    "solver_interface": "Assets/Scripts/Water/IWaterSolver.cs",
-    "solver": "Assets/Scripts/Water/WaterSolver.cs",
-    "field": "Assets/Scripts/Water/WaterField.cs",
-    "source": "Assets/Scripts/Water/WaterSource.cs",
-    "harness": "Assets/Tests/Benchmarks/BenchmarkHarness.cs",
-    "scenarios": "Assets/Tests/Benchmarks/BenchmarkScenarios.cs"
+  {
+   "milestone": "M12-13 - Content Pass",
+   "weeks": "12-13",
+   "issues": "100-117",
+   "count": 18,
+   "days": 10.0
   },
-  "one_line": "The plan is fully ticketed and the repository is consistent. The C# compiles locally and in CI, and the gate has run both ways: rung 0 is a clean BUDGET FAIL, rung 1 is a PASS on a quiet box and a BUDGET FAIL on a loaded one, and the Android tier has never been measured. The CI gate executed for the first time on 2026-10-03 and failed on activation, because the UNITY_LICENSE secret holds an entitlement XML rather than a ULF. Replace the secret with a real .ulf, make the verdict reproducible by recording machine quietness, and measure the Android tier before week 2 is called done.",
-  "gate_history": {
-    "ci_gate_has_run": true,
-    "ci_gate_has_verdict": false,
-    "ci_gate_runs": 5,
-    "ci_gate_note": "Five CI runs on 2026-10-03. Runs 37107565152, 37109026756, 37109526130 and 37110829407 failed on licence activation. Run 37111124148 ran the entitlement path for the first time and hung for 6h00m08s until GitHub's default job timeout cancelled it.",
-    "ci_gate_verdict": "none - no CI run has reached the checker",
-    "ci_gate_failure_line": "##[error]The operation was canceled.  (run 37111124148, after 6h00m08s with no container output)",
-    "ci_runs_before_this": "18 runs, all skipped the gate in 5-14 s for want of a licence secret",
-    "local_gate_has_run": true,
-    "local_gate_note": "Run headless on 2026-10-01 and again 2026-10-03. The C# has been compiled. Two compile errors were found and fixed on the first run.",
-    "report": "docs/gate-reports/gate-20261001-M01-linux-0001.md",
-    "verdicts": [
-      {
-        "attempt": 0,
-        "tile_res": 257,
-        "verdict": "BUDGET FAIL",
-        "rung_named": 1,
-        "note": "9 metrics over budget; correctness OK, so the ladder applies"
-      },
-      {
-        "attempt": 1,
-        "tile_res": 129,
-        "verdict": "PASS",
-        "note": "on a quiet pinned box; the same rung returned BUDGET FAIL on a loaded box"
-      }
-    ]
+  {
+   "milestone": "M14 - Art and Audio",
+   "weeks": "14",
+   "issues": "118-126",
+   "count": 9,
+   "days": 5.0
+  },
+  {
+   "milestone": "M15 - Performance",
+   "weeks": "15",
+   "issues": "127-135",
+   "count": 9,
+   "days": 5.0
+  },
+  {
+   "milestone": "M16 - Freeze and Playtest",
+   "weeks": "16",
+   "issues": "136-144",
+   "count": 9,
+   "days": 5.0
   }
+ ],
+ "blocking_item": {
+  "id": "UNITY_LICENSE_ENTITLEMENT_NEEDS_ACCESS_TOKEN",
+  "summary": "The UNITY_LICENSE secret holds a genuine entitlement licence (5434 bytes, root <root>, with <EntitlementGroups> and <Signature>). Run 37252858463 (2026-10-05) is the first in which the entitlement branch executed AND completed: the licence was visible in the container, the Licensing Client launched and connected, and the editor started - then rejected the licence. An entitlement licence is a NAMED-USER licence: the file carries the entitlement, but the Licensing Client needs the account's ACCESS TOKEN to resolve it, and a token exists only after a sign-in.",
+  "verified": "Run 37252858463 job log, step 9 (91 s, conclusion success): probe printed '-rw------- 1 1001 1001 5434 Oct 5 01:48 UnityEntitlementLicense.xml' and 'Probe exit code: 0'; editor printed 'Unity Editor version: 6000.5.9f1 (b57deb96f08d)', 'Batch mode: YES', 'Successfully launched the LicensingClient (PId: 27)', 'Successfully connected to: \"LicenseClient-root\"', 'Version: 1.18.3+d7ffd15'; then '[Licensing::Module] Error: Access token is unavailable; failed to update', '[Licensing::Client] Error: Code 404 while processing request (status: Found 0 entitlement groups and 0 free entitlements matching requested entitlement ids)', \"[Licensing::Module] Error: 'com.unity.editor.headless' was not found.\", 'No valid Unity Editor license found. Please activate your license.', 'Editor exit code: 198'.",
+  "correction": "Run 37111124148 (run 25) hung for 6h00m08s and the log could not say whether the licence was even visible in the container. Run 26 answered that: it is visible, the client launches, and the editor starts. The hang was not a visibility or network problem.",
+  "effect": "The entitlement step now signs in before the benchmark when UNITY_EMAIL and UNITY_PASSWORD are present (-username / -password), which is what obtains the access token, and dumps the Licensing Client's own log on a non-zero exit. The preflight reports 'Unity credentials present: yes|no' so the log says up front whether the XML route can work.",
+  "required_secrets": "UNITY_LICENSE (the entitlement XML) + UNITY_EMAIL + UNITY_PASSWORD. The XML route needs all three; the file alone is provably insufficient.",
+  "warning": "Do not read the entitlement path as working. The sign-in fix is reasoned from the log, not tested. Two things could still fail and both are visible in the run log: the account may have two-factor authentication enabled (the CLI sign-in has no TOTP path), or the entitlement may be bound to the machine that activated it.",
+  "fallback": "UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD. Re-issues the licence for the runner and needs no file. The preflight already routes that combination to game-ci's activation step."
+ },
+ "next_steps": [
+  {
+   "order": 1,
+   "action": "Add UNITY_EMAIL and UNITY_PASSWORD, then re-run the workflow",
+   "ref": "blocking_item",
+   "note": "The entitlement step now signs in before the benchmark, which is what obtains the access token the Licensing Client needs. Without them the XML route cannot work and the run says so."
+  },
+  {
+   "order": 2,
+   "action": "If the sign-in fails (2FA, or a machine-bound entitlement), switch to UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD",
+   "note": "Re-issues the licence for the runner and needs no file. The preflight already routes that combination to game-ci's activation step. Requires a Plus/Pro seat and consumes an activation."
+  },
+  {
+   "order": 3,
+   "action": "Run the gate on both tiers",
+   "command": "Tools/run_bench.sh --tier linux --attempt 0 && Tools/run_bench.sh --tier android --attempt 0"
+  },
+  {
+   "order": 4,
+   "action": "Write the M1 report from docs/GATE_REPORT_TEMPLATE.md into docs/gate-reports/",
+   "gate": "Week 2 must not begin until this report is committed"
+  },
+  {
+   "order": 5,
+   "action": "Work issues #1-#8 and #10 (M1), then #9 and #11-#18 (M2), in order",
+   "note": "#9 is week 2 and #10 is week 1; the week-NN label is authoritative, not the issue number"
+  }
+ ],
+ "unverified_claims": [
+  {
+   "claim": "The C# harness compiles",
+   "status": "VERIFIED (locally only)",
+   "reason": "The 2026-10-01 headless run compiled it and fixed two errors: missing 'using PET.Water;' in BenchmarkHarness.cs and ScenarioResult.cs, and PET.Benchmarks.asmdef lacking the test-runner references. NOTHING has been compiled in CI: no CI run has reached the point where the editor loads the project. The earlier claim that CI run 37107565152 'spent 117 s in the benchmark step, which requires a successful compile' is withdrawn - that run failed on licence activation before the editor loaded the project."
+  },
+  {
+   "claim": "The gate passes",
+   "status": "PARTLY VERIFIED - AND UNSTABLE",
+   "reason": "Rung 0 is a clean BUDGET FAIL. Rung 1 returned PASS twice on a quiet pinned box and BUDGET FAIL on a loaded box. The verdict flips on CPU contention alone. The Android tier has never been measured."
+  },
+  {
+   "claim": "The entitlement-XML licence path activates Unity in CI",
+   "status": "VERIFIED FALSE AS WIRED - FIX UNTESTED",
+   "reason": "Run 37252858463 (2026-10-05) ran the entitlement branch to completion in 91 s. The licence was visible in the container, the Licensing Client launched and connected, and the editor started - then rejected the licence with 'Access token is unavailable' and 'Found 0 entitlement groups'. An entitlement XML is a named-user licence and needs the account's access token. The step now signs in first when UNITY_EMAIL and UNITY_PASSWORD are present; that fix has never run."
+  },
+  {
+   "claim": "The four scenarios are correctly parameterised",
+   "status": "UNVERIFIED",
+   "reason": "3000 settle steps, 500 samples, 3600x multiplier are reasoned, not tuned."
+  },
+  {
+   "claim": "The changeset b57deb96f08d",
+   "status": "READ_OFF_A_MACHINE",
+   "reason": "Read from the installed editor, which reports 'Unity Editor version: 6000.5.9f1 (b57deb96f08d)'."
+  },
+  {
+   "claim": "The thresholds are mirrored in two places",
+   "status": "KNOWN_DRIFT_RISK",
+   "reason": "Tools/bench_thresholds.json and BenchmarkScenarios.cs both hold them."
+  },
+  {
+   "claim": "The reference device is owned",
+   "status": "UNCONFIRMED",
+   "reason": "The A54 is a recommendation."
+  },
+  {
+   "claim": "The LFS estimate of 1.4 GB",
+   "status": "ESTIMATE",
+   "reason": "Not measured; no art has been imported."
+  }
+ ],
+ "thresholds": {
+  "linux": {
+   "p50_ms": 1.5,
+   "p95_ms": 3.0,
+   "max_ms": 6.0,
+   "frame_budget_ms": 16.67,
+   "target_fps": 60
+  },
+  "android": {
+   "p50_ms": 2.5,
+   "p95_ms": 5.0,
+   "max_ms": 10.0,
+   "frame_budget_ms": 33.33,
+   "target_fps": 30
+  },
+  "unit": "milliseconds per solver step, not per frame",
+  "source": "Tools/bench_thresholds.json"
+ },
+ "exit_codes": {
+  "0": {
+   "verdict": "PASS",
+   "build": "green",
+   "meaning": "Every scenario within threshold"
+  },
+  "1": {
+   "verdict": "BUDGET FAIL",
+   "build": "green",
+   "meaning": "Walk the named rung. A budget miss is a project event, not a broken commit"
+  },
+  "2": {
+   "verdict": "HARD FAIL",
+   "build": "fails",
+   "meaning": "NaN, mass imbalance or a red test. The ladder cannot fix these"
+  },
+  "3": {
+   "verdict": "INPUT ERROR",
+   "build": "fails",
+   "meaning": "The checker could not read its inputs; the run is invalid"
+  }
+ },
+ "rung_ladder": [
+  {
+   "rung": 1,
+   "action": "Halve the simulation resolution to 129",
+   "cost": "none visible - the render grid is unchanged"
+  },
+  {
+   "rung": 2,
+   "action": "Shrink the active water window to tiles within 1 of the camera",
+   "cost": "distant water stops updating"
+  },
+  {
+   "rung": 3,
+   "action": "Channel graph on Android only",
+   "cost": "Android water is not freely redirectable"
+  },
+  {
+   "rung": 4,
+   "action": "Delay the Android tier",
+   "cost": "Linux-only slice"
+  },
+  {
+   "rung": 5,
+   "action": "Water stops being redirectable",
+   "cost": "a pillar - revisit Deliverable 1"
+  }
+ ],
+ "conventions": {
+  "assembly_rule": "An assembly may only reference assemblies below it. Enforced by .asmdef references, so a violation is a compile error.",
+  "hard_prohibition": "No #if UNITY_ANDROID anywhere under PET.Edit or PET.Save.",
+  "never_cut": [
+   "The three shaping tools (terraforming, water, planting)",
+   "The save system",
+   "The three failure messages"
+  ],
+  "cut_order": "Cuts come from the top of the written order in Deliverable 5 S08. Do not skip a row. Do not cut two things at once. A cut is recorded in the same commit that takes it.",
+  "commits": "Conventional Commits; scope is the assembly without the prefix or an area (art, ci, docs, board).",
+  "branches": "Trunk-based. main always compiles and passes the gate. wk/NN-slug, exp/slug, fix/slug. Never commit directly to main except docs and the board data file.",
+  "falling_behind_trigger": "Two consecutive milestones missing their exit criterion. Re-read Deliverable 5 S08 before taking any cut."
+ },
+ "git_setup": [
+  "git lfs install",
+  "git config blame.ignoreRevsFile .git-blame-ignore-revs",
+  "git config merge.unityyamlmerge.name \"Unity SmartMerge\"",
+  "git config merge.unityyamlmerge.driver \"<UNITYYAMLMERGE> merge -p --force %O %B %A %A\"",
+  "git config merge.unityyamlmerge.recursive binary"
+ ],
+ "unityyamlmerge_paths": {
+  "windows": "C:\\Program Files\\Unity\\Hub\\Editor\\<version>\\Editor\\Data\\Tools\\UnityYAMLMerge.exe",
+  "macos": "/Applications/Unity/Hub/Editor/<version>/Unity.app/Contents/Tools/UnityYAMLMerge",
+  "linux": "~/Unity/Hub/Editor/<version>/Editor/Data/Tools/UnityYAMLMerge"
+ },
+ "key_files": {
+  "readme": "README.md",
+  "contributing": "CONTRIBUTING.md",
+  "handoff": "docs/HANDOFF.md",
+  "gate_template": "docs/GATE_REPORT_TEMPLATE.md",
+  "workflow": ".github/workflows/water-gate.yml",
+  "thresholds": "Tools/bench_thresholds.json",
+  "checker": "Tools/check_thresholds.py",
+  "runner": "Tools/run_bench.sh",
+  "solver_interface": "Assets/Scripts/Water/IWaterSolver.cs",
+  "solver": "Assets/Scripts/Water/WaterSolver.cs",
+  "field": "Assets/Scripts/Water/WaterField.cs",
+  "source": "Assets/Scripts/Water/WaterSource.cs",
+  "harness": "Assets/Tests/Benchmarks/BenchmarkHarness.cs",
+  "scenarios": "Assets/Tests/Benchmarks/BenchmarkScenarios.cs"
+ },
+ "one_line": "The plan is fully ticketed and the repository is consistent. The C# compiles locally, and the gate has run both ways: rung 0 is a clean BUDGET FAIL, rung 1 is a PASS on a quiet box and a BUDGET FAIL on a loaded one, and the Android tier has never been measured. The CI gate has executed seven times and has never produced a verdict: run 26 proved the entitlement XML is visible in the container and the editor starts, but a named-user licence needs the account's access token, so the XML route now requires UNITY_EMAIL and UNITY_PASSWORD as well as UNITY_LICENSE. Add them, or switch to the serial route, and measure the Android tier before week 2 is called done.",
+ "gate_history": {
+  "ci_gate_has_run": true,
+  "ci_gate_has_verdict": false,
+  "ci_gate_runs": 7,
+  "ci_gate_note": "Seven CI runs, on 2026-10-03 and 2026-10-05. Runs 37107565152, 37109026756, 37109526130 and 37110829407 failed on licence activation. Run 37111124148 ran the entitlement path for the first time and hung for 6h00m08s until GitHub's default job timeout cancelled it. Run 37252858463 ran it to completion in 91 s and was rejected with 'Access token is unavailable'. Run 37253130555 is a workflow_dispatch of the same commit.",
+  "ci_gate_verdict": "none - no CI run has reached the checker",
+  "ci_gate_failure_line": "[Licensing::Module] Error: Access token is unavailable; failed to update  (run 37252858463, step 9, 91 s)",
+  "ci_runs_before_this": "18 runs, all skipped the gate in 5-14 s for want of a licence secret",
+  "local_gate_has_run": true,
+  "local_gate_note": "Run headless on 2026-10-01 and again 2026-10-03. The C# has been compiled. Two compile errors were found and fixed on the first run.",
+  "report": "docs/gate-reports/gate-20261001-M01-linux-0001.md",
+  "verdicts": [
+   {
+    "attempt": 0,
+    "tile_res": 257,
+    "verdict": "BUDGET FAIL",
+    "rung_named": 1,
+    "note": "9 metrics over budget; correctness OK, so the ladder applies"
+   },
+   {
+    "attempt": 1,
+    "tile_res": 129,
+    "verdict": "PASS",
+    "note": "on a quiet pinned box; the same rung returned BUDGET FAIL on a loaded box"
+   }
+  ]
+ }
 }
