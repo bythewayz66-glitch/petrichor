@@ -157,7 +157,8 @@ jobs:
 
           if [ -n "$UNITY_SERIAL" ]; then
             echo "licensed=true" >> "$GITHUB_OUTPUT"
-            echo "A Unity serial is present; the gate will activate with it."
+            echo "format=serial" >> "$GITHUB_OUTPUT"
+            echo "A Unity serial is present; the gate will activate with it via game-ci."
             exit 0
           fi
 
@@ -273,6 +274,12 @@ jobs:
     needs: preflight
     if: needs.preflight.outputs.licensed == 'true'
     runs-on: ubuntu-latest
+
+    # BOUNDED. Run 37111124148 (2026-10-03) ran the entitlement step for
+    # 6h00m08s and was killed by GitHub's default 6-hour job timeout. A hung
+    # editor must fail fast and name itself, not burn six hours of runner
+    # time and produce a log that ends in "The operation was canceled."
+    timeout-minutes: 30
 
     # Resolved once, so the LFS steps below read a single value rather than
     # repeating the dispatch expression three times.
@@ -451,8 +458,41 @@ jobs:
           IMAGE="unityci/editor:ubuntu-${{ steps.editor.outputs.version }}-linux-il2cpp-3"
           mkdir -p BenchResults
 
+          # ------------------------------------------------------------------
+          # PROBE, BEFORE THE EDITOR.
+          #
+          # Run 37111124148 hung here for six hours and emitted NOTHING after
+          # the image pull - no editor banner, no Licensing Client line, no
+          # error. The log therefore could not say whether the licence was
+          # even visible inside the container. This probe answers that in
+          # seconds, and it is the evidence the next run needs.
+          # ------------------------------------------------------------------
           set +e
-          docker run --rm \
+          docker run --rm --init \
+            -v "$LIC_DIR:/root/.config/unity3d/Unity/licenses:ro" \
+            "$IMAGE" \
+            bash -lc '
+              echo "--- probe: licence visibility ---"
+              ls -l /root/.config/unity3d/Unity/licenses/ 2>&1 || true
+              echo "--- probe: Licensing Client binary ---"
+              find / -maxdepth 6 -name "Unity.Licensing.Client*" 2>/dev/null | head -5 || true
+              echo "--- probe: editor binary ---"
+              ls -l /opt/unity/Editor/Unity 2>&1 || true
+            '
+          PROBE=$?
+          set -e
+          echo "Probe exit code: $PROBE"
+
+          # ------------------------------------------------------------------
+          # BOUNDED RUN.
+          #
+          # Run 37111124148 ran this container for 6h00m08s and was killed by
+          # GitHub's default 6-hour job timeout. `timeout 1500` bounds it to
+          # 25 minutes, so a hang becomes a fast, named failure instead of a
+          # six-hour silence. Exit 124 means the bound was hit.
+          # ------------------------------------------------------------------
+          set +e
+          timeout 1500 docker run --rm --init \
             -v "$PWD:/github/workspace" \
             -v "$LIC_DIR:/root/.config/unity3d/Unity/licenses" \
             -e PET_BENCH_TIER="${{ matrix.tier }}" \
@@ -471,6 +511,9 @@ jobs:
           CODE=$?
           set -e
           echo "Editor exit code: $CODE"
+          if [ "$CODE" = "124" ]; then
+            echo "::error title=Water Gate: entitlement path timed out::The editor produced no output for 25 minutes and was killed. This is the run-25 failure mode. See docs/HANDOFF.md section 3."
+          fi
           # A non-zero editor exit is a VERDICT, not a script error: the
           # checker below reads the results XML and decides. This mirrors the
           # ULF path, where game-ci's step is also continue-on-error.

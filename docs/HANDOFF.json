@@ -1,14 +1,14 @@
 {
   "$schema": "petrichor-handoff/1",
-  "generated": "2026-09-30, revised 2026-10-03 (entitlement-XML licence support)",
+  "generated": "2026-10-04",
   "repository": {
     "owner": "bythewayz66-glitch",
     "name": "petrichor",
     "private": false,
     "visibility_note": "Made public on 2026-10-01 so a local agent can clone it with no credentials. It was private when this handoff was first written; nothing else in this file changed.",
     "default_branch": "main",
-    "head_commit": "784bf67485c4d4dd85e03c66abcd2d78cb61c484",
-    "head_commit_note": "HEAD at the moment this file was last revised (2026-10-03). The commit that adds this revision is a child of it."
+    "head_commit": "beb5c8f2de9b1e861829ba2e2e4a7e0cdde59853",
+    "head_commit_note": "HEAD at the moment this file was last revised (2026-10-04). The commit that adds this revision is a child of it."
   },
   "engine": {
     "unity": "6000.5.9f1",
@@ -149,104 +149,47 @@
     }
   ],
   "blocking_item": {
-    "id": "UNITY_LICENSE_ENTITLEMENT_PATH_UNVERIFIED",
-    "summary": "The UNITY_LICENSE secret holds a document that is not a ULF. The CI gate has run four times and failed on activation every time. The workflow now routes entitlement XML to the Licensing Client, but the first attempt (run 37110829407) was misrouted to the ULF loader by a classifier bug, so the entitlement path itself has still never executed. The CI gate has no verdict.",
-    "verified": "GITHUB_LIST_REPOSITORY_SECRETS returned total_count: 1, secret named UNITY_LICENSE. Runs 37107565152, 37109026756, 37109526130 and 37110829407 all show the licence rejected.",
-    "effect": "The preflight now classifies the secret's root element and sets licensed=true for BOTH ulf and entitlement-xml. For entitlement-xml the gate skips game-ci's activation step and instead writes the licence to ~/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml and mounts it into the editor image.",
-    "warning": "Do not read the entitlement path as working. It is wired and syntax-checked only, and its one attempt was misrouted before it could run. The secret contains no <Signature> element, which is why the ULF loader rejected it; if it is also not a well-formed entitlement licence, no route will accept it. Fallback: UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD, which re-issues the licence for the runner.",
-    "formats": {
-      "ulf": {
-        "root_element": "root",
-        "distinctive_child": "Signature",
-        "read_by": "-manualLicenseFile, and game-ci's activation step",
-        "path_linux": "~/.local/share/unity3d/Unity/Unity_lic.ulf"
-      },
-      "entitlement_xml": {
-        "root_element": "License",
-        "distinctive_child": "EntitlementGroups",
-        "read_by": "the Licensing Client, from its own licences directory",
-        "licensing_client_path_linux": "~/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml",
-        "extensions": [
-          "UnityEntitlementLicense.xml",
-          ".txml"
-        ]
-      },
-      "discriminator_note": "Both documents carry a Signature element, so a Signature test alone cannot tell them apart. The root element is the discriminator, and the preflight checks it first for that reason.",
-      "source": "Unity, \"License troubleshooting\" (ActivationFAQ): gives the named-user licence path ~/.config/unity3d/Unity/licenses/UnityEntitlementLicense.xml and the .ulf path ~/.local/share/unity3d/Unity/Unity_lic.ulf. They are different directories."
-    },
-    "resolution_steps": [
-      "Re-run the Water Gate workflow (workflow_dispatch or any push to a gated path).",
-      "Read the 'Run the benchmark (entitlement XML)' step's log.",
-      "If the Licensing Client accepts the licence, the gate produces its first CI verdict.",
-      "If it rejects it, the log names the reason; switch to UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD.",
-      "Do not paste the licence into chat or into any file in the repository."
-    ],
-    "ulf_paths": {
-      "linux": "~/.local/share/unity3d/Unity/Unity_lic.ulf",
-      "windows": "C:\\ProgramData\\Unity\\Unity_lic.ulf",
-      "macos": "/Library/Application Support/Unity/Unity_lic.ulf"
-    },
-    "alternative": {
-      "secrets": [
-        "UNITY_SERIAL",
-        "UNITY_EMAIL",
-        "UNITY_PASSWORD"
-      ],
-      "for": "Plus / Pro",
-      "note": "Supported game-ci route. Re-issues the licence for the runner, so it is immune to the machine-binding risk. Use it if the entitlement path fails."
-    },
-    "preflight_hardening": {
-      "what_changed": "The preflight used to ask only whether a licence secret was present, and answered licensed=true for any non-empty value. It now classifies the value before the gate may start.",
-      "outcomes": {
-        "absent": "licensed=false, gate skipped, run green (unchanged)",
-        "ulf": "licensed=true, gate runs",
-        "entitlement-xml": "licensed=false, run FAILS in about 5 s with the format named and the fix given",
-        "xml-unknown": "licensed=false, run FAILS",
-        "other": "licensed=false, run FAILS"
-      },
-      "secret_handling": "The value is never printed. Only its shape is reported."
-    },
-    "verification_status": {
-      "workflow_yaml_parses": "VERIFIED - yaml.safe_load, 2 jobs, 16 gate steps",
-      "run_blocks_valid_shell": "VERIFIED - bash -n on all 11 run blocks, 0 failures",
-      "classifier_routes_correctly": "VERIFIED - tested against <License>, <root>+<Signature>, <root> without <Signature>, plain-text and empty inputs",
-      "licensing_client_launches_in_container": "VERIFIED - run 37110829407: Successfully launched the LicensingClient (PId: 38), v1.18.3+d7ffd15",
-      "entitlement_path_activates_unity_in_ci": "UNVERIFIED - its first attempt was misrouted before it could run"
-    },
-    "classifier_defect": "Run 37110829407 exposed a bug in the classifier added the same day: it matched '<root' anywhere in the document, so a document containing a <root element was routed to the ULF loader - the one loader that cannot read it. The classifier is now structure-based: <EntitlementGroups> -> entitlement-xml; <root> AND <Signature> -> ulf; any other XML -> entitlement-xml with a warning; not XML -> hard fail. The preflight also prints the document's shape (byte count, root element, marker elements) so a misroute is diagnosable from the log."
+    "id": "UNITY_LICENSE_ENTITLEMENT_PATH_HANGS",
+    "summary": "The UNITY_LICENSE secret holds a genuine entitlement licence (5434 bytes, root <root>, with <EntitlementGroups> and <Signature>). The CI gate has run five times on 2026-10-03 and has never produced a verdict. The first four failed on licence activation. The fifth (run 37111124148) is the first in which the entitlement branch executed, and it HUNG: the container produced no output for 6h00m08s and was killed by GitHub's default 6-hour job timeout.",
+    "verified": "Run 37111124148 preflight log: 'Licence bytes: 5434', 'Licence root element: <root', 'Has <Signature>: true', 'Has <EntitlementGroups>: true', 'Licence format detected: entitlement-xml'. The gate job's step 9 ran 08:52:16Z to 14:52:24Z and concluded 'cancelled'. The log contains no line between the image pull at 08:54:21Z and '##[error]The operation was canceled.'",
+    "correction": "Earlier revisions said the secret 'contains no <Signature> element'. The preflight log proves that false: Has <Signature>: true. The ULF loader rejected the document because its root is <root> wrapping <License>, not because a signature was missing.",
+    "effect": "The gate job now carries timeout-minutes: 30, and the entitlement step runs a short probe container (licence directory listing, Licensing Client binary, editor binary) before running the editor under 'timeout 1500'. A hang now fails in minutes and names itself.",
+    "warning": "Do not read the entitlement path as working. It is wired, correctly routed, and it hangs. If the document is machine-bound or the Licensing Client cannot reach the licence server from the container, no wiring will make it work.",
+    "fallback": "UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD. Re-issues the licence for the runner and needs no file. The preflight already routes that combination to game-ci's activation step."
   },
   "next_steps": [
     {
       "order": 1,
-      "action": "Replace the UNITY_LICENSE secret with a real .ulf",
+      "action": "Re-run the workflow and read the probe output",
       "ref": "blocking_item",
-      "note": "The secret exists but holds an entitlement XML. The gate ran and failed on activation."
+      "note": "The entitlement step now probes the container first: is the licence visible at /root/.config/unity3d/Unity/licenses/, and does the Licensing Client binary exist? That answers in seconds what run 37111124148 could not answer in six hours."
     },
     {
       "order": 2,
+      "action": "If the entitlement path still hangs or is rejected, switch to UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD",
+      "note": "Re-issues the licence for the runner and needs no file. The preflight already routes that combination to game-ci's activation step. Requires a Plus/Pro seat and consumes an activation."
+    },
+    {
+      "order": 3,
       "action": "Run the gate on both tiers",
       "command": "Tools/run_bench.sh --tier linux --attempt 0 && Tools/run_bench.sh --tier android --attempt 0"
     },
     {
-      "order": 3,
+      "order": 4,
       "action": "Write the M1 report from docs/GATE_REPORT_TEMPLATE.md into docs/gate-reports/",
       "gate": "Week 2 must not begin until this report is committed"
     },
     {
-      "order": 4,
+      "order": 5,
       "action": "Work issues #1-#8 and #10 (M1), then #9 and #11-#18 (M2), in order",
       "note": "#9 is week 2 and #10 is week 1; the week-NN label is authoritative, not the issue number"
-    },
-    {
-      "order": 5,
-      "action": "Expect the first compile to fail; budget an hour for the first open"
     }
   ],
   "unverified_claims": [
     {
       "claim": "The C# harness compiles",
-      "status": "VERIFIED (locally and in CI)",
-      "reason": "The 2026-10-01 headless run compiled it and fixed two errors: missing 'using PET.Water;' in BenchmarkHarness.cs and ScenarioResult.cs, and PET.Benchmarks.asmdef lacking the test-runner references. CI run 37107565152 then spent 117 s in the benchmark step, which requires a successful compile. The CI build is no longer unverified; the CI verdict is - activation failed before the checker ran."
+      "status": "VERIFIED (locally only)",
+      "reason": "The 2026-10-01 headless run compiled it and fixed two errors: missing 'using PET.Water;' in BenchmarkHarness.cs and ScenarioResult.cs, and PET.Benchmarks.asmdef lacking the test-runner references. NOTHING has been compiled in CI: no CI run has reached the point where the editor loads the project. The earlier claim that CI run 37107565152 'spent 117 s in the benchmark step, which requires a successful compile' is withdrawn - that run failed on licence activation before the editor loaded the project."
     },
     {
       "claim": "The gate passes",
@@ -254,14 +197,19 @@
       "reason": "Rung 0 is a clean BUDGET FAIL. Rung 1 returned PASS twice on a quiet pinned box and BUDGET FAIL on a loaded box. The verdict flips on CPU contention alone. The Android tier has never been measured."
     },
     {
+      "claim": "The entitlement-XML licence path activates Unity in CI",
+      "status": "UNVERIFIED - AND IT HANGS",
+      "reason": "Run 37111124148 is the first in which the entitlement branch executed. The licence was written (5434 bytes, root <root>) and the image pulled, then the container produced no output for 6h00m08s until GitHub's default job timeout cancelled it. The gate job now carries timeout-minutes: 30 and the step probes the container before starting the editor."
+    },
+    {
       "claim": "The four scenarios are correctly parameterised",
       "status": "UNVERIFIED",
       "reason": "3000 settle steps, 500 samples, 3600x multiplier are reasoned, not tuned."
     },
     {
-      "claim": "The changeset d1870ce95baf",
-      "status": "PUBLISHED_VALUE",
-      "reason": "Unity's published changeset, not read off a machine."
+      "claim": "The changeset b57deb96f08d",
+      "status": "READ_OFF_A_MACHINE",
+      "reason": "Read from the installed editor, which reports 'Unity Editor version: 6000.5.9f1 (b57deb96f08d)'."
     },
     {
       "claim": "The thresholds are mirrored in two places",
@@ -390,9 +338,11 @@
   "one_line": "The plan is fully ticketed and the repository is consistent. The C# compiles locally and in CI, and the gate has run both ways: rung 0 is a clean BUDGET FAIL, rung 1 is a PASS on a quiet box and a BUDGET FAIL on a loaded one, and the Android tier has never been measured. The CI gate executed for the first time on 2026-10-03 and failed on activation, because the UNITY_LICENSE secret holds an entitlement XML rather than a ULF. Replace the secret with a real .ulf, make the verdict reproducible by recording machine quietness, and measure the Android tier before week 2 is called done.",
   "gate_history": {
     "ci_gate_has_run": true,
-    "ci_gate_note": "The gate job executed in CI for the first time on 2026-10-03 (run 37107565152, run #20, push, 133 s). It failed on licence activation, not on the solver: the UNITY_LICENSE secret holds an entitlement XML rather than a ULF. The benchmark step ran for 117 s, so the project compiled in CI.",
-    "ci_gate_verdict": "INPUT ERROR - activation failed before the checker ran",
-    "ci_gate_failure_line": "[Licensing::Client] Error: Code 400 while processing request (status: Cannot load ULF license: Signature element not found in XML document)",
+    "ci_gate_has_verdict": false,
+    "ci_gate_runs": 5,
+    "ci_gate_note": "Five CI runs on 2026-10-03. Runs 37107565152, 37109026756, 37109526130 and 37110829407 failed on licence activation. Run 37111124148 ran the entitlement path for the first time and hung for 6h00m08s until GitHub's default job timeout cancelled it.",
+    "ci_gate_verdict": "none - no CI run has reached the checker",
+    "ci_gate_failure_line": "##[error]The operation was canceled.  (run 37111124148, after 6h00m08s with no container output)",
     "ci_runs_before_this": "18 runs, all skipped the gate in 5-14 s for want of a licence secret",
     "local_gate_has_run": true,
     "local_gate_note": "Run headless on 2026-10-01 and again 2026-10-03. The C# has been compiled. Two compile errors were found and fixed on the first run.",
@@ -409,48 +359,7 @@
         "attempt": 1,
         "tile_res": 129,
         "verdict": "PASS",
-        "note": "on a quiet pinned box, twice; BUDGET FAIL on a loaded box"
-      }
-    ],
-    "android_tier": "NEVER MEASURED on any device",
-    "stability_risk": "The verdict flips on CPU contention alone. A rung-1 PASS is not reproducible unless machine quietness is recorded.",
-    "ci_gate_has_produced_a_verdict": false,
-    "ci_gate_has_compiled": false,
-    "ci_runs_total": 25,
-    "ci_runs_that_skipped_the_gate": 21,
-    "ci_runs_that_executed_the_gate": 4,
-    "ci_gate_failure": "runs 37107565152, 37109026756, 37109526130, 37110829407: [Licensing::Client] Error: Code 400 while processing request (status: Cannot load ULF license: Signature element not found in XML document)",
-    "local_gate_has_compiled": true,
-    "local_verdicts": [
-      "BUDGET FAIL at rung 0",
-      "PASS at rung 1 on a quiet box",
-      "BUDGET FAIL at rung 1 on a loaded box"
-    ],
-    "android_tier_measured": false,
-    "ci_gate_runs": [
-      {
-        "run": 37107565152,
-        "commit": "71334b1f",
-        "duration_s": 133,
-        "outcome": "INPUT ERROR - licence rejected"
-      },
-      {
-        "run": 37109026756,
-        "commit": "71334b1f",
-        "duration_s": null,
-        "outcome": "INPUT ERROR - licence rejected"
-      },
-      {
-        "run": 37109526130,
-        "commit": "71334b1f",
-        "duration_s": 129,
-        "outcome": "INPUT ERROR - licence rejected"
-      },
-      {
-        "run": 37110829407,
-        "commit": "784bf674",
-        "duration_s": 111,
-        "outcome": "INPUT ERROR - licence rejected; entitlement branch skipped by a classifier bug"
+        "note": "on a quiet pinned box; the same rung returned BUDGET FAIL on a loaded box"
       }
     ]
   }
