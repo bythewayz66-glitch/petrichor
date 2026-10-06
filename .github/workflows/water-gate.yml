@@ -148,7 +148,7 @@ jobs:
               echo ""
               echo "| Secret | For | Notes |"
               echo "|---|---|---|"
-              echo "| \`UNITY_LICENSE\` | Personal licence | Contents of the \`.ulf\` file |"
+              echo "| \`UNITY_LICENSE\` | Personal licence | Contents of the entitlement \`.xml\` (Unity Hub) or a \`.ulf\` |"
               echo "| \`UNITY_SERIAL\` + \`UNITY_EMAIL\` + \`UNITY_PASSWORD\` | Plus / Pro | Serial from the license page |"
               echo ""
               echo "This is not a failure. The gate needs a licence and there is"
@@ -161,6 +161,17 @@ jobs:
             echo "licensed=true" >> "$GITHUB_OUTPUT"
             echo "format=serial" >> "$GITHUB_OUTPUT"
             echo "A Unity serial is present; the gate will activate with it via game-ci."
+            # The serial wins over the file, and not only here. game-ci's
+            # activation is an OR: it activates from the license FILE if
+            # UNITY_LICENSE is set and only falls back to the serial when it
+            # is not. So the gate step above withholds UNITY_LICENSE on this
+            # branch -- otherwise the serial would be ignored and an
+            # entitlement XML would reach the ULF loader and fail with Code
+            # 400. Priority is therefore explicit on BOTH sides.
+            if [ -n "$UNITY_LICENSE" ]; then
+              echo "A UNITY_LICENSE value is also present and will be WITHHELD from"
+              echo "the gate step, so activation uses the serial rather than the file."
+            fi
             exit 0
           fi
 
@@ -381,13 +392,36 @@ jobs:
       # run afterwards and produce a verdict -- the checker reads the results
       # XML and treats a failed test case as a hard fail. The verdict, not the
       # test runner's exit code, is the authoritative output.
-      - name: Run the benchmark (ULF)
+      # Named "(serial / ULF)" and not "(ULF)": this ONE step serves both
+      # non-entitlement routes. game-ci's activation chooses the mechanism
+      # from the environment it is handed (see the env block below), so the
+      # old name described only one of its two callers.
+      - name: Run the benchmark (serial / ULF)
         id: bench
         if: needs.preflight.outputs.format != 'entitlement-xml'
         uses: game-ci/unity-test-runner@v4
         continue-on-error: true
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          # CONDITIONAL, AND THE CONDITION IS THE BUG FIX.
+          #
+          # game-ci's activation is driven by an OR: it activates from the
+          # license FILE when UNITY_LICENSE is set, and only falls back to the
+          # serial when it is not. Passing both therefore does NOT prefer the
+          # serial - it prefers the file, and on this repository that file is
+          # the entitlement XML the ULF loader rejects with Code 400
+          # ("Cannot load ULF license: Signature element not found in XML
+          # document").
+          #
+          # So the file is passed ONLY when the preflight classified it as a
+          # ULF. On the serial route UNITY_LICENSE is deliberately empty and
+          # game-ci activates with UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD,
+          # the documented professional-license flow (game.ci/docs/github/
+          # activation: "Create the following secrets: UNITY_SERIAL,
+          # UNITY_EMAIL, UNITY_PASSWORD").
+          #
+          # This is a real fix, not a tidy-up. With both secrets set the serial
+          # was silently ignored and this step re-ran the Code 400 failure.
+          UNITY_LICENSE: ${{ needs.preflight.outputs.format == 'ulf' && secrets.UNITY_LICENSE || '' }}
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}

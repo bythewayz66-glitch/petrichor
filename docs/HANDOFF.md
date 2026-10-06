@@ -327,8 +327,8 @@ the entitlement route already uses — the only new value is the serial.
 
 **How you know it took the serial route.** The preflight prints
 `A Unity serial is present; the gate will activate with it via game-ci.` and the
-gate job then runs the step named **`Run the benchmark (ULF)`** — which is
-game-ci's `unity-test-runner`, the path that consumes `UNITY_SERIAL` — and
+gate job then runs the step named **`Run the benchmark (serial / ULF)`** —
+which is game-ci's `unity-test-runner`, the path that consumes `UNITY_SERIAL` — and
 **skips** `Run the benchmark (entitlement XML)`. If you instead see
 `Licence format detected: entitlement-xml`, the serial secret did not register.
 
@@ -341,6 +341,36 @@ again. The XML route consumes **nothing** — it reuses the seat's existing
 entitlement. So: if the entitlement sign-in works, it is the cheaper route; the
 serial route is the fallback for when the XML cannot work (2FA, or a
 machine-bound entitlement).
+
+**What the workflow does differently as of 2026-10-05.** The serial route already
+had *priority* — the preflight tests `UNITY_SERIAL` before it looks at
+`UNITY_LICENSE` at all. What was missing was the *withholding*. The gate step
+passed **both** secrets to game-ci, and game-ci activates from the license
+**file** whenever one is present, falling back to the serial only when it is not.
+With the entitlement XML still in `UNITY_LICENSE`, the serial would have been
+silently ignored and the step would have failed with the same Code 400. The step
+now passes `UNITY_LICENSE` **only** when the preflight classified it as a `.ulf`,
+so on the serial route game-ci receives exactly the documented
+professional-license environment: `UNITY_SERIAL` + `UNITY_EMAIL` +
+`UNITY_PASSWORD`.
+
+One consequence worth knowing: if **both** a valid `.ulf` and a serial are ever
+configured, the serial route wins and the `.ulf` is withheld, so the run spends
+an activation rather than using the file. That is deliberate — one predictable
+mechanism beats two competing ones.
+
+**Still unverified.** No run has ever taken the serial route. The wiring is
+syntactically valid and matches game-ci's documented activation, but nothing in
+this repository proves Unity activates with it. The first serial-route run *is*
+the verification step; read the gate step's log for the activation lines.
+
+**The activation limit is the real cost.** Unity documents two concurrent
+activations per seat, and — per Unity's own forum thread on the subject —
+activations created by CI are often **not listed** on the Unity ID activation
+page, which means the usual "Remove selected activations" remedy may not show
+them. A busy repository can therefore lock itself out of its own seat. Prefer the
+XML route when it works; keep the serial route for when the XML cannot work
+(2FA, or a machine-bound entitlement).
 
 ---
 
