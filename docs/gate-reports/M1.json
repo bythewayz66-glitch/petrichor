@@ -1,0 +1,242 @@
+{
+  "schema": "petrichor.gate-report/1",
+  "gate": "M1",
+  "gate_name": "Water Gate",
+  "tier": "linux",
+  "report_date": "2026-10-06",
+  "author": "Open World Architect (agent)",
+  "status": "FINAL",
+  "written_against": {
+    "repository": "bythewayz66-glitch/petrichor",
+    "branch": "main",
+    "head_sha": "ce2f122453fc9159bba5cf20b7d3695f0155ef7d",
+    "verdict_files_committed_at": "fd79539ff55cd80367d4a6c4cf49e1f08456a2cb",
+    "verdict_files_committed_at_utc": "2026-10-05T01:56:18+00:00"
+  },
+  "environment": {
+    "editor": {
+      "version": "6000.5.9f1",
+      "revision": "b57deb96f08d",
+      "source": "ProjectSettings/ProjectVersion.txt"
+    },
+    "scripting_backend": "not applicable",
+    "graphics_api": "not applicable",
+    "graphics_note": "headless -nographics; the harness reports Null Device. No draw call is issued.",
+    "packages": {
+      "burst": "1.8.30",
+      "collections": "6.5.0",
+      "mathematics": "1.4.0",
+      "test_framework": "1.7.0",
+      "test_framework_performance": "3.6.0",
+      "source": "Packages/packages-lock.json"
+    },
+    "host": {
+      "os": "Kali GNU/Linux Rolling",
+      "kernel": "7.0.12+kali-amd64",
+      "cpu": "Intel Core i5-6300U @ 2.40 GHz, 4 cores, max 3.00 GHz",
+      "ram_gb": 15,
+      "gpu": "Intel Skylake-U GT2 [HD Graphics 520]",
+      "gpu_driver": "not applicable",
+      "source": "gate-20261001-M01-linux-0001.md section 1.3",
+      "caveat": "The verdict files carry no host metadata; .gitignore excludes the per-scenario summaries that do. These facts are carried forward from the report for the same box and the same verdict files."
+    },
+    "reference_device": {
+      "model": "Samsung Galaxy A54 5G (SM-A546B)",
+      "status": "UNCONFIRMED",
+      "measured": false
+    },
+    "test_config": {
+      "tile_res_rung0": 257,
+      "tile_res_rung1": 129,
+      "active_tiles": 4,
+      "frame_budget_ms": 16.67,
+      "target_fps": 60,
+      "thresholds_file": "Tools/bench_thresholds.json",
+      "thresholds_blob_sha": "f7fdf6ccc65fff78adc583600f6099a49c5d92bd"
+    }
+  },
+  "rungs": [
+    {
+      "rung": 0,
+      "label": "shipping resolution",
+      "tile_res": 257,
+      "verdict": "BUDGET FAIL",
+      "exit_code": 1,
+      "metrics_over": 9,
+      "metrics_total": 9,
+      "next_rung": 1,
+      "source_file": "BenchmarkResults/verdict_linux.txt",
+      "source_blob_sha": "179076dd3c1a1cb43be099296a10931bb051ecc1",
+      "command": "Tools/run_bench.sh --tier linux --attempt 0",
+      "timestamp": "2026-10-01",
+      "metrics": [
+        {"scenario": "A_StaticSoak", "metric": "p50_ms", "value": 5.062, "unit": "ms", "threshold": 1.5, "verdict": "FAIL"},
+        {"scenario": "A_StaticSoak", "metric": "p95_ms", "value": 6.286, "unit": "ms", "threshold": 3.0, "verdict": "FAIL"},
+        {"scenario": "A_StaticSoak", "metric": "max_ms", "value": 10.261, "unit": "ms", "threshold": 6.0, "verdict": "FAIL"},
+        {"scenario": "B_StepFlood", "metric": "p50_ms", "value": 3.633, "unit": "ms", "threshold": 1.5, "verdict": "FAIL"},
+        {"scenario": "B_StepFlood", "metric": "p95_ms", "value": 4.494, "unit": "ms", "threshold": 3.0, "verdict": "FAIL"},
+        {"scenario": "B_StepFlood", "metric": "max_ms", "value": 23.706, "unit": "ms", "threshold": 6.0, "verdict": "FAIL"},
+        {"scenario": "C_FastForward", "metric": "p50_ms", "value": 5.072, "unit": "ms", "threshold": 1.5, "verdict": "FAIL"},
+        {"scenario": "C_FastForward", "metric": "p95_ms", "value": 7.94, "unit": "ms", "threshold": 3.0, "verdict": "FAIL"},
+        {"scenario": "C_FastForward", "metric": "max_ms", "value": 7.94, "unit": "ms", "threshold": 6.0, "verdict": "FAIL"}
+      ]
+    },
+    {
+      "rung": 1,
+      "label": "simulation grid halved",
+      "tile_res": 129,
+      "verdict": "BUDGET FAIL",
+      "exit_code": 1,
+      "metrics_over": 2,
+      "metrics_total": 9,
+      "next_rung": 2,
+      "next_rung_action": "Shrink the active water window to the tiles within 1 of the camera.",
+      "next_rung_cost": "distant water stops updating",
+      "source_file": "BenchmarkResults/verdict_linux_attempt1_res129.txt",
+      "source_blob_sha": "51c5f4ded5815781e0c93e836820206eab4b7ab3",
+      "command": "Tools/run_bench.sh --tier linux --attempt 1 --tile-res 129",
+      "timestamp": "2026-10-01",
+      "metrics": [
+        {"scenario": "A_StaticSoak", "metric": "p50_ms", "value": 1.544, "unit": "ms", "threshold": 1.5, "verdict": "FAIL", "over_by_pct": 2.9},
+        {"scenario": "A_StaticSoak", "metric": "p95_ms", "value": 1.789, "unit": "ms", "threshold": 3.0, "verdict": "PASS"},
+        {"scenario": "A_StaticSoak", "metric": "max_ms", "value": 3.528, "unit": "ms", "threshold": 6.0, "verdict": "PASS"},
+        {"scenario": "B_StepFlood", "metric": "p50_ms", "value": 1.159, "unit": "ms", "threshold": 1.5, "verdict": "PASS"},
+        {"scenario": "B_StepFlood", "metric": "p95_ms", "value": 1.534, "unit": "ms", "threshold": 3.0, "verdict": "PASS"},
+        {"scenario": "B_StepFlood", "metric": "max_ms", "value": 5.863, "unit": "ms", "threshold": 6.0, "verdict": "PASS"},
+        {"scenario": "C_FastForward", "metric": "p50_ms", "value": 2.105, "unit": "ms", "threshold": 1.5, "verdict": "FAIL", "over_by_pct": 40.3},
+        {"scenario": "C_FastForward", "metric": "p95_ms", "value": 2.57, "unit": "ms", "threshold": 3.0, "verdict": "PASS"},
+        {"scenario": "C_FastForward", "metric": "max_ms", "value": 2.57, "unit": "ms", "threshold": 6.0, "verdict": "PASS"}
+      ]
+    }
+  ],
+  "correctness": {
+    "verdict": "OK",
+    "line": "correctness: OK (no NaN, mass balanced, hash non-zero, all tests green)",
+    "checks": [
+      {"check": "non_finite_depth_samples", "limit": 0, "rung0": 0, "rung1": 0, "verdict": "PASS"},
+      {"check": "mass_balance_drift", "limit_pct": 0.1, "rung0": "within tolerance", "rung1": "within tolerance", "verdict": "PASS"},
+      {"check": "field_hash_non_zero", "limit": true, "rung0": true, "rung1": true, "verdict": "PASS"},
+      {"check": "nunit_test_result", "limit": "all green", "rung0": "green", "rung1": "green", "verdict": "PASS"}
+    ]
+  },
+  "speedup_rung0_to_rung1": [
+    {"scenario": "A_StaticSoak", "p50_rung0": 5.062, "p50_rung1": 1.544, "speedup": 3.3, "max_rung0": 10.261, "max_rung1": 3.528},
+    {"scenario": "B_StepFlood", "p50_rung0": 3.633, "p50_rung1": 1.159, "speedup": 3.1, "max_rung0": 23.706, "max_rung1": 5.863},
+    {"scenario": "C_FastForward", "p50_rung0": 5.072, "p50_rung1": 2.105, "speedup": 2.4, "max_rung0": 7.94, "max_rung1": 2.57}
+  ],
+  "proves": [
+    "The C# harness compiles (locally).",
+    "The solver is correct: no NaN, mass balanced, hash non-zero, all tests green, at both rungs.",
+    "The solver is deterministic: identical hashes across separate editor invocations.",
+    "The shipping-resolution solver is over budget: 9 of 9 metrics over at rung 0.",
+    "Halving the simulation grid recovers most of the budget: 7 of 9 metrics back within threshold at rung 1.",
+    "The rung ladder is the right instrument: the checker named rung 1, and rung 1 recovered 7 metrics."
+  ],
+  "does_not_prove": [
+    {"claim": "The CI gate works", "status": "UNVERIFIED", "why": "The gate job has executed nine times and has never produced a verdict. Every run failed on licence activation before the editor loaded the project."},
+    {"claim": "Anything compiled in CI", "status": "NO", "why": "No CI run has reached the point where the editor loads the project."},
+    {"claim": "The gate passes", "status": "NO", "why": "Rung 0 is a BUDGET FAIL; rung 1 is also a BUDGET FAIL."},
+    {"claim": "The Android tier is feasible", "status": "UNVERIFIED", "why": "Never measured on any device."},
+    {"claim": "The verdict is reproducible", "status": "UNVERIFIED", "why": "The rung-1 verdict flips on CPU contention alone and the harness does not record machine quietness."},
+    {"claim": "The scenarios are correctly parameterised", "status": "UNVERIFIED", "why": "3000 settle steps, 500 samples and the 3600x multiplier are reasoned, not tuned."}
+  ],
+  "ci_gate": {
+    "verdict": "none",
+    "runs_executed": 10,
+    "runs_with_verdict": 0,
+    "runs": [
+      {"run_number": 20, "run_id": 37107565152, "date": "2026-10-03", "outcome": "INPUT ERROR", "detail": "licence rejected, Code 400"},
+      {"run_number": 21, "run_id": 37109026756, "date": "2026-10-03", "outcome": "INPUT ERROR", "detail": "licence rejected"},
+      {"run_number": 22, "run_id": 37109526130, "date": "2026-10-03", "outcome": "INPUT ERROR", "detail": "licence rejected"},
+      {"run_number": 23, "run_id": 37110665890, "date": "2026-10-03", "outcome": "INPUT ERROR", "detail": "licence rejected"},
+      {"run_number": 24, "run_id": 37110829407, "date": "2026-10-03", "outcome": "INPUT ERROR", "detail": "misrouted to the ULF loader"},
+      {"run_number": 25, "run_id": 37111124148, "date": "2026-10-03", "outcome": "cancelled", "detail": "hung 6h00m08s, killed by the default job timeout"},
+      {"run_number": 26, "run_id": 37252858463, "date": "2026-10-05", "outcome": "INPUT ERROR", "detail": "Access token is unavailable"},
+      {"run_number": 27, "run_id": 37253130555, "date": "2026-10-05", "outcome": "INPUT ERROR", "detail": "Access token is unavailable"},
+      {"run_number": 28, "run_id": 37253384200, "date": "2026-10-05", "outcome": "INPUT ERROR", "detail": "Access token is unavailable"},
+      {"run_number": 29, "run_id": 37407618302, "date": "2026-10-06", "outcome": "INPUT ERROR", "detail": "Access token is unavailable; step 8 (serial / ULF) skipped, step 9 (entitlement XML) ran 101 s"}
+    ],
+    "latest_run_steps": [
+      {"number": 8, "name": "Run the benchmark (serial / ULF)", "conclusion": "skipped", "reason": "no UNITY_SERIAL secret exists"},
+      {"number": 9, "name": "Run the benchmark (entitlement XML)", "conclusion": "success", "duration_s": 101, "note": "continue-on-error"},
+      {"number": 11, "name": "Check thresholds", "conclusion": "success"},
+      {"number": 17, "name": "Enforce the verdict", "conclusion": "failure"}
+    ]
+  },
+  "known_gaps": [
+    {
+      "id": "G1",
+      "severity": "high",
+      "title": "The committed rung-1 verdict contradicts the 2026-10-01 report",
+      "detail": "gate-20261001-M01-linux-0001.md section 5.1 quotes a rung-1 verdict of PASS with A p50 1.377, B p50 0.816, C p50 1.362. No artifact in the repository, the sandbox, or the CI logs contains those numbers. The committed verdict file says BUDGET FAIL with A p50 1.544, B p50 1.159, C p50 2.105.",
+      "consequence": "The claim that rung 1 passes, repeated in HANDOFF.md section 1.4 and HANDOFF.json gate_history.verdicts, is not supported by the committed evidence.",
+      "resolved": false
+    },
+    {
+      "id": "G2",
+      "severity": "high",
+      "title": "The gate does not record machine quietness",
+      "detail": "The rung-1 verdict flips on CPU contention alone. run_bench.sh does not sample /proc/stat and the threshold file carries no such requirement.",
+      "consequence": "A frame-time number without the machine's idle fraction attached is not reproducible.",
+      "resolved": false
+    },
+    {
+      "id": "G3",
+      "severity": "high",
+      "title": "The Android tier has never been measured",
+      "detail": "Rung 1's recovery was measured on a 4-core desktop CPU. The Android tier is unmeasured and no reference device exists in this environment.",
+      "resolved": false
+    },
+    {
+      "id": "G4",
+      "severity": "medium",
+      "title": "The per-scenario summaries are not committed",
+      "detail": ".gitignore excludes everything under BenchmarkResults/ except verdict_*.txt. The summary_*.json files and the NUnit results_*.xml exist only on the machine that produced them.",
+      "consequence": "The verdict files are the only committed evidence and carry no host metadata, no per-scenario mass figures and no determinism hashes.",
+      "resolved": false
+    },
+    {
+      "id": "G5",
+      "severity": "low",
+      "title": "The thresholds are mirrored in two places",
+      "detail": "Tools/bench_thresholds.json and BenchmarkScenarios.cs both hold them. The harness writes the values it used into every summary, so drift is visible in results rather than inferred.",
+      "resolved": false
+    }
+  ],
+  "reproduce": {
+    "rung0": "Tools/run_bench.sh --tier linux --attempt 0",
+    "rung1": "Tools/run_bench.sh --tier linux --attempt 1 --tile-res 129",
+    "quietness_probe": "python3 -c \"import time\\ndef s():\\n    v=list(map(int,open('/proc/stat').readline().split()[1:]));return v[3]+v[4],sum(v)\\ni0,t0=s(); time.sleep(10); i1,t1=s()\\nprint('busy cores: %.2f of 4' % (4*(1-(i1-i0)/(t1-t0))))\"",
+    "pinned": "taskset -c 0,1 Tools/run_bench.sh --tier linux --attempt 1 --tile-res 129",
+    "explicit_editor": "UNITY_PATH=/home/jayson/Unity/Hub/Editor/6000.5.9f1/Editor/Unity HOME=/home/jayson Tools/run_bench.sh --tier linux --attempt 0",
+    "checker_only": "python3 Tools/check_thresholds.py --tier linux --results-dir BenchmarkResults --results-xml BenchmarkResults/results_linux.xml --thresholds Tools/bench_thresholds.json --attempt 0 --solver heightfield --out BenchmarkResults/verdict_linux.txt",
+    "home_note": "The editor reads its licence from $HOME/.config/unity3d/Unity/licenses/. Run the gate as the account whose entitlement is valid."
+  },
+  "exit_codes": [
+    {"code": 0, "verdict": "PASS", "build": "green", "meaning": "Every scenario within threshold"},
+    {"code": 1, "verdict": "BUDGET FAIL", "build": "green", "meaning": "Walk the named rung. A project event, not a broken commit"},
+    {"code": 2, "verdict": "HARD FAIL", "build": "fails", "meaning": "NaN, mass imbalance or a red test. The ladder cannot fix these"},
+    {"code": 3, "verdict": "INPUT ERROR", "build": "fails", "meaning": "The checker could not read its inputs; the run is invalid"}
+  ],
+  "next_gate": [
+    {"order": 1, "action": "Resolve the rung-1 discrepancy (G1)", "why": "The repository's own report and its own verdict file disagree about whether rung 1 passes."},
+    {"order": 2, "action": "Make the verdict reproducible (G2)", "why": "Sample /proc/stat around the measurement and refuse to report a budget verdict when the box was not quiet."},
+    {"order": 3, "action": "Walk rung 2", "why": "The committed rung-1 verdict names it: shrink the active water window to tiles within 1 of the camera. Cost: distant water stops updating."},
+    {"order": 4, "action": "Measure the Android tier", "why": "Never measured. Requires the reference device to be confirmed as owned."},
+    {"order": 5, "action": "Get a CI verdict", "why": "Nine runs, no verdict. The gate is unverified end to end."}
+  ],
+  "sign_off": {
+    "rung0_verdict": "BUDGET FAIL",
+    "rung1_verdict": "BUDGET FAIL",
+    "correctness": "OK",
+    "ci_verdict": "none",
+    "android_tier": "not measured",
+    "week2_may_begin": false,
+    "plan_rebaselined": false,
+    "evidence": [
+      "BenchmarkResults/verdict_linux.txt",
+      "BenchmarkResults/verdict_linux_attempt1_res129.txt"
+    ],
+    "signed": "Open World Architect (agent), 2026-10-06"
+  }
+}

@@ -9,11 +9,11 @@
 |---|---|
 | **Repository** | `bythewayz66-glitch/petrichor` (public since 2026-10-01) |
 | **Branch** | `main` |
-| **HEAD at handoff** | `beb5c8f2de9b1e861829ba2e2e4a7e0cdde59853` |
-| **Handoff written** | 2026-09-30, **revised 2026-10-04** |
+| **HEAD at handoff** | `ce2f122453fc9159bba5cf20b7d3695f0155ef7d` |
+| **Handoff written** | 2026-09-30, **revised 2026-10-06** |
 | **Engine** | Unity **6000.5.9f1** (changeset `b57deb96f08d`), URP |
 | **Reference device** | Samsung Galaxy A54 5G (`SM-A546B` — one of eight regional variants) |
-| **Blocking item** | **The entitlement XML is a named-user licence: the file alone is rejected with `Access token is unavailable`. The XML route now needs `UNITY_EMAIL` + `UNITY_PASSWORD` so the step can sign in and obtain a token. The CI gate still has no verdict.** See §3 |
+| **Blocking item** | **The M1 gate report is committed (`docs/gate-reports/M1.md`) and it records a `BUDGET FAIL` at both rungs. The CI gate still has no verdict — ten runs, all failed on licence activation. And the committed rung-1 verdict contradicts the 2026-10-01 report, which claims a `PASS` that no artifact supports.** See §3 and §5 |
 
 ---
 
@@ -29,7 +29,7 @@
 | Projects v2 board items | **144** | GraphQL `projectV2.items.totalCount` |
 | Assemblies (`.asmdef`) | 12 | `find Assets -name '*.asmdef'` |
 | C# source files | **16** | `find Assets -name '*.cs'` — 6 under `Assets/Scripts/Water`, 8 under `Assets/Tests/Benchmarks`, 2 under `Assets/Editor/Terrain`. Was 14 before the terrain editor tools landed |
-| Committed gate reports | **1** | `ls docs/gate-reports/` — `gate-20261001-M01-linux-0001.md` |
+| Committed gate reports | **3** | `ls docs/gate-reports/` — `gate-20261001-M01-linux-0001.md` (dated record), `M1.md` (the M1 report), `M1.json` (its machine-readable companion) |
 | Committed benchmark verdicts | **2** | `ls BenchmarkResults/` — `verdict_linux.txt` (attempt 0) and `verdict_linux_attempt1_res129.txt` (attempt 1) |
 
 The board, the issue set and the milestone set are **mutually consistent**: 144
@@ -68,11 +68,11 @@ number is not.
 
 ### 1.3 What does **not** exist
 
-- **No CI gate verdict.** The `gate` job has run seven times, on 2026-10-03 and
-  2026-10-05. The first four failed on licence activation; the fifth ran the
-  entitlement path and hung for six hours; the sixth ran it to completion in 91
-  seconds and was rejected with `Access token is unavailable`, because an
-  entitlement XML is a named-user licence and needs the account's access token.
+- **No CI gate verdict.** The `gate` job has run ten times, on 2026-10-03,
+  2026-10-05 and 2026-10-06. Runs #20–#24 failed on licence activation; #25 ran
+  the entitlement path and hung for six hours; #26–#29 ran it to completion in
+  ~100 seconds each and were rejected with `Access token is unavailable`, because
+  an entitlement XML is a named-user licence and needs the account's access token.
   No run has reached the checker. See §1.4 and §3.
 - **No art.** `Assets/Art/` contains only its `.gitignore` and `.gitattributes`.
   No purchased packs have been imported.
@@ -84,17 +84,17 @@ number is not.
   per-scenario summaries and the NUnit XML behind the committed verdicts exist
   only on the machine that produced them.
 
-### 1.4 The gate has run — locally, and five times in CI (the last one hung)
+### 1.4 The gate has run — locally, and ten times in CI (one hung)
 
 This is the single most important distinction in this document, and the one most
 likely to be misread.
 
 | | CI gate (GitHub Actions) | Local gate (headless editor) |
 |---|---|---|
-| Has it run? | **Yes — seven times**, on 2026-10-03 and 2026-10-05 (runs 37107565152, 37109026756, 37109526130, 37110829407, 37111124148, 37252858463, 37253130555) | **Yes**, on 2026-10-01 and again 2026-10-03 |
+| Has it run? | **Yes — ten times**, on 2026-10-03, 2026-10-05 and 2026-10-06 (runs 37107565152, 37109026756, 37109526130, 37110665890, 37110829407, 37111124148, 37252858463, 37253130555, 37253384200, 37407618302) | **Yes**, on 2026-10-01 and again 2026-10-03 |
 | Did it compile? | **No** — every run failed before the editor loaded the project | **Yes** — the 2026-10-01 run compiled the project and ran all four scenarios |
 | Evidence | each run's `gate` job executed its steps; four logs show the licence rejected, the fifth shows a six-hour silence | `docs/gate-reports/gate-20261001-M01-linux-0001.md`, and two committed verdict files |
-| Verdict produced | none | `BUDGET FAIL` at rung 0; `PASS` at rung 1 on a quiet box; `BUDGET FAIL` at rung 1 on a loaded box |
+| Verdict produced | none | `BUDGET FAIL` at rung 0 (9 of 9 metrics over); `BUDGET FAIL` at rung 1 (2 of 9 over). The `PASS` this row used to claim is not supported by any committed artifact — see §5 |
 | Report written | n/a | one, for the 2026-10-01 run |
 
 **The C# has been compiled — locally, and only locally.** The 2026-10-01 run
@@ -103,12 +103,18 @@ compiled the project, fixed two compile errors, and executed all four scenarios.
 the editor loads the project. Risk 1 in §5 is therefore resolved for the local
 path; risk 2 is partly resolved and partly *worse* than "unverified" — see §5.
 
-**The CI gate has run five times and has never produced a verdict.** The first
-four failed on licence activation. The fifth, run **37111124148**, is the first in
-which the entitlement branch actually executed — and it **hung**: the container
-produced no output for six hours and was killed by GitHub's default job timeout.
-The gate is no longer skipped, and it is no longer merely misconfigured; it is
-red for a reason that is now visible in the log. See §3.
+**The CI gate has run ten times and has never produced a verdict.** Runs #20–#24
+failed on licence activation. Run **37111124148** (#25) is the first in which the
+entitlement branch actually executed — and it **hung**: the container produced no
+output for six hours and was killed by GitHub's default job timeout. Runs #26–#29
+then ran the entitlement path to completion in ~100 s each and were rejected with
+`Access token is unavailable`. The gate is no longer skipped, and it is no longer
+merely misconfigured; it is red for a reason that is now visible in the log. See §3.
+
+**The M1 report is committed: `docs/gate-reports/M1.md`** (with `M1.json` as its
+machine-readable companion). It is written from the two committed verdict files
+and from nothing else, and it records a `BUDGET FAIL` at **both** rungs. Read it
+before trusting any summary of the gate, including this one.
 
 ---
 
@@ -378,12 +384,13 @@ XML route when it works; keep the serial route for when the XML cannot work
 
 ### Step 1 — Get a CI verdict (§3)
 
-The gate has returned a verdict **locally** (§1.4). The **CI** gate has executed
-seven times and has never produced a verdict. Run 26 (`37252858463`) settled the
-question run 25 could not: the licence is visible in the container, the Licensing
-Client launches and connects, and the editor starts — but the entitlement XML
-alone is rejected with `Access token is unavailable`, because a named-user
-licence needs the account's access token.
+The gate has returned a verdict **locally** (§1.4), and it is now written up:
+**`docs/gate-reports/M1.md`**. The **CI** gate has executed ten times and has
+never produced a verdict. Run 26 (`37252858463`) settled the question run 25 could
+not: the licence is visible in the container, the Licensing Client launches and
+connects, and the editor starts — but the entitlement XML alone is rejected with
+`Access token is unavailable`, because a named-user licence needs the account's
+access token.
 
 **Add `UNITY_EMAIL` and `UNITY_PASSWORD`** (Settings → Secrets and variables →
 Actions). The entitlement step now signs in before the benchmark, which is what
@@ -402,9 +409,10 @@ Tools/run_bench.sh --tier linux   --attempt 0
 Tools/run_bench.sh --tier android --attempt 0
 ```
 
-The Linux report already exists: `docs/gate-reports/gate-20261001-M01-linux-0001.md`.
-What is still missing is the **Android** tier, which has never been measured on
-any device. Write that report from `docs/GATE_REPORT_TEMPLATE.md` into
+The Linux report already exists: `docs/gate-reports/gate-20261001-M01-linux-0001.md`,
+and the M1 report is `docs/gate-reports/M1.md`. What is still missing is the
+**Android** tier, which has never been measured on any device. Write that report
+from `docs/GATE_REPORT_TEMPLATE.md` into
 `docs/gate-reports/gate-<yyyymmdd>-<Mnn>-<tier>-<run>.md` and commit it. The
 naming convention is defined in `docs/gate-reports/README.md`.
 
@@ -430,9 +438,12 @@ naming convention is defined in `docs/gate-reports/README.md`.
 | 12 | **#127–#135** | M15 — Performance |
 | 13 | **#136–#144** | M16 — Freeze and Playtest |
 
-**Do not start week 2 until the M1 report is committed.** Every ticket from #9
-and #11 onward is labelled `status:backlog` with the description *"Conditional on
-the week-one gate. Do not start before it returns a verdict."*
+**Do not start week 2 until the rung-1 discrepancy is resolved.** The M1 report
+is committed, but it records a `BUDGET FAIL` at both rungs, and the 2026-10-01
+report's claim of a rung-1 `PASS` cannot be traced to any artifact (§5, risk 2).
+Every ticket from #9 and #11 onward is labelled `status:backlog` with the
+description *"Conditional on the week-one gate. Do not start before it returns a
+verdict."*
 
 ### Step 4 — The first compile has already happened
 
@@ -450,8 +461,8 @@ the project compiled in CI. What failed was licence activation, not the build.
 
 | # | Claim | Status | What it means |
 |---|---|---|---|
-| 1 | The C# harness compiles | **VERIFIED (locally and in CI)** | The 2026-10-01 headless run compiled it and fixed two errors: `BenchmarkHarness.cs` and `ScenarioResult.cs` were missing `using PET.Water;`, and `PET.Benchmarks.asmdef` lacked the test-runner references so the assembly was not registered as a test assembly. CI run 37107565152 then spent 117 s in the benchmark step, which requires a successful compile. **The CI build is no longer unverified; the CI *verdict* is** — activation failed before the checker ran |
-| 2 | The gate passes | **PARTLY VERIFIED — AND UNSTABLE** | It has run locally. Rung 0 is a clean `BUDGET FAIL` (9 metrics over). Rung 1 returned `PASS` twice on a quiet pinned box and `BUDGET FAIL` on a loaded box. **The verdict flips on CPU contention alone**, so a rung-1 `PASS` is not reproducible without recording machine quietness. The Android tier has never been measured on any device |
+| 1 | The C# harness compiles | **VERIFIED (locally only)** | The 2026-10-01 headless run compiled it and fixed two errors: `BenchmarkHarness.cs` and `ScenarioResult.cs` were missing `using PET.Water;`, and `PET.Benchmarks.asmdef` lacked the test-runner references so the assembly was not registered as a test assembly. **CI has never compiled it.** An earlier revision of this row claimed CI run 37107565152 "spent 117 s in the benchmark step, which requires a successful compile" — that inference was wrong: the 117 s was the licence-activation attempt, and the run failed before the editor loaded the project. No CI run has reached a compile |
+| 2 | The gate passes | **NO — AND THE EVIDENCE CONFLICTS** | It has run locally. Rung 0 is a clean `BUDGET FAIL` (9 of 9 metrics over). The **committed** rung-1 verdict is also a `BUDGET FAIL` (2 of 9 over: `A_StaticSoak p50` 1.544 vs 1.500, `C_FastForward p50` 2.105 vs 1.500). `gate-20261001-M01-linux-0001.md` §5.1 claims a rung-1 `PASS` with numbers (1.377 / 0.816 / 1.362) that **exist in no artifact** — see `docs/gate-reports/M1.md` §5.1. The verdict also flips on CPU contention alone, so it is not reproducible without recording machine quietness. The Android tier has never been measured on any device |
 | 3 | The four scenarios are correctly parameterised | **UNVERIFIED** | 3000 settle steps, 500 samples, 3600× multiplier are reasoned, not tuned. If scenario A's settle loop is too short, A reports a transient cost and becomes a second B |
 | 4 | The changeset `b57deb96f08d` | **READ OFF A MACHINE** | Taken from the installed editor's `modules.json` on the box where the benchmarks were measured, so version and changeset provably agree. A different install of the same patch should still carry the same changeset; if it does not, you have a different build |
 | 5 | The thresholds are mirrored in two places | **KNOWN DRIFT RISK** | `Tools/bench_thresholds.json` and `BenchmarkScenarios.cs` both hold them. The harness writes the values it used into every summary, so drift is visible in results rather than inferred — but it is still two places to change |
@@ -684,13 +695,16 @@ of them is a bug and it is worth finding out which.
 
 ## 9. The one-line version
 
-**The plan is fully ticketed and the repository is consistent. The C# compiles
-locally — and only locally: the CI gate has executed once and failed on
-activation, so nothing has ever been compiled in CI. The gate has run both ways
-locally: rung 0 is a clean `BUDGET FAIL`, rung 1 is a `PASS` on a quiet box and a
-`BUDGET FAIL` on a loaded one, and the Android tier has never been measured. The
-workflow now accepts the entitlement XML the `UNITY_LICENSE` secret holds, by
-mounting it into the Licensing Client's directory instead of handing it to the
-manual-activation loader — but that path has not yet run. Re-run the workflow to
-get the first CI verdict, make the verdict reproducible by recording machine
+**The plan is fully ticketed and the repository is consistent. The M1 report is
+committed (`docs/gate-reports/M1.md`) and it records a `BUDGET FAIL` at both
+rungs — rung 0 with 9 of 9 metrics over, rung 1 with 2 of 9 over. The 2026-10-01
+report's claim of a rung-1 `PASS` cannot be traced to any artifact, so the
+repository's own evidence disagrees with itself and that must be settled first.
+The C# compiles locally — and only locally: the CI gate has executed ten times
+and has never produced a verdict, so nothing has ever been compiled in CI. The
+Android tier has never been measured. The workflow accepts the entitlement XML
+the `UNITY_LICENSE` secret holds, by mounting it into the Licensing Client's
+directory instead of handing it to the manual-activation loader, but that path
+still needs `UNITY_EMAIL` + `UNITY_PASSWORD` and has not yet activated. Resolve
+the rung-1 discrepancy, make the verdict reproducible by recording machine
 quietness, and measure the Android tier before week 2 is called done.**

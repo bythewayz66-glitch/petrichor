@@ -1,14 +1,14 @@
 {
  "$schema": "petrichor-handoff/1",
- "generated": "2026-10-05",
+ "generated": "2026-10-06",
  "repository": {
   "owner": "bythewayz66-glitch",
   "name": "petrichor",
   "private": false,
   "visibility_note": "Made public on 2026-10-01 so a local agent can clone it with no credentials. It was private when this handoff was first written; nothing else in this file changed.",
   "default_branch": "main",
-  "head_commit": "c510f6d8a7e35a2ad7e11c785267aaa430c43dd1",
-  "head_commit_note": "HEAD at the moment this file was last revised (2026-10-05). The commit that adds this revision is a child of it."
+  "head_commit": "ce2f122453fc9159bba5cf20b7d3695f0155ef7d",
+  "head_commit_note": "HEAD at the moment this file was last revised (2026-10-06). The commit that adds this revision is a child of it."
  },
  "engine": {
   "unity": "6000.5.9f1",
@@ -47,13 +47,13 @@
   "assemblies": 12,
   "csharp_files": 16,
   "csharp_files_note": "Recounted from the committed tree on 2026-10-03. Was 14, then 15 (wrong), now 16: 6 under Assets/Scripts/Water, plus the harness and support files.",
-  "committed_gate_reports": 1,
+  "committed_gate_reports": 3,
   "verified_by": "GraphQL totalCount queries",
-  "committed_gate_reports_note": "docs/gate-reports/gate-20261001-M01-linux-0001.md. Was 0.",
+  "committed_gate_reports_note": "docs/gate-reports/gate-20261001-M01-linux-0001.md (the dated measurement record), M1.md (the M1 gate report) and M1.json (its machine-readable companion). Was 1.",
   "committed_verdicts": 2,
   "committed_verdicts_note": "BenchmarkResults/verdict_linux.txt (attempt 0) and verdict_linux_attempt1_res129.txt (attempt 1). .gitignore excludes everything else under BenchmarkResults/, so the per-scenario summaries and NUnit XML are NOT in the repository.",
   "ci_compiles": 0,
-  "ci_compiles_note": "Nothing has ever been compiled in CI. The one CI run that reached the gate failed on activation before the editor loaded the project. The local 2026-10-01 run did compile."
+  "ci_compiles_note": "Nothing has ever been compiled in CI. Every CI run failed on activation before the editor loaded the project. The local 2026-10-01 run did compile."
  },
  "issue_ranges": [
   {
@@ -189,8 +189,8 @@
   },
   {
    "order": 4,
-   "action": "Write the M1 report from docs/GATE_REPORT_TEMPLATE.md into docs/gate-reports/",
-   "gate": "Week 2 must not begin until this report is committed"
+   "action": "Resolve the rung-1 discrepancy recorded in docs/gate-reports/M1.md section 5.1",
+   "gate": "Week 2 must not begin until this is settled. The M1 report is committed, but it records a BUDGET FAIL at both rungs, and the 2026-10-01 report's claim of a rung-1 PASS cannot be traced to any artifact."
   },
   {
    "order": 5,
@@ -206,8 +206,8 @@
   },
   {
    "claim": "The gate passes",
-   "status": "PARTLY VERIFIED - AND UNSTABLE",
-   "reason": "Rung 0 is a clean BUDGET FAIL. Rung 1 returned PASS twice on a quiet pinned box and BUDGET FAIL on a loaded box. The verdict flips on CPU contention alone. The Android tier has never been measured."
+   "status": "NO - AND THE EVIDENCE CONFLICTS",
+   "reason": "Rung 0 is a clean BUDGET FAIL (9 of 9 metrics over). The COMMITTED rung-1 verdict is also a BUDGET FAIL (2 of 9 over: A_StaticSoak p50 1.544 vs 1.500, C_FastForward p50 2.105 vs 1.500). gate-20261001-M01-linux-0001.md section 5.1 claims a rung-1 PASS with numbers (1.377 / 0.816 / 1.362) that exist in no artifact - see docs/gate-reports/M1.md section 5.1. The verdict also flips on CPU contention alone, so it is not reproducible without recording machine quietness. The Android tier has never been measured."
   },
   {
    "claim": "The entitlement-XML licence path activates Unity in CI",
@@ -348,31 +348,43 @@
   "harness": "Assets/Tests/Benchmarks/BenchmarkHarness.cs",
   "scenarios": "Assets/Tests/Benchmarks/BenchmarkScenarios.cs"
  },
- "one_line": "The plan is fully ticketed and the repository is consistent. The C# compiles locally, and the gate has run both ways: rung 0 is a clean BUDGET FAIL, rung 1 is a PASS on a quiet box and a BUDGET FAIL on a loaded one, and the Android tier has never been measured. The CI gate has executed seven times and has never produced a verdict: run 26 proved the entitlement XML is visible in the container and the editor starts, but a named-user licence needs the account's access token, so the XML route now requires UNITY_EMAIL and UNITY_PASSWORD as well as UNITY_LICENSE. Add them, or switch to the serial route, and measure the Android tier before week 2 is called done.",
+ "one_line": "The plan is fully ticketed and the repository is consistent. The M1 report is committed (docs/gate-reports/M1.md) and it records a BUDGET FAIL at both rungs - rung 0 with 9 of 9 metrics over, rung 1 with 2 of 9 over. The 2026-10-01 report's claim of a rung-1 PASS cannot be traced to any artifact, so the repository's own evidence disagrees with itself and that must be settled first. The C# compiles locally - and only locally: the CI gate has executed ten times and has never produced a verdict, so nothing has ever been compiled in CI. The Android tier has never been measured. The workflow accepts the entitlement XML the UNITY_LICENSE secret holds, by mounting it into the Licensing Client's directory instead of handing it to the manual-activation loader, but that path still needs UNITY_EMAIL and UNITY_PASSWORD and has not yet activated. Resolve the rung-1 discrepancy, make the verdict reproducible by recording machine quietness, and measure the Android tier before week 2 is called done.",
  "gate_history": {
   "ci_gate_has_run": true,
   "ci_gate_has_verdict": false,
-  "ci_gate_runs": 7,
-  "ci_gate_note": "Seven CI runs, on 2026-10-03 and 2026-10-05. Runs 37107565152, 37109026756, 37109526130 and 37110829407 failed on licence activation. Run 37111124148 ran the entitlement path for the first time and hung for 6h00m08s until GitHub's default job timeout cancelled it. Run 37252858463 ran it to completion in 91 s and was rejected with 'Access token is unavailable'. Run 37253130555 is a workflow_dispatch of the same commit.",
+  "ci_gate_runs": 10,
+  "ci_gate_note": "Ten CI runs, on 2026-10-03, 2026-10-05 and 2026-10-06. Runs 37107565152, 37109026756, 37109526130, 37110665890 and 37110829407 failed on licence activation. Run 37111124148 ran the entitlement path for the first time and hung for 6h00m08s until GitHub's default job timeout cancelled it. Runs 37252858463, 37253130555, 37253384200 and 37407618302 ran it to completion in ~100 s each and were rejected with 'Access token is unavailable'.",
   "ci_gate_verdict": "none - no CI run has reached the checker",
   "ci_gate_failure_line": "[Licensing::Module] Error: Access token is unavailable; failed to update  (run 37252858463, step 9, 91 s)",
   "ci_runs_before_this": "18 runs, all skipped the gate in 5-14 s for want of a licence secret",
   "local_gate_has_run": true,
   "local_gate_note": "Run headless on 2026-10-01 and again 2026-10-03. The C# has been compiled. Two compile errors were found and fixed on the first run.",
   "report": "docs/gate-reports/gate-20261001-M01-linux-0001.md",
+  "m1_report": "docs/gate-reports/M1.md",
+  "m1_report_json": "docs/gate-reports/M1.json",
+  "m1_report_note": "Written 2026-10-06 against main HEAD ce2f122453fc9159bba5cf20b7d3695f0155ef7d, from the two committed verdict files and nothing else. Records BUDGET FAIL at both rungs and flags the rung-1 discrepancy as its most important finding.",
   "verdicts": [
    {
     "attempt": 0,
     "tile_res": 257,
     "verdict": "BUDGET FAIL",
     "rung_named": 1,
+    "metrics_over": 9,
+    "metrics_total": 9,
+    "source": "BenchmarkResults/verdict_linux.txt",
+    "source_blob_sha": "179076dd3c1a1cb43be099296a10931bb051ecc1",
     "note": "9 metrics over budget; correctness OK, so the ladder applies"
    },
    {
     "attempt": 1,
     "tile_res": 129,
-    "verdict": "PASS",
-    "note": "on a quiet pinned box; the same rung returned BUDGET FAIL on a loaded box"
+    "verdict": "BUDGET FAIL",
+    "rung_named": 2,
+    "metrics_over": 2,
+    "metrics_total": 9,
+    "source": "BenchmarkResults/verdict_linux_attempt1_res129.txt",
+    "source_blob_sha": "51c5f4ded5815781e0c93e836820206eab4b7ab3",
+    "note": "The committed verdict is a BUDGET FAIL. An earlier revision of this file recorded PASS here, following gate-20261001-M01-linux-0001.md section 5.1; that report's numbers (1.377 / 0.816 / 1.362) exist in no artifact. The committed verdict file is authoritative: A_StaticSoak p50 1.544 vs 1.500, C_FastForward p50 2.105 vs 1.500."
    }
   ]
  }
