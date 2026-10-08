@@ -94,7 +94,7 @@ likely to be misread.
 | Has it run? | **Yes — ten times**, on 2026-10-03, 2026-10-05 and 2026-10-06 (runs 37107565152, 37109026756, 37109526130, 37110665890, 37110829407, 37111124148, 37252858463, 37253130555, 37253384200, 37407618302) | **Yes**, on 2026-10-01 and again 2026-10-03 |
 | Did it compile? | **No** — every run failed before the editor loaded the project | **Yes** — the 2026-10-01 run compiled the project and ran all four scenarios |
 | Evidence | each run's `gate` job executed its steps; four logs show the licence rejected, the fifth shows a six-hour silence | `docs/gate-reports/gate-20261001-M01-linux-0001.md`, and two committed verdict files |
-| Verdict produced | none | `BUDGET FAIL` at rung 0 (9 of 9 metrics over); `BUDGET FAIL` at rung 1 (2 of 9 over). The `PASS` this row used to claim is not supported by any committed artifact — see §5 |
+| Verdict produced | none | `BUDGET FAIL` at rung 0 (9 of 9 metrics over); `BUDGET FAIL` at rung 1 (2 of 9 over). The `PASS` this row used to claim is not supported by any committed artifact — see §5. **Rung 2 has no verdict at all** — see §1.5 |
 | Report written | n/a | one, for the 2026-10-01 run |
 
 **The C# has been compiled — locally, and only locally.** The 2026-10-01 run
@@ -115,6 +115,39 @@ merely misconfigured; it is red for a reason that is now visible in the log. See
 machine-readable companion). It is written from the two committed verdict files
 and from nothing else, and it records a `BUDGET FAIL` at **both** rungs. Read it
 before trusting any summary of the gate, including this one.
+
+### 1.5 Rung 2 is implemented — and has never been run
+
+**The ladder's next rung is code now, not a plan.** `WaterSolver.Step` skips every
+cell outside a Chebyshev window across all four passes; a cell outside it is never
+assigned, so it holds its last depth. Scope, radius and origin are configuration
+(`PET_BENCH_WINDOW_SCOPE`, `PET_BENCH_WINDOW_RADIUS`), and `none` is the identity,
+which is how rungs 0 and 1 stay reproducible from the same tree.
+
+**No rung-2 verdict exists, and none could have been taken here.** There is no
+Unity editor in the environment this revision was written in:
+`/opt/unity/Editor/Unity` is absent, and there is no `dotnet`, no `mono` and no
+`docker` either. **The new C# has never been compiled, anywhere.**
+
+What exists instead is a **labelled model**, not a measurement:
+
+| Scenario | Model p50 rung 2 (ms) | Threshold | Model fixed cost `S` (ms) |
+|---|---|---|---|
+| A_StaticSoak | `0.371968` | 1.500 | `0.371333` |
+| B_StepFlood | `0.334779` | 1.500 | `0.334333` |
+| C_FastForward | `1.116535` | 1.500 | `1.116000` |
+
+> **`C_FastForward` passes by `0.383 ms` on a fixed cost of `1.116 ms` — 74% of the
+> threshold spent before any water moves.** The model says rung 2 is worth
+> measuring. It does not say rung 2 passes. **Never quote these as a verdict.**
+> `M1.json` carries them under `rung_2.source: "model, not measurement"`.
+
+Two further facts that constrain what rung 2 can achieve, both arithmetic rather
+than opinion. In the shipping 8×8 slice a radius-1 tile window activates 9 of 64
+tiles — **`7.11×`** — but the benchmark world is 2×2, where every tile is within 1
+of every other, so **rung 2's tile saving in the harness is exactly `1.0×`**. The
+harness as built cannot measure the mechanism the rung names. And a radius-1
+*cell* window freezes `99.95%` of a tile: it is a pinhole, not a playable setting.
 
 ---
 
@@ -416,9 +449,34 @@ from `docs/GATE_REPORT_TEMPLATE.md` into
 `docs/gate-reports/gate-<yyyymmdd>-<Mnn>-<tier>-<run>.md` and commit it. The
 naming convention is defined in `docs/gate-reports/README.md`.
 
-> **Before re-running, record machine quietness.** The rung-1 verdict flips
-> between `PASS` and `BUDGET FAIL` on CPU contention alone (§5, risk 2). A
-> verdict without an idle fraction attached is not reproducible.
+> **Before re-running, record machine quietness — now automatic.** The rung-1
+> verdict flips between `PASS` and `BUDGET FAIL` on CPU contention alone (§5,
+> risk 2). `run_bench.sh` now samples `/proc/stat` twice — a 5-second window
+> before the editor, and again across the editor — and writes
+> `BenchmarkResults/quietness_<tier>.txt` with the core count, both busy
+> fractions, the wall clock, the load average and a `quiet` / `noisy` / `BUSY`
+> verdict. **Discard any run whose file does not say `quiet`.** The rung-0 and
+> rung-1 verdicts in this repository predate the instrumentation and carry no
+> machine state, so they still cannot be attributed.
+>
+> **The runner refuses to start without an editor.** If the binary is missing it
+> exits `3` and writes nothing. This is a data-loss guard: the verdict is a
+> committed file, and before the guard existed, running on a checkout with no
+> editor silently replaced rung 0's committed verdict with an `INPUT ERROR`.
+
+### Step 2b — Run rung 2 (needs a machine with the editor)
+
+```bash
+Tools/run_bench.sh --tier linux --attempt 2 --window-scope cells --window-radius 1
+```
+
+This is the measurement the rung-2 model in `M1.json` is waiting for. Check
+`BenchmarkResults/quietness_linux.txt` says `quiet` before believing the numbers,
+then replace the model with the measured verdict in `M1.json` (`rung_2.source`
+becomes the path of a real verdict file, not the string `model, not measurement`).
+
+The `--window-scope tiles` variant is the rung exactly as the ladder names it, but
+it cannot show a saving until the harness steps more than one tile — see §1.5.
 
 ### Step 3 — Work the tickets in order
 
@@ -575,13 +633,23 @@ Tools/run_bench.sh --tier android --attempt 0
 
 # Measure a ladder rung instead of the reference solver
 Tools/run_bench.sh --tier android --attempt 0 --solver channel-graph
+
+# Rung 2: shrink the active water window. --window-scope is one of none|tiles|cells
+Tools/run_bench.sh --tier linux --attempt 2 --window-scope cells --window-radius 1
 ```
 
 `--attempt` names how many rungs of the ladder are already applied. The checker
 returns the **next** rung; it does not choose one for you. `--solver` selects the
 implementation under test and defaults to `heightfield`, so a run that omits it
-measures exactly what it measured before the option existed. An unrecognised
-value fails the NUnit run, which the checker reads as a HARD FAIL.
+measures exactly what it measured before the option existed. `--window-scope` and
+`--window-radius` configure rung 2 the same way: omitting them measures the
+unwindowed solver, and the values actually used are recorded in
+`BenchmarkResults/summary_RunSummary.json`. An unrecognised value of either fails
+the NUnit run, which the checker reads as a HARD FAIL.
+
+The harness refuses to start if `/opt/unity/Editor/Unity` is absent, rather than
+overwriting a committed verdict with an `INPUT ERROR`. Point `UNITY_PATH` at your
+editor to override the default.
 
 ### Re-running the checker alone
 
@@ -668,7 +736,7 @@ not skip one.
 | Rung | Action | Cost |
 |---|---|---|
 | 1 | Halve the simulation resolution to 129 | none visible — the render grid is unchanged |
-| 2 | Shrink the active water window to tiles within 1 of the camera | distant water stops updating |
+| 2 | **Shrink the active water window to tiles within 1 of the camera — IMPLEMENTED, NOT MEASURED (§1.5)** | distant water stops updating |
 | 3 | Channel graph on Android only | Android water is not freely redirectable |
 | 4 | Delay the Android tier | Linux-only slice |
 | 5 | Water stops being redirectable | a pillar — revisit Deliverable 1 |
@@ -700,11 +768,17 @@ committed (`docs/gate-reports/M1.md`) and it records a `BUDGET FAIL` at both
 rungs — rung 0 with 9 of 9 metrics over, rung 1 with 2 of 9 over. The 2026-10-01
 report's claim of a rung-1 `PASS` cannot be traced to any artifact, so the
 repository's own evidence disagrees with itself and that must be settled first.
-The C# compiles locally — and only locally: the CI gate has executed ten times
-and has never produced a verdict, so nothing has ever been compiled in CI. The
+Rung 2 — the active water window — is implemented and committed, but it has
+never been run: the environment it was written in has no Unity editor, so its
+cost is a labelled model (`C_FastForward` modelled at `1.116535 ms` against a
+`1.500 ms` threshold, passing by `0.383 ms` on a `1.116 ms` fixed cost) and not
+a verdict. Machine quietness is now sampled automatically, but no verdict has
+yet been taken with it attached. The C# compiles locally — and only locally: the
+CI gate has executed ten times and has never produced a verdict, so nothing has
+ever been compiled in CI, and nothing was compiled anywhere for rung 2. The
 Android tier has never been measured. The workflow accepts the entitlement XML
 the `UNITY_LICENSE` secret holds, by mounting it into the Licensing Client's
 directory instead of handing it to the manual-activation loader, but that path
 still needs `UNITY_EMAIL` + `UNITY_PASSWORD` and has not yet activated. Resolve
-the rung-1 discrepancy, make the verdict reproducible by recording machine
-quietness, and measure the Android tier before week 2 is called done.**
+the rung-1 discrepancy, run rung 2 on a machine that has the editor, and measure
+the Android tier before week 2 is called done.**

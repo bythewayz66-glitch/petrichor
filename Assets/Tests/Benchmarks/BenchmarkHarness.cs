@@ -62,6 +62,12 @@ namespace PET.Benchmarks
                       $"res {BenchmarkScenarios.TileRes}, {BenchmarkScenarios.TileCount} tiles, " +
                       $"dt {BenchmarkScenarios.Dt:R} s, output {OutputDir}");
 
+            // Record the run's configuration in its own summary file, which the
+            // checker never opens. Without this the window a run stepped under
+            // exists only in the shell that launched it, and a rung-2 number
+            // would be indistinguishable from a rung-0 one after the fact.
+            ActiveWindowConfig.WriteSummary(tier, solver.Name);
+
             var results = new ScenarioResult[3];
 
             results[0] = StaticSoakScenario.Run(solver, tier);

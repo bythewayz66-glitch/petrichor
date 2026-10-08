@@ -5,13 +5,15 @@
   "tier": "linux",
   "report_date": "2026-10-06",
   "author": "Open World Architect (agent)",
-  "status": "FINAL",
+  "status": "REVISED",
   "written_against": {
     "repository": "bythewayz66-glitch/petrichor",
     "branch": "main",
     "head_sha": "ce2f122453fc9159bba5cf20b7d3695f0155ef7d",
     "verdict_files_committed_at": "fd79539ff55cd80367d4a6c4cf49e1f08456a2cb",
-    "verdict_files_committed_at_utc": "2026-10-05T01:56:18+00:00"
+    "verdict_files_committed_at_utc": "2026-10-05T01:56:18+00:00",
+    "previous_head_sha": "ce2f122453fc9159bba5cf20b7d3695f0155ef7d",
+    "previous_head_note": "M1.md and M1.json were committed on 2026-10-06. The r2 revision is built on top of the commits that followed."
   },
   "environment": {
     "editor": {
@@ -70,15 +72,78 @@
       "command": "Tools/run_bench.sh --tier linux --attempt 0",
       "timestamp": "2026-10-01",
       "metrics": [
-        {"scenario": "A_StaticSoak", "metric": "p50_ms", "value": 5.062, "unit": "ms", "threshold": 1.5, "verdict": "FAIL"},
-        {"scenario": "A_StaticSoak", "metric": "p95_ms", "value": 6.286, "unit": "ms", "threshold": 3.0, "verdict": "FAIL"},
-        {"scenario": "A_StaticSoak", "metric": "max_ms", "value": 10.261, "unit": "ms", "threshold": 6.0, "verdict": "FAIL"},
-        {"scenario": "B_StepFlood", "metric": "p50_ms", "value": 3.633, "unit": "ms", "threshold": 1.5, "verdict": "FAIL"},
-        {"scenario": "B_StepFlood", "metric": "p95_ms", "value": 4.494, "unit": "ms", "threshold": 3.0, "verdict": "FAIL"},
-        {"scenario": "B_StepFlood", "metric": "max_ms", "value": 23.706, "unit": "ms", "threshold": 6.0, "verdict": "FAIL"},
-        {"scenario": "C_FastForward", "metric": "p50_ms", "value": 5.072, "unit": "ms", "threshold": 1.5, "verdict": "FAIL"},
-        {"scenario": "C_FastForward", "metric": "p95_ms", "value": 7.94, "unit": "ms", "threshold": 3.0, "verdict": "FAIL"},
-        {"scenario": "C_FastForward", "metric": "max_ms", "value": 7.94, "unit": "ms", "threshold": 6.0, "verdict": "FAIL"}
+        {
+          "scenario": "A_StaticSoak",
+          "metric": "p50_ms",
+          "value": 5.062,
+          "unit": "ms",
+          "threshold": 1.5,
+          "verdict": "FAIL"
+        },
+        {
+          "scenario": "A_StaticSoak",
+          "metric": "p95_ms",
+          "value": 6.286,
+          "unit": "ms",
+          "threshold": 3.0,
+          "verdict": "FAIL"
+        },
+        {
+          "scenario": "A_StaticSoak",
+          "metric": "max_ms",
+          "value": 10.261,
+          "unit": "ms",
+          "threshold": 6.0,
+          "verdict": "FAIL"
+        },
+        {
+          "scenario": "B_StepFlood",
+          "metric": "p50_ms",
+          "value": 3.633,
+          "unit": "ms",
+          "threshold": 1.5,
+          "verdict": "FAIL"
+        },
+        {
+          "scenario": "B_StepFlood",
+          "metric": "p95_ms",
+          "value": 4.494,
+          "unit": "ms",
+          "threshold": 3.0,
+          "verdict": "FAIL"
+        },
+        {
+          "scenario": "B_StepFlood",
+          "metric": "max_ms",
+          "value": 23.706,
+          "unit": "ms",
+          "threshold": 6.0,
+          "verdict": "FAIL"
+        },
+        {
+          "scenario": "C_FastForward",
+          "metric": "p50_ms",
+          "value": 5.072,
+          "unit": "ms",
+          "threshold": 1.5,
+          "verdict": "FAIL"
+        },
+        {
+          "scenario": "C_FastForward",
+          "metric": "p95_ms",
+          "value": 7.94,
+          "unit": "ms",
+          "threshold": 3.0,
+          "verdict": "FAIL"
+        },
+        {
+          "scenario": "C_FastForward",
+          "metric": "max_ms",
+          "value": 7.94,
+          "unit": "ms",
+          "threshold": 6.0,
+          "verdict": "FAIL"
+        }
       ]
     },
     {
@@ -97,15 +162,80 @@
       "command": "Tools/run_bench.sh --tier linux --attempt 1 --tile-res 129",
       "timestamp": "2026-10-01",
       "metrics": [
-        {"scenario": "A_StaticSoak", "metric": "p50_ms", "value": 1.544, "unit": "ms", "threshold": 1.5, "verdict": "FAIL", "over_by_pct": 2.9},
-        {"scenario": "A_StaticSoak", "metric": "p95_ms", "value": 1.789, "unit": "ms", "threshold": 3.0, "verdict": "PASS"},
-        {"scenario": "A_StaticSoak", "metric": "max_ms", "value": 3.528, "unit": "ms", "threshold": 6.0, "verdict": "PASS"},
-        {"scenario": "B_StepFlood", "metric": "p50_ms", "value": 1.159, "unit": "ms", "threshold": 1.5, "verdict": "PASS"},
-        {"scenario": "B_StepFlood", "metric": "p95_ms", "value": 1.534, "unit": "ms", "threshold": 3.0, "verdict": "PASS"},
-        {"scenario": "B_StepFlood", "metric": "max_ms", "value": 5.863, "unit": "ms", "threshold": 6.0, "verdict": "PASS"},
-        {"scenario": "C_FastForward", "metric": "p50_ms", "value": 2.105, "unit": "ms", "threshold": 1.5, "verdict": "FAIL", "over_by_pct": 40.3},
-        {"scenario": "C_FastForward", "metric": "p95_ms", "value": 2.57, "unit": "ms", "threshold": 3.0, "verdict": "PASS"},
-        {"scenario": "C_FastForward", "metric": "max_ms", "value": 2.57, "unit": "ms", "threshold": 6.0, "verdict": "PASS"}
+        {
+          "scenario": "A_StaticSoak",
+          "metric": "p50_ms",
+          "value": 1.544,
+          "unit": "ms",
+          "threshold": 1.5,
+          "verdict": "FAIL",
+          "over_by_pct": 2.9
+        },
+        {
+          "scenario": "A_StaticSoak",
+          "metric": "p95_ms",
+          "value": 1.789,
+          "unit": "ms",
+          "threshold": 3.0,
+          "verdict": "PASS"
+        },
+        {
+          "scenario": "A_StaticSoak",
+          "metric": "max_ms",
+          "value": 3.528,
+          "unit": "ms",
+          "threshold": 6.0,
+          "verdict": "PASS"
+        },
+        {
+          "scenario": "B_StepFlood",
+          "metric": "p50_ms",
+          "value": 1.159,
+          "unit": "ms",
+          "threshold": 1.5,
+          "verdict": "PASS"
+        },
+        {
+          "scenario": "B_StepFlood",
+          "metric": "p95_ms",
+          "value": 1.534,
+          "unit": "ms",
+          "threshold": 3.0,
+          "verdict": "PASS"
+        },
+        {
+          "scenario": "B_StepFlood",
+          "metric": "max_ms",
+          "value": 5.863,
+          "unit": "ms",
+          "threshold": 6.0,
+          "verdict": "PASS"
+        },
+        {
+          "scenario": "C_FastForward",
+          "metric": "p50_ms",
+          "value": 2.105,
+          "unit": "ms",
+          "threshold": 1.5,
+          "verdict": "FAIL",
+          "over_by_pct": 40.3
+        },
+        {
+          "scenario": "C_FastForward",
+          "metric": "p95_ms",
+          "value": 2.57,
+          "unit": "ms",
+          "threshold": 3.0,
+          "verdict": "PASS"
+        },
+        {
+          "scenario": "C_FastForward",
+          "metric": "max_ms",
+          "value": 2.57,
+          "unit": "ms",
+          "threshold": 6.0,
+          "verdict": "PASS"
+        }
       ]
     }
   ],
@@ -113,16 +243,61 @@
     "verdict": "OK",
     "line": "correctness: OK (no NaN, mass balanced, hash non-zero, all tests green)",
     "checks": [
-      {"check": "non_finite_depth_samples", "limit": 0, "rung0": 0, "rung1": 0, "verdict": "PASS"},
-      {"check": "mass_balance_drift", "limit_pct": 0.1, "rung0": "within tolerance", "rung1": "within tolerance", "verdict": "PASS"},
-      {"check": "field_hash_non_zero", "limit": true, "rung0": true, "rung1": true, "verdict": "PASS"},
-      {"check": "nunit_test_result", "limit": "all green", "rung0": "green", "rung1": "green", "verdict": "PASS"}
+      {
+        "check": "non_finite_depth_samples",
+        "limit": 0,
+        "rung0": 0,
+        "rung1": 0,
+        "verdict": "PASS"
+      },
+      {
+        "check": "mass_balance_drift",
+        "limit_pct": 0.1,
+        "rung0": "within tolerance",
+        "rung1": "within tolerance",
+        "verdict": "PASS"
+      },
+      {
+        "check": "field_hash_non_zero",
+        "limit": true,
+        "rung0": true,
+        "rung1": true,
+        "verdict": "PASS"
+      },
+      {
+        "check": "nunit_test_result",
+        "limit": "all green",
+        "rung0": "green",
+        "rung1": "green",
+        "verdict": "PASS"
+      }
     ]
   },
   "speedup_rung0_to_rung1": [
-    {"scenario": "A_StaticSoak", "p50_rung0": 5.062, "p50_rung1": 1.544, "speedup": 3.3, "max_rung0": 10.261, "max_rung1": 3.528},
-    {"scenario": "B_StepFlood", "p50_rung0": 3.633, "p50_rung1": 1.159, "speedup": 3.1, "max_rung0": 23.706, "max_rung1": 5.863},
-    {"scenario": "C_FastForward", "p50_rung0": 5.072, "p50_rung1": 2.105, "speedup": 2.4, "max_rung0": 7.94, "max_rung1": 2.57}
+    {
+      "scenario": "A_StaticSoak",
+      "p50_rung0": 5.062,
+      "p50_rung1": 1.544,
+      "speedup": 3.3,
+      "max_rung0": 10.261,
+      "max_rung1": 3.528
+    },
+    {
+      "scenario": "B_StepFlood",
+      "p50_rung0": 3.633,
+      "p50_rung1": 1.159,
+      "speedup": 3.1,
+      "max_rung0": 23.706,
+      "max_rung1": 5.863
+    },
+    {
+      "scenario": "C_FastForward",
+      "p50_rung0": 5.072,
+      "p50_rung1": 2.105,
+      "speedup": 2.4,
+      "max_rung0": 7.94,
+      "max_rung1": 2.57
+    }
   ],
   "proves": [
     "The C# harness compiles (locally).",
@@ -133,34 +308,137 @@
     "The rung ladder is the right instrument: the checker named rung 1, and rung 1 recovered 7 metrics."
   ],
   "does_not_prove": [
-    {"claim": "The CI gate works", "status": "UNVERIFIED", "why": "The gate job has executed nine times and has never produced a verdict. Every run failed on licence activation before the editor loaded the project."},
-    {"claim": "Anything compiled in CI", "status": "NO", "why": "No CI run has reached the point where the editor loads the project."},
-    {"claim": "The gate passes", "status": "NO", "why": "Rung 0 is a BUDGET FAIL; rung 1 is also a BUDGET FAIL."},
-    {"claim": "The Android tier is feasible", "status": "UNVERIFIED", "why": "Never measured on any device."},
-    {"claim": "The verdict is reproducible", "status": "UNVERIFIED", "why": "The rung-1 verdict flips on CPU contention alone and the harness does not record machine quietness."},
-    {"claim": "The scenarios are correctly parameterised", "status": "UNVERIFIED", "why": "3000 settle steps, 500 samples and the 3600x multiplier are reasoned, not tuned."}
+    {
+      "claim": "The CI gate works",
+      "status": "UNVERIFIED",
+      "why": "The gate job has executed nine times and has never produced a verdict. Every run failed on licence activation before the editor loaded the project."
+    },
+    {
+      "claim": "Anything compiled in CI",
+      "status": "NO",
+      "why": "No CI run has reached the point where the editor loads the project."
+    },
+    {
+      "claim": "The gate passes",
+      "status": "NO",
+      "why": "Rung 0 is a BUDGET FAIL; rung 1 is also a BUDGET FAIL."
+    },
+    {
+      "claim": "The Android tier is feasible",
+      "status": "UNVERIFIED",
+      "why": "Never measured on any device."
+    },
+    {
+      "claim": "The verdict is reproducible",
+      "status": "UNVERIFIED",
+      "why": "The rung-1 verdict flips on CPU contention alone and the harness does not record machine quietness."
+    },
+    {
+      "claim": "The scenarios are correctly parameterised",
+      "status": "UNVERIFIED",
+      "why": "3000 settle steps, 500 samples and the 3600x multiplier are reasoned, not tuned."
+    }
   ],
   "ci_gate": {
     "verdict": "none",
     "runs_executed": 10,
     "runs_with_verdict": 0,
     "runs": [
-      {"run_number": 20, "run_id": 37107565152, "date": "2026-10-03", "outcome": "INPUT ERROR", "detail": "licence rejected, Code 400"},
-      {"run_number": 21, "run_id": 37109026756, "date": "2026-10-03", "outcome": "INPUT ERROR", "detail": "licence rejected"},
-      {"run_number": 22, "run_id": 37109526130, "date": "2026-10-03", "outcome": "INPUT ERROR", "detail": "licence rejected"},
-      {"run_number": 23, "run_id": 37110665890, "date": "2026-10-03", "outcome": "INPUT ERROR", "detail": "licence rejected"},
-      {"run_number": 24, "run_id": 37110829407, "date": "2026-10-03", "outcome": "INPUT ERROR", "detail": "misrouted to the ULF loader"},
-      {"run_number": 25, "run_id": 37111124148, "date": "2026-10-03", "outcome": "cancelled", "detail": "hung 6h00m08s, killed by the default job timeout"},
-      {"run_number": 26, "run_id": 37252858463, "date": "2026-10-05", "outcome": "INPUT ERROR", "detail": "Access token is unavailable"},
-      {"run_number": 27, "run_id": 37253130555, "date": "2026-10-05", "outcome": "INPUT ERROR", "detail": "Access token is unavailable"},
-      {"run_number": 28, "run_id": 37253384200, "date": "2026-10-05", "outcome": "INPUT ERROR", "detail": "Access token is unavailable"},
-      {"run_number": 29, "run_id": 37407618302, "date": "2026-10-06", "outcome": "INPUT ERROR", "detail": "Access token is unavailable; step 8 (serial / ULF) skipped, step 9 (entitlement XML) ran 101 s"}
+      {
+        "run_number": 20,
+        "run_id": 37107565152,
+        "date": "2026-10-03",
+        "outcome": "INPUT ERROR",
+        "detail": "licence rejected, Code 400"
+      },
+      {
+        "run_number": 21,
+        "run_id": 37109026756,
+        "date": "2026-10-03",
+        "outcome": "INPUT ERROR",
+        "detail": "licence rejected"
+      },
+      {
+        "run_number": 22,
+        "run_id": 37109526130,
+        "date": "2026-10-03",
+        "outcome": "INPUT ERROR",
+        "detail": "licence rejected"
+      },
+      {
+        "run_number": 23,
+        "run_id": 37110665890,
+        "date": "2026-10-03",
+        "outcome": "INPUT ERROR",
+        "detail": "licence rejected"
+      },
+      {
+        "run_number": 24,
+        "run_id": 37110829407,
+        "date": "2026-10-03",
+        "outcome": "INPUT ERROR",
+        "detail": "misrouted to the ULF loader"
+      },
+      {
+        "run_number": 25,
+        "run_id": 37111124148,
+        "date": "2026-10-03",
+        "outcome": "cancelled",
+        "detail": "hung 6h00m08s, killed by the default job timeout"
+      },
+      {
+        "run_number": 26,
+        "run_id": 37252858463,
+        "date": "2026-10-05",
+        "outcome": "INPUT ERROR",
+        "detail": "Access token is unavailable"
+      },
+      {
+        "run_number": 27,
+        "run_id": 37253130555,
+        "date": "2026-10-05",
+        "outcome": "INPUT ERROR",
+        "detail": "Access token is unavailable"
+      },
+      {
+        "run_number": 28,
+        "run_id": 37253384200,
+        "date": "2026-10-05",
+        "outcome": "INPUT ERROR",
+        "detail": "Access token is unavailable"
+      },
+      {
+        "run_number": 29,
+        "run_id": 37407618302,
+        "date": "2026-10-06",
+        "outcome": "INPUT ERROR",
+        "detail": "Access token is unavailable; step 8 (serial / ULF) skipped, step 9 (entitlement XML) ran 101 s"
+      }
     ],
     "latest_run_steps": [
-      {"number": 8, "name": "Run the benchmark (serial / ULF)", "conclusion": "skipped", "reason": "no UNITY_SERIAL secret exists"},
-      {"number": 9, "name": "Run the benchmark (entitlement XML)", "conclusion": "success", "duration_s": 101, "note": "continue-on-error"},
-      {"number": 11, "name": "Check thresholds", "conclusion": "success"},
-      {"number": 17, "name": "Enforce the verdict", "conclusion": "failure"}
+      {
+        "number": 8,
+        "name": "Run the benchmark (serial / ULF)",
+        "conclusion": "skipped",
+        "reason": "no UNITY_SERIAL secret exists"
+      },
+      {
+        "number": 9,
+        "name": "Run the benchmark (entitlement XML)",
+        "conclusion": "success",
+        "duration_s": 101,
+        "note": "continue-on-error"
+      },
+      {
+        "number": 11,
+        "name": "Check thresholds",
+        "conclusion": "success"
+      },
+      {
+        "number": 17,
+        "name": "Enforce the verdict",
+        "conclusion": "failure"
+      }
     ]
   },
   "known_gaps": [
@@ -170,14 +448,6 @@
       "title": "The committed rung-1 verdict contradicts the 2026-10-01 report",
       "detail": "gate-20261001-M01-linux-0001.md section 5.1 quotes a rung-1 verdict of PASS with A p50 1.377, B p50 0.816, C p50 1.362. No artifact in the repository, the sandbox, or the CI logs contains those numbers. The committed verdict file says BUDGET FAIL with A p50 1.544, B p50 1.159, C p50 2.105.",
       "consequence": "The claim that rung 1 passes, repeated in HANDOFF.md section 1.4 and HANDOFF.json gate_history.verdicts, is not supported by the committed evidence.",
-      "resolved": false
-    },
-    {
-      "id": "G2",
-      "severity": "high",
-      "title": "The gate does not record machine quietness",
-      "detail": "The rung-1 verdict flips on CPU contention alone. run_bench.sh does not sample /proc/stat and the threshold file carries no such requirement.",
-      "consequence": "A frame-time number without the machine's idle fraction attached is not reproducible.",
       "resolved": false
     },
     {
@@ -201,6 +471,31 @@
       "title": "The thresholds are mirrored in two places",
       "detail": "Tools/bench_thresholds.json and BenchmarkScenarios.cs both hold them. The harness writes the values it used into every summary, so drift is visible in results rather than inferred.",
       "resolved": false
+    },
+    {
+      "id": "G2",
+      "severity": "medium",
+      "title": "The quietness instrumentation is committed but has never been attached to a verdict",
+      "detail": "run_bench.sh now samples /proc/stat twice and writes BenchmarkResults/quietness_<tier>.txt with the core count, both busy fractions, the wall clock, the load average and a quiet/noisy/BUSY verdict. It has only been exercised on the failed no-editor run, where it reported 22.2% busy (10.7 of 48 cores) under loadavg 10.81.",
+      "consequence": "WAS: no quietness was recorded at all. NOW: quietness is recorded, but the rung-0 and rung-1 verdicts predate it and still carry no machine state. They remain unattributable.",
+      "resolved": false,
+      "regressed_in_severity": "high -> medium"
+    },
+    {
+      "id": "G6",
+      "severity": "high",
+      "title": "No Unity editor exists in the environment the rung-2 revision was written in",
+      "detail": "/opt/unity/Editor/Unity is absent, there is no dotnet, no mono and no docker in the sandbox. The C# added by this revision has never been compiled, and the rung-2 benchmark has never been run, in any environment.",
+      "consequence": "The rung-2 implementation is unverified. A compile error in WaterWindow.cs or ActiveWindowConfig.cs would not be caught until a machine with the editor runs the gate.",
+      "resolved": false
+    },
+    {
+      "id": "G7",
+      "severity": "medium",
+      "title": "The benchmark world cannot measure the tile mechanism the rung names",
+      "detail": "The harness reports tile_count = 4 as a 2x2 grid. In a 2x2 world the active-tile set at radius 1 is 4 of 4, so rung 2's tile selection saves nothing there.",
+      "consequence": "Even with an editor, a rung-2 verdict from this harness measures the cell scope only. The tile mechanism needs a larger benchmark world.",
+      "resolved": false
     }
   ],
   "reproduce": {
@@ -213,17 +508,62 @@
     "home_note": "The editor reads its licence from $HOME/.config/unity3d/Unity/licenses/. Run the gate as the account whose entitlement is valid."
   },
   "exit_codes": [
-    {"code": 0, "verdict": "PASS", "build": "green", "meaning": "Every scenario within threshold"},
-    {"code": 1, "verdict": "BUDGET FAIL", "build": "green", "meaning": "Walk the named rung. A project event, not a broken commit"},
-    {"code": 2, "verdict": "HARD FAIL", "build": "fails", "meaning": "NaN, mass imbalance or a red test. The ladder cannot fix these"},
-    {"code": 3, "verdict": "INPUT ERROR", "build": "fails", "meaning": "The checker could not read its inputs; the run is invalid"}
+    {
+      "code": 0,
+      "verdict": "PASS",
+      "build": "green",
+      "meaning": "Every scenario within threshold"
+    },
+    {
+      "code": 1,
+      "verdict": "BUDGET FAIL",
+      "build": "green",
+      "meaning": "Walk the named rung. A project event, not a broken commit"
+    },
+    {
+      "code": 2,
+      "verdict": "HARD FAIL",
+      "build": "fails",
+      "meaning": "NaN, mass imbalance or a red test. The ladder cannot fix these"
+    },
+    {
+      "code": 3,
+      "verdict": "INPUT ERROR",
+      "build": "fails",
+      "meaning": "The checker could not read its inputs; the run is invalid"
+    }
   ],
   "next_gate": [
-    {"order": 1, "action": "Resolve the rung-1 discrepancy (G1)", "why": "The repository's own report and its own verdict file disagree about whether rung 1 passes."},
-    {"order": 2, "action": "Make the verdict reproducible (G2)", "why": "Sample /proc/stat around the measurement and refuse to report a budget verdict when the box was not quiet."},
-    {"order": 3, "action": "Walk rung 2", "why": "The committed rung-1 verdict names it: shrink the active water window to tiles within 1 of the camera. Cost: distant water stops updating."},
-    {"order": 4, "action": "Measure the Android tier", "why": "Never measured. Requires the reference device to be confirmed as owned."},
-    {"order": 5, "action": "Get a CI verdict", "why": "Nine runs, no verdict. The gate is unverified end to end."}
+    {
+      "order": 1,
+      "action": "Resolve the rung-1 discrepancy (G1)",
+      "why": "The repository's report and its own verdict file still disagree about whether rung 1 passes."
+    },
+    {
+      "order": 2,
+      "action": "Take a verdict with the quietness sampler attached (G2)",
+      "why": "The instrumentation is committed but has never been attached to a verdict. Discard any run above 20% busy."
+    },
+    {
+      "order": 3,
+      "action": "Run rung 2 on a machine with the editor (G6)",
+      "why": "The implementation is committed and the model predicts a pass. Neither is a measurement. Do not quote the model as a verdict."
+    },
+    {
+      "order": 4,
+      "action": "Widen the benchmark world past 3x3 to measure the tile mechanism (G7)",
+      "why": "The 7.11x tile reduction belongs to the shipping 8x8 slice and is unobservable in a 2x2 world."
+    },
+    {
+      "order": 5,
+      "action": "Measure the Android tier",
+      "why": "Never measured. Requires the reference device to be confirmed as owned."
+    },
+    {
+      "order": 6,
+      "action": "Get a CI verdict",
+      "why": "Ten runs, no verdict. The gate is unverified end to end."
+    }
   ],
   "sign_off": {
     "rung0_verdict": "BUDGET FAIL",
@@ -237,6 +577,178 @@
       "BenchmarkResults/verdict_linux.txt",
       "BenchmarkResults/verdict_linux_attempt1_res129.txt"
     ],
-    "signed": "Open World Architect (agent), 2026-10-06"
-  }
+    "signed": "Open World Architect (agent), 2026-10-06, revised 2026-10-07 (r2)",
+    "rung2_verdict": "none - modelled only, no editor available",
+    "rung2_implementation": "committed",
+    "quietness_instrumentation": "committed, never attached to a verdict"
+  },
+  "revision": "r2",
+  "revision_date": "2026-10-07",
+  "revision_note": "r2 adds the committed rung-2 implementation and its cost MODEL, the quietness instrumentation, and gap G6. Rung 2 has no verdict.",
+  "rung_2": {
+    "rung": 2,
+    "label": "active water window",
+    "tile_res": 129,
+    "source": "model, not measurement",
+    "verdict": "NONE - NOT MEASURED",
+    "why_not_measured": "No Unity editor exists in the environment this revision was written in: /opt/unity/Editor/Unity is absent and run_bench.sh now refuses to start without it. No benchmark number here was measured on any machine.",
+    "implementation": {
+      "new_files": [
+        "Assets/Scripts/Water/WaterWindow.cs",
+        "Assets/Tests/Benchmarks/ActiveWindowConfig.cs"
+      ],
+      "changed_files": [
+        "Assets/Scripts/Water/WaterSolver.cs",
+        "Assets/Tests/Benchmarks/BenchmarkScenarios.cs",
+        "Assets/Tests/Benchmarks/BenchmarkHarness.cs",
+        "Assets/Tests/Benchmarks/StaticSoakScenario.cs",
+        "Assets/Tests/Benchmarks/StepFloodScenario.cs",
+        "Assets/Tests/Benchmarks/FastForwardScenario.cs",
+        "Assets/Tests/Benchmarks/CorrectnessScenario.cs",
+        "Tools/run_bench.sh",
+        "Tools/window_model.py"
+      ],
+      "frozen_untouched": {
+        "Assets/Scripts/Water/IWaterSolver.cs": "77af73ae",
+        "Assets/Scripts/Water/HeightfieldWaterSolver.cs": "c61898e0",
+        "Assets/Scripts/Water/ChannelGraphWaterSolver.cs": "e36039ed",
+        "note": "Blob prefixes, unchanged by this revision, as required."
+      },
+      "mechanism": "WaterSolver.Step skips any cell outside a Chebyshev window in all four passes. Pass 1 clears flux globally and a windowed-out cell never re-populates it, so no flux crosses the boundary and the step is a closed system over the active set. A cell outside the window is never assigned, so it holds its last depth.",
+      "data_driven": "Scope, radius and origin are configuration, read from PET_BENCH_WINDOW_SCOPE / PET_BENCH_WINDOW_RADIUS. Scope=none is the identity, which is how rungs 0 and 1 stay reproducible from one tree."
+    },
+    "window_scope_semantics": {
+      "none": "every cell of every tile steps - the identity path rungs 0 and 1 take",
+      "tiles": "a tile steps only if within r tiles of the camera's tile; per-tile cost unchanged",
+      "cells": "cells within r cells of the camera's cell step; per-tile cost reduced",
+      "note": "The rung as named by the ladder is TILE-based. The cell scope exists because the harness allocates one tile per scenario, so a per-tile step cost is the only thing it can measure."
+    },
+    "window_arithmetic": {
+      "cell_window_res129": {
+        "active_cells": 9,
+        "cells_in_tile": 16641,
+        "active_fraction": 0.000540833,
+        "frozen_fraction": 0.999459167
+      },
+      "cell_window_res257": {
+        "active_cells": 9,
+        "cells_in_tile": 66049,
+        "active_fraction": 0.000136262
+      },
+      "cell_count_reduction_rung0_to_rung1": 3.9691,
+      "cell_count_reduction_rung1_to_rung2": 1849.0,
+      "tile_grid": {
+        "tiles_per_side": 8,
+        "world_tiles": 64,
+        "radius_tiles": 1,
+        "active_tiles_max": 9,
+        "active_tile_fraction_max": 0.140625,
+        "tile_reduction_factor_max": 7.1111,
+        "active_tiles_corner": 4,
+        "benchmark_world_tiles_per_side": 2,
+        "benchmark_world_tiles": 4,
+        "benchmark_active_tiles": 4,
+        "benchmark_tile_reduction_factor": 1.0,
+        "note": "In a 2x2 world radius 1 covers every tile, so rung 2's TILE mechanism has zero effect in the benchmark world. The 7.11x reduction is a property of the shipping 8x8 slice and the harness cannot measure it as built."
+      }
+    },
+    "model": {
+      "form": "T = S + W(res) * active_fraction",
+      "assumption": "W scales with the cell count of the tile",
+      "solved_for": "S, the per-step cost that does not scale with the active set",
+      "fit_inputs": "the committed rung-0 and rung-1 p50 values for each scenario",
+      "identifiability": "Two points and two unknowns, so the fit is exact by construction and is NOT evidence that the model is right. It is falsifiable: a real rung-2 verdict can be diffed against it.",
+      "script": "Tools/window_model.py",
+      "invocation": "python3 Tools/window_model.py",
+      "formula": "T = S + W(res) * active_fraction;  S = (4*T129 - T257) / 3",
+      "confidence": "Low. Two points fit two unknowns exactly, so the fit is not evidence the model is right. The only independent support is the sublinear rung 0 -> 1 scaling, which is consistent with a nonzero fixed term."
+    },
+    "per_scenario": [
+      {
+        "scenario": "A_StaticSoak",
+        "measured_p50_rung0_ms": 5.062,
+        "measured_p50_rung1_ms": 1.544,
+        "model_fixed_cost_ms": 0.371333,
+        "model_tile_work_rung1_ms": 1.172667,
+        "model_p50_rung2_cells_ms": 0.371968,
+        "model_meets_p50_threshold": true,
+        "model_margin_under_threshold_ms": 1.128032,
+        "model_speedup_rung1_to_rung2": 4.1509,
+        "model_speedup_rung0_to_rung2": 13.6087
+      },
+      {
+        "scenario": "B_StepFlood",
+        "measured_p50_rung0_ms": 3.633,
+        "measured_p50_rung1_ms": 1.159,
+        "model_fixed_cost_ms": 0.334333,
+        "model_tile_work_rung1_ms": 0.824667,
+        "model_p50_rung2_cells_ms": 0.334779,
+        "model_meets_p50_threshold": true,
+        "model_margin_under_threshold_ms": 1.165221,
+        "model_speedup_rung1_to_rung2": 3.462,
+        "model_speedup_rung0_to_rung2": 10.8519
+      },
+      {
+        "scenario": "C_FastForward",
+        "measured_p50_rung0_ms": 5.072,
+        "measured_p50_rung1_ms": 2.105,
+        "model_fixed_cost_ms": 1.116,
+        "model_tile_work_rung1_ms": 0.989,
+        "model_p50_rung2_cells_ms": 1.116535,
+        "model_meets_p50_threshold": true,
+        "model_margin_under_threshold_ms": 0.383465,
+        "model_speedup_rung1_to_rung2": 1.8853,
+        "model_speedup_rung0_to_rung2": 4.5426
+      }
+    ],
+    "key_finding": "At a radius-1 cell window the windowed term is 9 cells of 16641, so the modelled cost collapses to the fixed term S. Rung 2's modelled floor is S, not zero. C_FastForward carries S = 1.116 ms, which is 74% of the 1.500 ms p50 threshold spent before any water moves. That is the number to watch when a real measurement exists.",
+    "benchmark_blind_spot": "The benchmark world is 2x2 tiles, so every tile is within 1 of every other and rung 2's tile saving there is exactly 1.0x. The 7.11x figure is a property of the shipping 8x8 slice (64 tiles -> 9 active) and cannot be observed until the harness steps more than one tile.",
+    "not_a_game_configuration": "A radius-1 cell window freezes 99.95% of the tile. It is a pinhole, not a playable setting. The modelled pass means 'rung 2 is worth measuring', not 'rung 2 passes'."
+  },
+  "speedup_rung1_to_rung2_model": [
+    {
+      "scenario": "A_StaticSoak",
+      "p50_rung1_measured": 1.544,
+      "p50_rung2_modelled": 0.371968,
+      "speedup_modelled": 4.1509,
+      "source": "model, not measurement"
+    },
+    {
+      "scenario": "B_StepFlood",
+      "p50_rung1_measured": 1.159,
+      "p50_rung2_modelled": 0.334779,
+      "speedup_modelled": 3.462,
+      "source": "model, not measurement"
+    },
+    {
+      "scenario": "C_FastForward",
+      "p50_rung1_measured": 2.105,
+      "p50_rung2_modelled": 1.116535,
+      "speedup_modelled": 1.8853,
+      "source": "model, not measurement"
+    }
+  ],
+  "speedup_rung0_to_rung2_model": [
+    {
+      "scenario": "A_StaticSoak",
+      "p50_rung0_measured": 5.062,
+      "p50_rung2_modelled": 0.371968,
+      "speedup_modelled": 13.6087,
+      "source": "model, not measurement"
+    },
+    {
+      "scenario": "B_StepFlood",
+      "p50_rung0_measured": 3.633,
+      "p50_rung2_modelled": 0.334779,
+      "speedup_modelled": 10.8519,
+      "source": "model, not measurement"
+    },
+    {
+      "scenario": "C_FastForward",
+      "p50_rung0_measured": 5.072,
+      "p50_rung2_modelled": 1.116535,
+      "speedup_modelled": 4.5426,
+      "source": "model, not measurement"
+    }
+  ]
 }

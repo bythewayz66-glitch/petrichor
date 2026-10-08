@@ -58,6 +58,19 @@ namespace PET.Benchmarks
         /// </summary>
         public static void Run(IWaterSolver solver)
         {
+            BenchmarkScenarios.BeginWindowed();
+            try
+            {
+                RunCore(solver);
+            }
+            finally
+            {
+                BenchmarkScenarios.EndWindowed();
+            }
+        }
+
+        private static void RunCore(IWaterSolver solver)
+        {
             using var a = BenchmarkScenarios.MakeField();
             using var b = BenchmarkScenarios.MakeField();
             using var sources = BenchmarkScenarios.MakeSources();

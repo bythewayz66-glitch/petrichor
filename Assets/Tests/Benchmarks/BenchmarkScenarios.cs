@@ -47,7 +47,17 @@ namespace PET.Benchmarks
         /// <summary>250 m tile across 256 cells between 257 samples.</summary>
         public const float TileSizeM = 250f;
 
-        /// <summary>Four tiles, laid out as a 2x2 block.</summary>
+        /// <summary>
+        /// FOUR tiles, laid out as a 2x2 block.
+        ///
+        /// This is the tile count the harness reports, and it is also the whole
+        /// benchmark world. That matters for rung 2 and is stated rather than
+        /// left to be discovered: in a 2x2 world a camera's tile is within 1 of
+        /// every other tile, so the active-tile set is 4 of 4 and rung 2
+        /// produces NO tile saving here. The saving is a property of the
+        /// shipping 8x8 world, and the per-tile step cost the harness measures
+        /// is what that saving multiplies.
+        /// </summary>
         public const int TileCount = 4;
 
         /// <summary>Fixed simulation timestep, 30 Hz.</summary>
@@ -186,6 +196,28 @@ namespace PET.Benchmarks
             }
 
             return samples;
+        }
+
+        /// <summary>
+        /// The window every step in this scenario is taken under.
+        ///
+        /// The window is an ambient static on the solver (see
+        /// <see cref="ActiveWindowConfig"/>), so a scenario must set it before
+        /// the FIRST step, settle loop included. Windowing only the measured
+        /// window and not the settle would measure a field that was never in
+        /// the state the run claims to measure.
+        ///
+        /// The restore is in a finally so a windowed rung cannot leak into the
+        /// next scenario and be reported as an unwindowed number.
+        /// </summary>
+        public static WaterWindow BeginWindowed()
+        {
+            return ActiveWindowConfig.Apply();
+        }
+
+        public static void EndWindowed()
+        {
+            ActiveWindowConfig.Restore();
         }
 
         /// <summary>

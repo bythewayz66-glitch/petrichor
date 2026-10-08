@@ -50,6 +50,19 @@ namespace PET.Benchmarks
 
         public static ScenarioResult Run(IWaterSolver solver, string tier)
         {
+            BenchmarkScenarios.BeginWindowed();
+            try
+            {
+                return RunCore(solver, tier);
+            }
+            finally
+            {
+                BenchmarkScenarios.EndWindowed();
+            }
+        }
+
+        private static ScenarioResult RunCore(IWaterSolver solver, string tier)
+        {
             using var field = BenchmarkScenarios.MakeField();
             using var sources = BenchmarkScenarios.MakeSources();
             using var inflow = new NativeArray<float>(1, Allocator.Persistent);

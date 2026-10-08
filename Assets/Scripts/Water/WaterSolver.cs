@@ -21,6 +21,30 @@ namespace PET.Water
     /// </summary>
     public static class WaterSolver
     {
+        /// <summary>
+        /// The window the four-argument <see cref="Step(WaterField, NativeArray{WaterSource}, float, NativeArray{float})"/>
+        /// overload steps under. Ladder rung 2.
+        ///
+        /// WHY THIS IS A STATIC, AND WHAT IT COSTS
+        /// ---------------------------------------
+        /// <see cref="IWaterSolver.Step"/> takes no window, and the three
+        /// committed solver implementations are frozen, so there is no parameter
+        /// to thread a window through. This static is how the rung is MEASURED
+        /// today; it is an ambient default, not an architecture.
+        ///
+        /// The cost is real and worth naming: a static is not thread-safe. It is
+        /// correct for this gate, which steps one tile at a time on one thread,
+        /// and INCORRECT for a scheduler that steps several tiles in parallel.
+        /// The shipping multi-tile stepper must call the five-argument overload
+        /// and pass its own window, so no tile can ever observe another tile's
+        /// setting. Any job reading this static across threads is a bug.
+        ///
+        /// It is mutable rather than readonly because the harness sets it per
+        /// scenario, and it defaults to unwindowed so an untouched process runs
+        /// exactly the solver rungs 0 and 1 measured.
+        /// </summary>
+        public static WaterWindow ActiveWindow = WaterWindow.Unwindowed;
+
         /// <summary>Below this depth a cell is treated as dry and neither gives
         /// nor receives flux. Prevents a film of water from jittering forever.</summary>
         public const float MinDepth = 1e-5f;
@@ -71,6 +95,20 @@ namespace PET.Water
             /// </summary>
             public NativeArray<float> Inflow;
 
+            /// <summary>
+            /// Which part of the tile this step may write. Ladder rung 2.
+            ///
+            /// Default(WaterWindow) has Scope = None, and IsActiveCell returns
+            /// true for every cell under Scope.None, so a job that never sets
+            /// this field runs the unwindowed solver - which is what keeps rungs
+            /// 0 and 1 reproducible from this source tree without a flag.
+            ///
+            /// The window is a field on the job and not a parameter of Execute
+            /// for the same reason Inflow is: IJob.Run() takes the job by value,
+            /// and this is read-only during the step.
+            /// </summary>
+            public WaterWindow Window;
+
             public void Execute()
             {
                 int w = Field.Width;
@@ -85,10 +123,23 @@ namespace PET.Water
                 }
 
                 // ---- Pass 2: outgoing flux from head difference -------------
+                //
+                // A cell outside the window is skipped BEFORE its depth is read,
+                // so it publishes no outgoing flux. Because pass 1 cleared the
+                // whole flux array, the boundary carries zero flux for the whole
+                // step and no water crosses it. That is what makes a windowed
+                // step a closed system over the active set, and it is why the
+                // mass-balance assertion stays meaningful rather than merely
+                // covering fewer cells.
                 for (int y = 0; y < h; y++)
                 {
                     for (int x = 0; x < w; x++)
                     {
+                        if (!Window.IsActiveCell(x, y))
+                        {
+                            continue;
+                        }
+
                         int c = Field.Index(x, y);
                         float surface = Field.Depth[c];
                         if (surface <= MinDepth)
@@ -136,10 +187,21 @@ namespace PET.Water
                 }
 
                 // ---- Pass 3: the flux limiter -------------------------------
+                //
+                // The limiter is the only pass whose cost depends on the field's
+                // STATE rather than its size, which is why skipping cells here
+                // is worth more than skipping them in pass 1. Outside the window
+                // every flux is already zero, so the limiter would find nothing
+                // to scale - the guard removes the scan, not the work.
                 for (int y = 0; y < h; y++)
                 {
                     for (int x = 0; x < w; x++)
                     {
+                        if (!Window.IsActiveCell(x, y))
+                        {
+                            continue;
+                        }
+
                         int c = Field.Index(x, y);
                         float held = Field.Depth[c];
                         if (held <= MinDepth)
@@ -166,10 +228,21 @@ namespace PET.Water
                 }
 
                 // ---- Pass 4: apply, then add sources ------------------------
+                //
+                // Skipping a windowed-out cell here is what HOLDS it at its last
+                // state: the cell is simply never assigned. Because no flux
+                // crossed the boundary, the delta it would have computed is zero
+                // anyway - the guard removes a write that would have been a
+                // no-op read-modify-write of the same value.
                 for (int y = 0; y < h; y++)
                 {
                     for (int x = 0; x < w; x++)
                     {
+                        if (!Window.IsActiveCell(x, y))
+                        {
+                            continue;
+                        }
+
                         int c = Field.Index(x, y);
                         float delta = 0f;
 
@@ -210,6 +283,17 @@ namespace PET.Water
                         continue;
                     }
 
+                    // A source outside the window adds nothing this step. Its
+                    // water is not lost - the source is a boundary condition,
+                    // not a reservoir - but it IS withheld, which is the rung's
+                    // stated cost: distant water stops updating. The spring
+                    // resumes contributing the moment the camera comes within
+                    // the window again.
+                    if (!Window.IsActiveCell(s.X, s.Y))
+                    {
+                        continue;
+                    }
+
                     int c = Field.Index(s.X, s.Y);
                     float before = Field.Depth[c];
                     float added = s.Rate * dt / area;
@@ -245,7 +329,32 @@ namespace PET.Water
             float dt,
             NativeArray<float> inflow)
         {
-            new StepJob { Field = field, Sources = sources, Dt = dt, Inflow = inflow }.Run();
+            return Step(field, sources, dt, inflow, ActiveWindow);
+        }
+
+        /// <summary>
+        /// Advance the field one step, writing only the cells the window admits.
+        ///
+        /// Ladder rung 2 enters here. Passing
+        /// <see cref="WaterWindow.Unwindowed"/> is behaviourally identical to the
+        /// four-argument overload, which is the property that lets rungs 0, 1
+        /// and 2 be measured from one source tree.
+        /// </summary>
+        public static float Step(
+            WaterField field,
+            NativeArray<WaterSource> sources,
+            float dt,
+            NativeArray<float> inflow,
+            WaterWindow window)
+        {
+            new StepJob
+            {
+                Field = field,
+                Sources = sources,
+                Dt = dt,
+                Inflow = inflow,
+                Window = window,
+            }.Run();
             return inflow.IsCreated && inflow.Length > 0 ? inflow[0] : 0f;
         }
 
