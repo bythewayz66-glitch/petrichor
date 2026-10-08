@@ -9,8 +9,8 @@
 |---|---|
 | **Repository** | `bythewayz66-glitch/petrichor` (public since 2026-10-01) |
 | **Branch** | `main` |
-| **HEAD at handoff** | `ce2f122453fc9159bba5cf20b7d3695f0155ef7d` |
-| **Handoff written** | 2026-09-30, **revised 2026-10-06** |
+| **HEAD at handoff** | `43777624e48dc5dfc160c8639d026c08a34042ce` (2026-10-08) |
+| **Handoff written** | 2026-09-30, **revised 2026-10-08** (`r3`) |
 | **Engine** | Unity **6000.5.9f1** (changeset `b57deb96f08d`), URP |
 | **Reference device** | Samsung Galaxy A54 5G (`SM-A546B` — one of eight regional variants) |
 | **Blocking item** | **The M1 gate report is committed (`docs/gate-reports/M1.md`) and it records a `BUDGET FAIL` at both rungs. Eleven CI runs have produced no verdict of their own — run 30 (2026-10-08) reached the checker for the first time and returned `INPUT ERROR`, but still uploaded a verdict file it inherited from the checkout (gap G8). And the committed rung-1 verdict contradicts the 2026-10-01 report, which claims a `PASS` that no artifact supports.** See §1.4, §3 and §5 |
@@ -785,7 +785,7 @@ cost is a labelled model (`C_FastForward` modelled at `1.116535 ms` against a
 a verdict. Machine quietness is now sampled automatically, but no verdict has
 yet been taken with it attached. The C# compiles locally — and only locally: the
 CI gate has executed eleven times and has never produced a verdict of its own, so
-nothing has ever been compiled in CI, and nothing was compiled anywhere for rung 2. The
+nothing has ever been compiled in CI, and nothing was compiled anywhere for rung 2. Run 30 (2026-10-08) is the first run to reach the checker — it returned `INPUT ERROR`, and it still uploaded a verdict file it inherited from the checkout (gap G8). The
 Android tier has never been measured. The workflow accepts the entitlement XML
 the `UNITY_LICENSE` secret holds, by mounting it into the Licensing Client's
 directory instead of handing it to the manual-activation loader, but that path

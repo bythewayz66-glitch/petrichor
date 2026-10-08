@@ -1,6 +1,6 @@
 {
   "$schema": "petrichor-handoff/1",
-  "generated": "2026-10-07",
+  "generated": "2026-10-08",
   "repository": {
     "owner": "bythewayz66-glitch",
     "name": "petrichor",
@@ -53,7 +53,7 @@
     "committed_verdicts": 2,
     "committed_verdicts_note": "BenchmarkResults/verdict_linux.txt (attempt 0) and verdict_linux_attempt1_res129.txt (attempt 1). .gitignore excludes everything else under BenchmarkResults/, so the per-scenario summaries and NUnit XML are NOT in the repository.",
     "ci_compiles": 0,
-    "ci_compiles_note": "Nothing has ever been compiled in CI, and nothing was compiled anywhere for the rung-2 revision: no editor exists in the authoring environment (gap G6). Eleven CI runs have failed on activation. Run 30 (37731453756, 2026-10-08) got furthest - its editor step COMPLETED for the first time - but the editor was refused the licence at exit 198 before it loaded the project."
+    "ci_compiles_note": "Nothing has ever been compiled in CI, and nothing was compiled anywhere for the rung-2 revision: no editor exists in the authoring environment (gap G6). Eleven CI runs have failed on activation. Run 30 (37731453756, 2026-10-08) got furthest - its editor step COMPLETED for the first time - but the editor was refused the licence at exit 198 before it loaded the project. r3 also folds in CI run 30 (2026-10-08), the first run to reach the checker, and gap G8: it uploaded a verdict file inherited from the checkout instead of one it measured."
   },
   "issue_ranges": [
     {
@@ -436,5 +436,50 @@
     },
     "ci_gate_false_verdict": "Gap G8: run 30 uploaded water-gate-verdict-linux-ae5a93ae... (1034 bytes, md5 77d5a170) which is byte-identical to the committed rung-0 verdict. Since BenchmarkResults/verdict_linux.txt is committed and the upload step has if: always(), a run that produces no verdict still publishes one. The build is red for the right reason; the artifact is not."
   },
-  "revision": "r2"
+  "revision": "r3",
+  "revision_note": "r3 (2026-10-08) integrates CI run 30 (37731453756, head ae5a93ae): the first run whose editor step completed (editor exit 198), the first in which the checker executed (exit 3, INPUT ERROR), and the first that uploaded a verdict file it inherited from the checkout rather than measured (gap G8). ci_gate_runs 10 -> 11; ci_gate_has_verdict stays false; the rung-2 tree is unchanged. Also sets HEAD at handoff to 4377762, the commit that carried this revision.",
+  "repository_deploy_keys": {
+    "count": 7,
+    "all_write_access": true,
+    "delete_tool_disabled": true,
+    "note": "Temporary write keys created by agent pushes. GITHUB_DELETE_A_DEPLOY_KEY is disabled for this agent, so they cannot be removed from here and must be deleted by hand at Settings -> Deploy keys.",
+    "manual_url_for_the_last_one": "https://github.com/bythewayz66-glitch/petrichor/settings/keys/165750267",
+    "keys": [
+      {
+        "id": 165244696,
+        "title": "petrichor-agent-push (temporary, 2026-10-03)",
+        "created": "2026-10-03T08:40:01Z"
+      },
+      {
+        "id": 165245391,
+        "title": "petrichor-agent-push-2 (temporary, 2026-10-03)",
+        "created": "2026-10-03T08:51:57Z"
+      },
+      {
+        "id": 165385039,
+        "title": "petrichor-agent-push-3 (temporary, 2026-10-04)",
+        "created": "2026-10-05T01:47:59Z"
+      },
+      {
+        "id": 165385303,
+        "title": "petrichor-agent-tmp-20261005",
+        "created": "2026-10-05T01:54:54Z"
+      },
+      {
+        "id": 165611951,
+        "title": "agent-push-m1-report-20261006",
+        "created": "2026-10-06T23:35:47Z"
+      },
+      {
+        "id": 165749790,
+        "title": "agent-push-rung2-report-20261007",
+        "created": "2026-10-08T05:14:55Z"
+      },
+      {
+        "id": 165750267,
+        "title": "agent-push-m1-r3-20261008",
+        "created": "2026-10-08T05:23:30Z"
+      }
+    ]
+  }
 }
