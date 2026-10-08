@@ -299,7 +299,7 @@ network failure — the client reached its own state and found no token.
 | Job conclusion | `failure` |
 | Step 9 conclusion | `success` (91 s) — the step is `continue-on-error` |
 | Verdict | `INPUT ERROR` (exit 3) — no results XML, so the checker had no inputs |
-| Artifacts | `water-gate-verdict-linux-…zip`, 631 bytes |
+| Artifacts | `water-gate-verdict-linux-…zip`, 631 bytes compressed (holds `verdict_linux.txt`, 1034 bytes) |
 
 **This is not a pass.** The editor started and refused the licence before loading
 the project. Nothing was compiled.

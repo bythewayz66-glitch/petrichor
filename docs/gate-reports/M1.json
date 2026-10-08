@@ -457,7 +457,7 @@
         "number": 16,
         "name": "Upload the verdict",
         "conclusion": "success",
-        "note": "uploaded 631 bytes - an inherited file, see G8"
+        "note": "uploaded an inherited verdict file - see G8"
       },
       {
         "number": 17,
@@ -476,10 +476,10 @@
       "checker_exit_code": 3,
       "checker_line": "INPUT ERROR: no summaries in BenchmarkResults and no timings in <none>",
       "enforce_step": "failure",
-      "uploaded_verdict_bytes": 631,
+      "uploaded_verdict_bytes": 1034,
       "uploaded_verdict_md5": "77d5a170189e46f0c2b1c4097d679641",
       "uploaded_verdict_blob": "179076dd3c1a1cb43be099296a10931bb051ecc1",
-      "uploaded_verdict_note": "Byte-identical to BenchmarkResults/verdict_linux.txt as committed (blob 179076dd). No benchmark ran in this run and no log in the run contains the numbers it prints, so the file cannot be this run's measurement: the upload step copies whatever verdict file the checkout supplies.",
+      "uploaded_verdict_note": "Byte-identical to BenchmarkResults/verdict_linux.txt as committed (1034 bytes, blob 179076dd). No benchmark ran in this run and no log in the run contains the numbers it prints, so the file cannot be this run's measurement: the upload step copies whatever verdict file the checkout supplies.",
       "firsts": [
         "First CI run in which the gate job's editor step completed rather than being skipped, timing out or being killed.",
         "First CI run in which the checker (step 11) executed and returned an exit code of its own.",
@@ -492,7 +492,8 @@
         "5.072",
         "10.261",
         "23.706"
-      ]
+      ],
+      "uploaded_artifact_zip_bytes": 631
     }
   },
   "known_gaps": [
@@ -555,7 +556,7 @@
       "id": "G8",
       "severity": "high",
       "title": "The CI gate uploads a verdict artifact even when it produces no verdict",
-      "detail": "Run 30 (2026-10-08) produced no verdict: the checker exited 3, INPUT ERROR, having found no summaries and no results XML. The 'Upload the verdict' step nevertheless uploaded a file, because BenchmarkResults/verdict_linux.txt is COMMITTED to the repository - the checkout supplies it and the step copies whatever is there. The artifact water-gate-verdict-linux-<sha>.zip is 631 bytes, md5 77d5a170189e46f0c2b1c4097d679641, byte-identical to the committed rung-0 verdict (blob 179076dd). It is named for run 30's own head SHA, ae5a93ae.",
+      "detail": "Run 30 (2026-10-08) produced no verdict: the checker exited 3, INPUT ERROR, having found no summaries and no results XML. The 'Upload the verdict' step nevertheless uploaded a file, because BenchmarkResults/verdict_linux.txt is COMMITTED to the repository - the checkout supplies it and the step copies whatever is there. The artifact water-gate-verdict-linux-<sha>.zip is 631 bytes compressed and holds verdict_linux.txt at 1034 bytes, md5 77d5a170189e46f0c2b1c4097d679641, byte-identical to the committed rung-0 verdict (blob 179076dd). It is named for run 30's own head SHA, ae5a93ae.",
       "consequence": "A reviewer or an automated consumer reading water-gate-verdict-linux-ae5a93ae... sees a full scenario table and 'VERDICT: BUDGET FAIL' and can attribute it to a run that never measured anything. The build is correctly red (exit 3 fails the build); it is the ARTIFACT that lies.",
       "recommended_fix": "Gate the upload on the checker's exit code (upload only when it is 0 or 1), or delete the checked-out verdict before the benchmark step so an artifact can only ever be freshly written. State the artifact's provenance in the job summary either way.",
       "resolved": false
@@ -630,7 +631,7 @@
     {
       "order": 7,
       "action": "Stop the CI gate uploading an inherited verdict (G8)",
-      "why": "Run 30 uploaded a 631-byte verdict file carrying this run's SHA and the committed rung-0 numbers. The build is red for the right reason; the artifact is not."
+      "why": "Run 30 uploaded a verdict file carrying this run's SHA and the committed rung-0 numbers. The build is red for the right reason; the artifact is not."
     }
   ],
   "sign_off": {
@@ -686,9 +687,9 @@
       ]
     }
   },
-  "revision": "r3",
+  "revision": "r3a",
   "revision_date": "2026-10-08",
-  "revision_note": "r3 folds in CI run 30 (37731453756, 2026-10-08), the first run in which the gate job's editor step completed and the checker executed. It adds the run to the CI table, records the run's evidence under ci_gate.last_run, and adds gap G8: the run uploaded a verdict artifact byte-identical to the committed rung-0 file. No measured number changed; rung 2 still has no verdict.",
+  "revision_note": "r3 folds in CI run 30 (37731453756, 2026-10-08), the first run in which the gate job's editor step completed and the checker executed. It adds the run to the CI table, records the run's evidence under ci_gate.last_run, and adds gap G8: the run uploaded a verdict artifact byte-identical to the committed rung-0 file. No measured number changed; rung 2 still has no verdict. r3a corrects the artifact's stated size: r3 said 631 bytes, which is the COMPRESSED size of the artifact zip; the verdict_linux.txt inside it is 1034 bytes. Byte-identity with the committed rung-0 file is confirmed regardless (1034 bytes, md5 77d5a170, cmp exit 0).",
   "rung_2": {
     "rung": 2,
     "label": "active water window",

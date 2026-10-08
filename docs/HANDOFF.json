@@ -424,16 +424,17 @@
       "checker_exit_code": 3,
       "checker_line": "INPUT ERROR: no summaries in BenchmarkResults and no timings in <none>",
       "enforce_step": "failure",
-      "uploaded_verdict_bytes": 631,
+      "uploaded_verdict_bytes": 1034,
       "uploaded_verdict_md5": "77d5a170189e46f0c2b1c4097d679641",
       "uploaded_verdict_blob": "179076dd3c1a1cb43be099296a10931bb051ecc1",
       "uploaded_verdict_is_inherited": true,
       "firsts": [
         "first CI run whose editor step completed",
         "first CI run in which the checker executed and returned an exit code"
-      ]
+      ],
+      "uploaded_artifact_zip_bytes": 631
     },
-    "ci_gate_false_verdict": "Gap G8: run 30 uploaded water-gate-verdict-linux-ae5a93ae... (631 bytes, md5 77d5a170) which is byte-identical to the committed rung-0 verdict. Since BenchmarkResults/verdict_linux.txt is committed and the upload step has if: always(), a run that produces no verdict still publishes one. The build is red for the right reason; the artifact is not."
+    "ci_gate_false_verdict": "Gap G8: run 30 uploaded water-gate-verdict-linux-ae5a93ae... (1034 bytes, md5 77d5a170) which is byte-identical to the committed rung-0 verdict. Since BenchmarkResults/verdict_linux.txt is committed and the upload step has if: always(), a run that produces no verdict still publishes one. The build is red for the right reason; the artifact is not."
   },
   "revision": "r2"
 }
