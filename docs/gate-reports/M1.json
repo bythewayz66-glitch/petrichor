@@ -341,7 +341,7 @@
   ],
   "ci_gate": {
     "verdict": "none",
-    "runs_executed": 10,
+    "runs_executed": 11,
     "runs_with_verdict": 0,
     "runs": [
       {
@@ -413,6 +413,13 @@
         "date": "2026-10-06",
         "outcome": "INPUT ERROR",
         "detail": "Access token is unavailable; step 8 (serial / ULF) skipped, step 9 (entitlement XML) ran 101 s"
+      },
+      {
+        "run_number": 30,
+        "run_id": 37731453756,
+        "date": "2026-10-08",
+        "outcome": "INPUT ERROR",
+        "detail": "First run whose editor step COMPLETED. Editor exit code 198 - 'No valid Unity Editor license found'. The checker then ran for the first time in any CI run and returned exit 3: 'INPUT ERROR: no summaries in BenchmarkResults and no timings in <none>'. The uploaded verdict artifact is nevertheless byte-identical to the committed rung-0 file - see gap G8."
       }
     ],
     "latest_run_steps": [
@@ -420,26 +427,73 @@
         "number": 8,
         "name": "Run the benchmark (serial / ULF)",
         "conclusion": "skipped",
-        "reason": "no UNITY_SERIAL secret exists"
+        "reason": "still no UNITY_SERIAL secret exists"
       },
       {
         "number": 9,
         "name": "Run the benchmark (entitlement XML)",
         "conclusion": "success",
-        "duration_s": 101,
-        "note": "continue-on-error"
+        "note": "continue-on-error; editor exit code 198"
+      },
+      {
+        "number": 10,
+        "name": "Locate the results XML",
+        "conclusion": "success",
+        "note": "Results XML: <none>"
       },
       {
         "number": 11,
         "name": "Check thresholds",
-        "conclusion": "success"
+        "conclusion": "success",
+        "note": "checker exit code 3 - INPUT ERROR"
+      },
+      {
+        "number": 15,
+        "name": "Upload raw samples",
+        "conclusion": "success",
+        "note": "No files were found with the provided path"
+      },
+      {
+        "number": 16,
+        "name": "Upload the verdict",
+        "conclusion": "success",
+        "note": "uploaded 631 bytes - an inherited file, see G8"
       },
       {
         "number": 17,
         "name": "Enforce the verdict",
-        "conclusion": "failure"
+        "conclusion": "failure",
+        "note": "exit 1 on code 3, as the contract requires"
       }
-    ]
+    ],
+    "last_run": {
+      "run_number": 30,
+      "run_id": 37731453756,
+      "head_sha": "ae5a93ae046ecb9324987daec07f473d798d3637",
+      "observed": "2026-10-08",
+      "editor_exit_code": 198,
+      "results_xml": "none",
+      "checker_exit_code": 3,
+      "checker_line": "INPUT ERROR: no summaries in BenchmarkResults and no timings in <none>",
+      "enforce_step": "failure",
+      "uploaded_verdict_bytes": 631,
+      "uploaded_verdict_md5": "77d5a170189e46f0c2b1c4097d679641",
+      "uploaded_verdict_blob": "179076dd3c1a1cb43be099296a10931bb051ecc1",
+      "uploaded_verdict_note": "Byte-identical to BenchmarkResults/verdict_linux.txt as committed (blob 179076dd). No benchmark ran in this run and no log in the run contains the numbers it prints, so the file cannot be this run's measurement: the upload step copies whatever verdict file the checkout supplies.",
+      "firsts": [
+        "First CI run in which the gate job's editor step completed rather than being skipped, timing out or being killed.",
+        "First CI run in which the checker (step 11) executed and returned an exit code of its own.",
+        "First CI run in which the enforcement step received a code produced by this run rather than a skipped step's default."
+      ],
+      "still_failing": "The editor is refused the licence before it loads the project: '[Licensing::Module] Error: Access token is unavailable; failed to update'.",
+      "no_number_in_any_log": [
+        "5.062",
+        "3.633",
+        "5.072",
+        "10.261",
+        "23.706"
+      ]
+    }
   },
   "known_gaps": [
     {
@@ -495,6 +549,15 @@
       "title": "The benchmark world cannot measure the tile mechanism the rung names",
       "detail": "The harness reports tile_count = 4 as a 2x2 grid. In a 2x2 world the active-tile set at radius 1 is 4 of 4, so rung 2's tile selection saves nothing there.",
       "consequence": "Even with an editor, a rung-2 verdict from this harness measures the cell scope only. The tile mechanism needs a larger benchmark world.",
+      "resolved": false
+    },
+    {
+      "id": "G8",
+      "severity": "high",
+      "title": "The CI gate uploads a verdict artifact even when it produces no verdict",
+      "detail": "Run 30 (2026-10-08) produced no verdict: the checker exited 3, INPUT ERROR, having found no summaries and no results XML. The 'Upload the verdict' step nevertheless uploaded a file, because BenchmarkResults/verdict_linux.txt is COMMITTED to the repository - the checkout supplies it and the step copies whatever is there. The artifact water-gate-verdict-linux-<sha>.zip is 631 bytes, md5 77d5a170189e46f0c2b1c4097d679641, byte-identical to the committed rung-0 verdict (blob 179076dd). It is named for run 30's own head SHA, ae5a93ae.",
+      "consequence": "A reviewer or an automated consumer reading water-gate-verdict-linux-ae5a93ae... sees a full scenario table and 'VERDICT: BUDGET FAIL' and can attribute it to a run that never measured anything. The build is correctly red (exit 3 fails the build); it is the ARTIFACT that lies.",
+      "recommended_fix": "Gate the upload on the checker's exit code (upload only when it is 0 or 1), or delete the checked-out verdict before the benchmark step so an artifact can only ever be freshly written. State the artifact's provenance in the job summary either way.",
       "resolved": false
     }
   ],
@@ -563,13 +626,18 @@
       "order": 6,
       "action": "Get a CI verdict",
       "why": "Ten runs, no verdict. The gate is unverified end to end."
+    },
+    {
+      "order": 7,
+      "action": "Stop the CI gate uploading an inherited verdict (G8)",
+      "why": "Run 30 uploaded a 631-byte verdict file carrying this run's SHA and the committed rung-0 numbers. The build is red for the right reason; the artifact is not."
     }
   ],
   "sign_off": {
     "rung0_verdict": "BUDGET FAIL",
     "rung1_verdict": "BUDGET FAIL",
     "correctness": "OK",
-    "ci_verdict": "none",
+    "ci_verdict": "none of its own - eleven runs; run 30 (2026-10-08) reached the checker for the first time (exit 3, INPUT ERROR) and uploaded an inherited verdict file (G8)",
     "android_tier": "not measured",
     "week2_may_begin": false,
     "plan_rebaselined": false,
@@ -580,11 +648,47 @@
     "signed": "Open World Architect (agent), 2026-10-06, revised 2026-10-07 (r2)",
     "rung2_verdict": "none - modelled only, no editor available",
     "rung2_implementation": "committed",
-    "quietness_instrumentation": "committed, never attached to a verdict"
+    "quietness_instrumentation": "committed, never attached to a verdict",
+    "deploy_keys_orphaned": {
+      "count": 6,
+      "note": "Temporary write keys created by agent pushes and left on the repository. The MCP delete tool (GITHUB_DELETE_A_DEPLOY_KEY) is disabled for this agent, so they cannot be removed from here. Remove them at Settings -> Deploy keys.",
+      "keys": [
+        {
+          "id": 165244696,
+          "title": "petrichor-agent-push (temporary, 2026-10-03)",
+          "created": "2026-10-03T08:40:01Z"
+        },
+        {
+          "id": 165245391,
+          "title": "petrichor-agent-push-2 (temporary, 2026-10-03)",
+          "created": "2026-10-03T08:51:57Z"
+        },
+        {
+          "id": 165385039,
+          "title": "petrichor-agent-push-3 (temporary, 2026-10-04)",
+          "created": "2026-10-05T01:47:59Z"
+        },
+        {
+          "id": 165385303,
+          "title": "petrichor-agent-tmp-20261005",
+          "created": "2026-10-05T01:54:54Z"
+        },
+        {
+          "id": 165611951,
+          "title": "agent-push-m1-report-20261006",
+          "created": "2026-10-06T23:35:47Z"
+        },
+        {
+          "id": 165749790,
+          "title": "agent-push-rung2-report-20261007",
+          "created": "2026-10-08T05:14:55Z"
+        }
+      ]
+    }
   },
-  "revision": "r2",
-  "revision_date": "2026-10-07",
-  "revision_note": "r2 adds the committed rung-2 implementation and its cost MODEL, the quietness instrumentation, and gap G6. Rung 2 has no verdict.",
+  "revision": "r3",
+  "revision_date": "2026-10-08",
+  "revision_note": "r3 folds in CI run 30 (37731453756, 2026-10-08), the first run in which the gate job's editor step completed and the checker executed. It adds the run to the CI table, records the run's evidence under ci_gate.last_run, and adds gap G8: the run uploaded a verdict artifact byte-identical to the committed rung-0 file. No measured number changed; rung 2 still has no verdict.",
   "rung_2": {
     "rung": 2,
     "label": "active water window",

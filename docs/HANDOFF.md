@@ -13,7 +13,7 @@
 | **Handoff written** | 2026-09-30, **revised 2026-10-06** |
 | **Engine** | Unity **6000.5.9f1** (changeset `b57deb96f08d`), URP |
 | **Reference device** | Samsung Galaxy A54 5G (`SM-A546B` — one of eight regional variants) |
-| **Blocking item** | **The M1 gate report is committed (`docs/gate-reports/M1.md`) and it records a `BUDGET FAIL` at both rungs. The CI gate still has no verdict — ten runs, all failed on licence activation. And the committed rung-1 verdict contradicts the 2026-10-01 report, which claims a `PASS` that no artifact supports.** See §3 and §5 |
+| **Blocking item** | **The M1 gate report is committed (`docs/gate-reports/M1.md`) and it records a `BUDGET FAIL` at both rungs. Eleven CI runs have produced no verdict of their own — run 30 (2026-10-08) reached the checker for the first time and returned `INPUT ERROR`, but still uploaded a verdict file it inherited from the checkout (gap G8). And the committed rung-1 verdict contradicts the 2026-10-01 report, which claims a `PASS` that no artifact supports.** See §1.4, §3 and §5 |
 
 ---
 
@@ -68,12 +68,16 @@ number is not.
 
 ### 1.3 What does **not** exist
 
-- **No CI gate verdict.** The `gate` job has run ten times, on 2026-10-03,
-  2026-10-05 and 2026-10-06. Runs #20–#24 failed on licence activation; #25 ran
-  the entitlement path and hung for six hours; #26–#29 ran it to completion in
-  ~100 seconds each and were rejected with `Access token is unavailable`, because
-  an entitlement XML is a named-user licence and needs the account's access token.
-  No run has reached the checker. See §1.4 and §3.
+- **No CI gate verdict.** The `gate` job has run eleven times, on 2026-10-03,
+  2026-10-05, 2026-10-06 and 2026-10-08. Runs #20–#24 failed on licence
+  activation; #25 ran the entitlement path and hung for six hours; #26–#29 ran it
+  to completion in ~100 seconds each and were rejected with `Access token is
+  unavailable`, because an entitlement XML is a named-user licence and needs the
+  account's access token. Run **#30** (`37731453756`, 2026-10-08) is the first
+  whose editor step COMPLETED: the editor started and was refused at exit `198`,
+  after which the checker ran for the first time (exit `3`, `INPUT ERROR`) — and
+  the upload step still published a verdict file inherited from the checkout. See
+  §1.4, §3 and gap G8.
 - **No art.** `Assets/Art/` contains only its `.gitignore` and `.gitattributes`.
   No purchased packs have been imported.
 - **No scenes or prefabs.** There are no `.unity` or `.prefab` files. The
@@ -91,8 +95,8 @@ likely to be misread.
 
 | | CI gate (GitHub Actions) | Local gate (headless editor) |
 |---|---|---|
-| Has it run? | **Yes — ten times**, on 2026-10-03, 2026-10-05 and 2026-10-06 (runs 37107565152, 37109026756, 37109526130, 37110665890, 37110829407, 37111124148, 37252858463, 37253130555, 37253384200, 37407618302) | **Yes**, on 2026-10-01 and again 2026-10-03 |
-| Did it compile? | **No** — every run failed before the editor loaded the project | **Yes** — the 2026-10-01 run compiled the project and ran all four scenarios |
+| Has it run? | **Yes — eleven times**, on 2026-10-03, 2026-10-05, 2026-10-06 and 2026-10-08 (runs 37107565152, 37109026756, 37109526130, 37110665890, 37110829407, 37111124148, 37252858463, 37253130555, 37253384200, 37407618302, 37731453756) | **Yes**, on 2026-10-01 and again 2026-10-03 |
+| Did it compile? | **No** — no run has loaded the project. Run 37731453756 (2026-10-08) got furthest: the editor started and was refused at exit `198` | **Yes** — the 2026-10-01 run compiled the project and ran all four scenarios |
 | Evidence | each run's `gate` job executed its steps; four logs show the licence rejected, the fifth shows a six-hour silence | `docs/gate-reports/gate-20261001-M01-linux-0001.md`, and two committed verdict files |
 | Verdict produced | none | `BUDGET FAIL` at rung 0 (9 of 9 metrics over); `BUDGET FAIL` at rung 1 (2 of 9 over). The `PASS` this row used to claim is not supported by any committed artifact — see §5. **Rung 2 has no verdict at all** — see §1.5 |
 | Report written | n/a | one, for the 2026-10-01 run |
@@ -103,7 +107,11 @@ compiled the project, fixed two compile errors, and executed all four scenarios.
 the editor loads the project. Risk 1 in §5 is therefore resolved for the local
 path; risk 2 is partly resolved and partly *worse* than "unverified" — see §5.
 
-**The CI gate has run ten times and has never produced a verdict.** Runs #20–#24
+**The CI gate has run eleven times and has never produced a verdict of its own.**
+Run **37731453756** (#30, 2026-10-08) is the first in which step 9 completed *and*
+step 11 executed: the editor started, was refused the licence at exit `198`, and the
+checker then returned `3` (`INPUT ERROR`). It nevertheless uploaded a verdict file it
+inherited from the checkout — see gap **G8**. Runs #20–#24
 failed on licence activation. Run **37111124148** (#25) is the first in which the
 entitlement branch actually executed — and it **hung**: the container produced no
 output for six hours and was killed by GitHub's default job timeout. Runs #26–#29
@@ -418,12 +426,14 @@ XML route when it works; keep the serial route for when the XML cannot work
 ### Step 1 — Get a CI verdict (§3)
 
 The gate has returned a verdict **locally** (§1.4), and it is now written up:
-**`docs/gate-reports/M1.md`**. The **CI** gate has executed ten times and has
-never produced a verdict. Run 26 (`37252858463`) settled the question run 25 could
-not: the licence is visible in the container, the Licensing Client launches and
-connects, and the editor starts — but the entitlement XML alone is rejected with
-`Access token is unavailable`, because a named-user licence needs the account's
-access token.
+**`docs/gate-reports/M1.md`**. The **CI** gate has executed eleven times and has
+never produced a verdict of its own. Run 30 (`37731453756`, 2026-10-08) is the
+furthest any run has reached: the editor started, was refused at exit `198`, and the
+checker then returned `3` (`INPUT ERROR`) — see §1.4 and gap G8. Run 26
+(`37252858463`) settled the question run 25 could not: the licence is visible in the
+container, the Licensing Client launches and connects, and the editor starts — but
+the entitlement XML alone is rejected with `Access token is unavailable`, because a
+named-user licence needs the account's access token.
 
 **Add `UNITY_EMAIL` and `UNITY_PASSWORD`** (Settings → Secrets and variables →
 Actions). The entitlement step now signs in before the benchmark, which is what
@@ -774,8 +784,8 @@ cost is a labelled model (`C_FastForward` modelled at `1.116535 ms` against a
 `1.500 ms` threshold, passing by `0.383 ms` on a `1.116 ms` fixed cost) and not
 a verdict. Machine quietness is now sampled automatically, but no verdict has
 yet been taken with it attached. The C# compiles locally — and only locally: the
-CI gate has executed ten times and has never produced a verdict, so nothing has
-ever been compiled in CI, and nothing was compiled anywhere for rung 2. The
+CI gate has executed eleven times and has never produced a verdict of its own, so
+nothing has ever been compiled in CI, and nothing was compiled anywhere for rung 2. The
 Android tier has never been measured. The workflow accepts the entitlement XML
 the `UNITY_LICENSE` secret holds, by mounting it into the Licensing Client's
 directory instead of handing it to the manual-activation loader, but that path

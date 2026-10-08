@@ -53,7 +53,7 @@
     "committed_verdicts": 2,
     "committed_verdicts_note": "BenchmarkResults/verdict_linux.txt (attempt 0) and verdict_linux_attempt1_res129.txt (attempt 1). .gitignore excludes everything else under BenchmarkResults/, so the per-scenario summaries and NUnit XML are NOT in the repository.",
     "ci_compiles": 0,
-    "ci_compiles_note": "Nothing has ever been compiled in CI, and nothing was compiled anywhere for the rung-2 revision: no editor exists in the authoring environment (gap G6). Every CI run failed on activation before the editor loaded the project."
+    "ci_compiles_note": "Nothing has ever been compiled in CI, and nothing was compiled anywhere for the rung-2 revision: no editor exists in the authoring environment (gap G6). Eleven CI runs have failed on activation. Run 30 (37731453756, 2026-10-08) got furthest - its editor step COMPLETED for the first time - but the editor was refused the licence at exit 198 before it loaded the project."
   },
   "issue_ranges": [
     {
@@ -377,9 +377,9 @@
   "gate_history": {
     "ci_gate_has_run": true,
     "ci_gate_has_verdict": false,
-    "ci_gate_runs": 10,
-    "ci_gate_note": "Ten CI runs, on 2026-10-03, 2026-10-05 and 2026-10-06. Runs 37107565152, 37109026756, 37109526130, 37110665890 and 37110829407 failed on licence activation. Run 37111124148 ran the entitlement path for the first time and hung for 6h00m08s until GitHub's default job timeout cancelled it. Runs 37252858463, 37253130555, 37253384200 and 37407618302 ran it to completion in ~100 s each and were rejected with 'Access token is unavailable'.",
-    "ci_gate_verdict": "none - no CI run has reached the checker",
+    "ci_gate_runs": 11,
+    "ci_gate_note": "Eleven CI runs, on 2026-10-03, 2026-10-05, 2026-10-06 and 2026-10-08. Runs 37107565152, 37109026756, 37109526130, 37110665890 and 37110829407 failed on licence activation. Run 37111124148 ran the entitlement path for the first time and hung for 6h00m08s until GitHub's default job timeout cancelled it. Runs 37252858463, 37253130555, 37253384200 and 37407618302 ran it to completion in ~100 s each and were rejected with 'Access token is unavailable'. Run 37731453756 (#30) is the first whose editor step COMPLETED: editor exit 198, then the checker ran for the first time and returned exit 3 (INPUT ERROR).",
+    "ci_gate_verdict": "none of its own - run 30 reached the checker (exit 3, INPUT ERROR) but no run has produced a verdict of its own",
     "ci_gate_failure_line": "[Licensing::Module] Error: Access token is unavailable; failed to update  (run 37252858463, step 9, 91 s)",
     "ci_runs_before_this": "18 runs, all skipped the gate in 5-14 s for want of a licence secret",
     "local_gate_has_run": true,
@@ -412,8 +412,28 @@
         "note": "The committed verdict is a BUDGET FAIL. An earlier revision of this file recorded PASS here, following gate-20261001-M01-linux-0001.md section 5.1; that report's numbers (1.377 / 0.816 / 1.362) exist in no artifact. The committed verdict file is authoritative: A_StaticSoak p50 1.544 vs 1.500, C_FastForward p50 2.105 vs 1.500."
       }
     ],
-    "rung2_note": "Rung 2 is implemented and committed but unmeasured. The two committed verdicts remain a BUDGET FAIL at rungs 0 and 1. No new CI run occurred for this revision; the CI gate is still unverified.",
-    "quietness_instrumentation": "run_bench.sh samples /proc/stat before and during the editor and writes BenchmarkResults/quietness_<tier>.txt. Committed, never yet attached to a verdict."
+    "rung2_note": "Rung 2 is implemented and committed but unmeasured. The two committed verdicts remain a BUDGET FAIL at rungs 0 and 1. Run 30 (2026-10-08, head ae5a93ae) executed the gate against the rung-2 tree, but the editor was refused the licence at exit 198 and the checker returned INPUT ERROR, so rung 2 still has no verdict.",
+    "quietness_instrumentation": "run_bench.sh samples /proc/stat before and during the editor and writes BenchmarkResults/quietness_<tier>.txt. Committed, never yet attached to a verdict.",
+    "ci_gate_run30": {
+      "run_number": 30,
+      "run_id": 37731453756,
+      "head_sha": "ae5a93ae046ecb9324987daec07f473d798d3637",
+      "observed": "2026-10-08",
+      "editor_exit_code": 198,
+      "results_xml": "none",
+      "checker_exit_code": 3,
+      "checker_line": "INPUT ERROR: no summaries in BenchmarkResults and no timings in <none>",
+      "enforce_step": "failure",
+      "uploaded_verdict_bytes": 631,
+      "uploaded_verdict_md5": "77d5a170189e46f0c2b1c4097d679641",
+      "uploaded_verdict_blob": "179076dd3c1a1cb43be099296a10931bb051ecc1",
+      "uploaded_verdict_is_inherited": true,
+      "firsts": [
+        "first CI run whose editor step completed",
+        "first CI run in which the checker executed and returned an exit code"
+      ]
+    },
+    "ci_gate_false_verdict": "Gap G8: run 30 uploaded water-gate-verdict-linux-ae5a93ae... (631 bytes, md5 77d5a170) which is byte-identical to the committed rung-0 verdict. Since BenchmarkResults/verdict_linux.txt is committed and the upload step has if: always(), a run that produces no verdict still publishes one. The build is red for the right reason; the artifact is not."
   },
   "revision": "r2"
 }
